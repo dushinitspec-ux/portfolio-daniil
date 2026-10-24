@@ -31,6 +31,7 @@
     "text": "deploying AI monitoring systems at Steady Control"
   },
   "home": {
+    "introLabel": "Portfolio",
     "role": "AI Developer & IT/Network Technician",
     "place": "Antalya, Türkiye",
     "available": "Open to relocation",
@@ -47,7 +48,8 @@
       "infra": "Infrastructure"
     },
     "relocation": "Open to relocation · Europe & worldwide",
-    "relocationText": "I am looking for a junior role as an AI developer or an IT/network technician, on site or remote."
+    "relocationText": "I am looking for a junior role as an AI developer or an IT/network technician, on site or remote.",
+    "portraitAlt": "Portrait of Daniil Dushin"
   },
   "projects": {
     "title": "Projects",

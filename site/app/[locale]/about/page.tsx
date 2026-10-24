@@ -29,7 +29,7 @@ export default async function AboutPage({ params: { locale } }: Props) {
       <PageHeader index="/ 02" title={t("title")} lead={t("lead")} />
 
       <section aria-labelledby="how" className="page-x">
-        <div className="grid-12 gap-y-6 border-t border-line py-12 md:py-16">
+        <div data-rule className="grid-12 gap-y-6 border-t border-line py-12 md:py-16">
           <h2 id="how" className="col-span-4 text-lg font-semibold tracking-tight md:col-span-3">
             {t("howTitle")}
           </h2>
@@ -43,7 +43,7 @@ export default async function AboutPage({ params: { locale } }: Props) {
       </section>
 
       <section aria-labelledby="experience" className="page-x">
-        <div className="grid-12 gap-y-6 border-t border-line py-12 md:py-16">
+        <div data-rule className="grid-12 gap-y-6 border-t border-line py-12 md:py-16">
           <h2
             id="experience"
             className="col-span-4 text-lg font-semibold tracking-tight md:col-span-3"
@@ -72,7 +72,7 @@ export default async function AboutPage({ params: { locale } }: Props) {
       </section>
 
       <section aria-labelledby="languages" className="page-x">
-        <div className="grid-12 gap-y-6 border-t border-line py-12 md:py-16">
+        <div data-rule className="grid-12 gap-y-6 border-t border-line py-12 md:py-16">
           <h2
             id="languages"
             className="col-span-4 text-lg font-semibold tracking-tight md:col-span-3"
@@ -90,7 +90,7 @@ export default async function AboutPage({ params: { locale } }: Props) {
       </section>
 
       <section aria-labelledby="relocation" className="page-x">
-        <div className="grid-12 gap-y-6 border-t border-strong py-12 md:py-16">
+        <div data-rule className="grid-12 gap-y-6 border-t border-strong py-12 md:py-16">
           <h2
             id="relocation"
             className="col-span-4 text-[clamp(2rem,5vw,4rem)] font-semibold leading-[1.02] tracking-[-0.04em] md:col-span-7"

@@ -31,6 +31,7 @@
     "text": "Installation von KI-Monitoring-Systemen bei Steady Control"
   },
   "home": {
+    "introLabel": "Portfolio",
     "role": "KI-Entwickler & IT-/Netzwerktechniker",
     "place": "Antalya, Türkei",
     "available": "Offen für einen Umzug",
@@ -47,7 +48,8 @@
       "infra": "Infrastruktur"
     },
     "relocation": "Offen für einen Umzug · Europa & weltweit",
-    "relocationText": "Ich suche eine Junior-Stelle als KI-Entwickler oder IT-/Netzwerktechniker, vor Ort oder remote."
+    "relocationText": "Ich suche eine Junior-Stelle als KI-Entwickler oder IT-/Netzwerktechniker, vor Ort oder remote.",
+    "portraitAlt": "Porträt von Daniil Dushin"
   },
   "projects": {
     "title": "Projekte",

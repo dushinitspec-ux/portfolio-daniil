@@ -50,7 +50,8 @@ export default async function CaseStudyPage({ params: { locale, slug } }: Props)
 
   return (
     <article>
-      <header className="page-x pb-12 pt-10 md:pt-14">
+      {/* The title block sinks and dims while the cover, painted above it, slides over it. */}
+      <header data-layer className="page-x pb-12 pt-10 md:pt-14">
         <div className="flex items-baseline justify-between border-b border-line pb-4">
           <Link href="/projects" className="link-line font-mono text-label uppercase">
             ← {t("back")}
@@ -76,11 +77,11 @@ export default async function CaseStudyPage({ params: { locale, slug } }: Props)
         </dl>
       </header>
 
-      <div className="page-x">
+      <div className="page-x relative z-[1]">
         <ProjectCover image={project.cover} sizes="(min-width: 1440px) 1360px, 100vw" priority />
       </div>
 
-      <div className="page-x mt-16">
+      <div className="page-x relative z-[1] mt-16">
         <CaseStudyBody project={project} />
       </div>
 
@@ -88,6 +89,7 @@ export default async function CaseStudyPage({ params: { locale, slug } }: Props)
         <nav aria-label={t("next")} className="page-x mt-16">
           <Link
             href={`/projects/${next.slug}`}
+            data-rule
             className="group grid-12 border-t border-strong pt-8"
           >
             <span className="label col-span-4 md:col-span-3">{t("next")}</span>

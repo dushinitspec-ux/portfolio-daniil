@@ -126,26 +126,49 @@ execFileSync(browser, [
 **What broke.** Lighthouse measured a Cumulative Layout Shift of 0.24 on the home page
 (above 0.1 counts as poor): the paragraph under the headline moved down after loading.
 
-**Root cause.** Two things together. The headline width was `max-w-[15ch]`, and `ch` is the
-width of the digit "0" *in the current font*. When Inter Tight replaced the fallback font, the
-box width changed, the headline wrapped differently and grew taller. Even after switching to
-`em`, the font swap still re-wrapped the large headline (CLS 0.17 on desktop).
+**Root cause.** The page first paints with a fallback font, then Inter Tight replaces it
+(`font-display: swap`). Two things made that swap move the layout:
 
-**Fix.** Widths use `em` (relative to font size, not to a particular font), and the fonts use
-`display: "optional"`: the preloaded font is used if it arrives within about 100 ms, otherwise
-the page keeps the fallback for that visit instead of jumping.
+1. The headline width was `max-w-[15ch]`, and `ch` is the width of the digit "0" *in the
+   current font*. When the font changed, the box width changed too.
+2. Even with a fixed width, the large headline wraps differently in the two fonts and becomes
+   one line taller or shorter. Everything below it moved.
+
+**First attempt (reverted).** `display: "optional"` removes the swap: the browser uses the web
+font only if it is ready within about 100 ms, otherwise it keeps the fallback for the visit.
+CLS went to 0, but in real browsing the brand font often did not appear at all. A design that
+depends on its typeface cannot accept that.
+
+**Fix.**
+
+- Widths use `em` (relative to the font size, not to a particular font).
+- Fonts stay on `display: "swap"`, so the brand font always appears.
+- The hero is laid out so that the headline re-wrapping moves nothing else: on desktop the
+  headline is alone on the left and the portrait, intro and buttons sit in a fixed-width
+  column on the right; nothing is placed under the headline.
+- The monospace font gets a monospace fallback (`next/font` defaults to an adjusted Arial),
+  so labels keep their width and look during the swap.
 
 ```tsx
 // before
 className="max-w-[15ch] ..."
-const sans = Inter_Tight({ subsets, variable: "--font-sans", display: "swap" });
+// intro and buttons under the headline
 ```
 
 ```tsx
 // after
 className="max-w-[8.4em] ..."
-const sans = Inter_Tight({ subsets, variable: "--font-sans", display: "optional" });
+// <div className="md:flex"> headline | <div className="md:w-[clamp(15rem,24vw,22rem)]"> ...
+const mono = JetBrains_Mono({ ..., display: "swap",
+  fallback: ["ui-monospace", "SFMono-Regular", "Consolas", "Menlo", "monospace"],
+  adjustFontFallback: false });
 ```
 
-Result: CLS 0 on every page tested; home page performance 84 → 99 (mobile) and 93 → 100
-(desktop).
+**A trap while measuring.** On Windows, `next build` (Next 14) wrote an empty font manifest and
+the pages had no `<link rel="preload" as="font">`; the Linux build on Railway has them. Without
+preload the font arrives later, so local Lighthouse runs looked worse than the real site.
+Measure the deployed site, not a local Windows build.
+
+Result, measured with Lighthouse 12 on the deployed site (11 pages on mobile, 3 on desktop):
+CLS 0 on every page; performance 91–97 on mobile and 99 on desktop (it was 84 and 93 on the
+home page before the fix).

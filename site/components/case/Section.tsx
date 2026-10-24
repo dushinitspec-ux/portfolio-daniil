@@ -23,7 +23,7 @@ export async function Section({ id, children }: { id: SectionId; children: React
   const t = await getTranslations("case.sections");
   const number = String(sectionIds.indexOf(id) + 1).padStart(2, "0");
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="grid-12 gap-y-6 border-t border-line py-12 md:py-16">
+    <section id={id} aria-labelledby={`${id}-title`} data-rule className="grid-12 gap-y-6 border-t border-line py-12 md:py-16">
       <h2 id={`${id}-title`} className="col-span-4 md:col-span-3">
         <span aria-hidden="true" className="block font-mono text-label text-muted">
           {number}

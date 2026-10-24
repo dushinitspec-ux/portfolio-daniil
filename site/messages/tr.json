@@ -31,6 +31,7 @@
     "text": "Steady Control'de yapay zekâ izleme sistemleri kuruyorum"
   },
   "home": {
+    "introLabel": "Portfolyo",
     "role": "Yapay Zekâ Geliştirici ve BT/Ağ Teknisyeni",
     "place": "Antalya, Türkiye",
     "available": "Taşınmaya açığım",
@@ -47,7 +48,8 @@
       "infra": "Altyapı"
     },
     "relocation": "Taşınmaya açığım · Avrupa ve dünya",
-    "relocationText": "Yapay zekâ geliştirici veya BT/ağ teknisyeni olarak junior bir pozisyon arıyorum; ofiste ya da uzaktan."
+    "relocationText": "Yapay zekâ geliştirici veya BT/ağ teknisyeni olarak junior bir pozisyon arıyorum; ofiste ya da uzaktan.",
+    "portraitAlt": "Daniil Dushin portresi"
   },
   "projects": {
     "title": "Projeler",

@@ -39,6 +39,12 @@ export async function SiteHeader() {
             <MobileMenu items={items} openLabel={t("menu")} closeLabel={t("close")} />
           </div>
         </div>
+        {/* Reading progress: MotionRoot scales it with the scroll position; hidden without JS. */}
+        <span
+          data-progress
+          aria-hidden="true"
+          className="absolute inset-x-0 -bottom-px h-0.5 origin-left scale-x-0 bg-accent"
+        />
       </header>
     </>
   );

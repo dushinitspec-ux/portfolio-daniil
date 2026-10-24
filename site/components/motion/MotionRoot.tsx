@@ -53,8 +53,11 @@ function animatePage({ gsap, ScrollTrigger }: Engine): () => void {
   // Reveals are started by an IntersectionObserver, not by ScrollTrigger: the observer fires
   // for every kind of scrolling (wheel, keyboard, anchor links, the browser's find-in-page),
   // so hidden content can never stay hidden.
+  let batch = 0;
+  const rules: HTMLElement[] = [];
   const observer = new IntersectionObserver(
     (entries) => {
+      batch = 0;
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
         observer.unobserve(entry.target);
@@ -65,6 +68,28 @@ function animatePage({ gsap, ScrollTrigger }: Engine): () => void {
             scale: 1,
             duration: 1.2,
             ease: "expo.out",
+          });
+        } else if ("rule" in el.dataset) {
+          el.classList.add("rule-in");
+        } else if ("split" in el.dataset) {
+          gsap.to(el.querySelectorAll(".split-word-scroll"), {
+            yPercent: 0,
+            duration: 1,
+            ease: "expo.out",
+            stagger: 0.035,
+          });
+        } else if ("assembleItem" in el.dataset) {
+          // Cards that enter together assemble one after another, left to right.
+          gsap.to(el, {
+            opacity: 1,
+            x: 0,
+            y: 0,
+            rotate: 0,
+            scale: 1,
+            duration: 1.1,
+            ease: "expo.out",
+            delay: (batch++ % 4) * 0.09,
+            onComplete: () => gsap.set(el, { clearProps: "transform" }),
           });
         } else {
           gsap.to(el, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" });
@@ -91,7 +116,76 @@ function animatePage({ gsap, ScrollTrigger }: Engine): () => void {
       observer.observe(mask);
     }
 
-    // 3. Pinned stack of featured projects (desktop): each card is sticky, and the card
+    // 3. Section rules draw from the left.
+    for (const rule of gsap.utils.toArray<HTMLElement>("[data-rule]")) {
+      if (inViewport(rule)) continue;
+      rule.classList.add("rule-pending");
+      rules.push(rule);
+      observer.observe(rule);
+    }
+
+    // 4. Large statements rise word by word (SplitHeadline reveal="scroll").
+    for (const split of gsap.utils.toArray<HTMLElement>("[data-split]")) {
+      if (inViewport(split)) continue;
+      gsap.set(split.querySelectorAll(".split-word-scroll"), { yPercent: 105 });
+      observer.observe(split);
+    }
+
+    // 5. Cards assemble: each starts a little lower, tilted away from the centre of its row,
+    //    and settles into the grid.
+    for (const group of gsap.utils.toArray<HTMLElement>("[data-assemble]")) {
+      group.querySelectorAll<HTMLElement>("[data-assemble-item]").forEach((item, i) => {
+        if (inViewport(item)) return;
+        const side = i % 2 === 0 ? -1 : 1;
+        gsap.set(item, { opacity: 0, y: 70, x: side * 24, rotate: side * 2, scale: 0.96 });
+        observer.observe(item);
+      });
+    }
+
+    // 6. Layers: a hero sinks and dims while the section after it (painted above it) slides
+    //    over it. The trigger starts at the layer's own position, so nothing moves at load.
+    for (const layer of gsap.utils.toArray<HTMLElement>("[data-layer]")) {
+      const scrub = { trigger: layer, start: "top top", end: "bottom top", scrub: true };
+      gsap.to(layer, { yPercent: 22, opacity: 0.2, ease: "none", scrollTrigger: scrub });
+      // The portrait keeps its place a little longer than the text (depth), and the photo
+      // zooms in slowly inside its circle.
+      for (const depth of layer.querySelectorAll("[data-depth]")) {
+        gsap.to(depth, { yPercent: -18, ease: "none", scrollTrigger: scrub });
+      }
+      for (const img of layer.querySelectorAll("[data-portrait-img]")) {
+        gsap.to(img, { scale: 1.14, ease: "none", scrollTrigger: scrub });
+      }
+    }
+
+    // 7. Covers drift against the scroll inside their frames (parallax).
+    for (const inner of gsap.utils.toArray<HTMLElement>("[data-parallax]")) {
+      gsap.fromTo(
+        inner,
+        { yPercent: -5 },
+        {
+          yPercent: 5,
+          ease: "none",
+          scrollTrigger: {
+            trigger: inner.parentElement,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: true,
+          },
+        },
+      );
+    }
+
+    // 8. Reading progress under the header.
+    const progress = document.querySelector("[data-progress]");
+    if (progress) {
+      gsap.to(progress, {
+        scaleX: 1,
+        ease: "none",
+        scrollTrigger: { start: 0, end: "max", scrub: 0.3 },
+      });
+    }
+
+    // 9. Pinned stack of featured projects (desktop): each card is sticky, and the card
     //    underneath shrinks and dims as the next one slides over it.
     const mm = gsap.matchMedia();
     mm.add("(min-width: 1024px)", () => {
@@ -115,6 +209,7 @@ function animatePage({ gsap, ScrollTrigger }: Engine): () => void {
     window.clearTimeout(refresh);
     observer.disconnect();
     ctx.revert();
+    for (const rule of rules) rule.classList.remove("rule-pending", "rule-in");
   };
 }
 

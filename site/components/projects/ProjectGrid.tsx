@@ -66,7 +66,9 @@ export function ProjectGrid({ projects }: { projects: ProjectMeta[] }) {
         })}
       </div>
 
-      <m.ul layout className="mt-10 grid gap-x-6 gap-y-14 md:grid-cols-2">
+      {/* Framer animates the list items (filtering); MotionRoot assembles the links inside them
+          on scroll, so the two never animate the same element. */}
+      <m.ul layout data-assemble className="mt-10 grid gap-x-6 gap-y-14 md:grid-cols-2">
         <AnimatePresence mode="popLayout" initial={false}>
           {visible.map((project) => (
             <m.li
@@ -77,7 +79,7 @@ export function ProjectGrid({ projects }: { projects: ProjectMeta[] }) {
               exit={{ opacity: 0, scale: 0.97 }}
               transition={{ duration: 0.3, ease: [0.2, 0.7, 0.1, 1] }}
             >
-              <Link href={`/projects/${project.slug}`} className="group block">
+              <Link href={`/projects/${project.slug}`} data-assemble-item className="group block">
                 <div className="relative aspect-[16/10] overflow-hidden border border-line bg-surface">
                   <Image
                     src={project.cover.src}
