@@ -11,7 +11,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [01-fridge-alert-bot, 02-hotel-ai-concierge, 03-uptime-monitor]
+        project:
+          - 01-fridge-alert-bot
+          - 02-hotel-ai-concierge
+          - 03-uptime-monitor
+          - 04-pii-guard
+          - 05-e-invoice
+          - 06-helpdesk-copilot
+          - 07-network-inventory
+          - 08-accessibility-check
+          - 09-energy-saver
+          - 10-allergen-labels
     defaults:
       run:
         working-directory: projects/${{ matrix.project }}

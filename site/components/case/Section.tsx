@@ -17,17 +17,16 @@ export type SectionId = (typeof sectionIds)[number];
 /**
  * One section of a case study: a label in the left column, content on the right, separated
  * by a 1px rule. The label comes from messages/, so every case study uses the same wording.
+ * The number is a CSS counter (see globals.css), so a section a case study leaves out, such as
+ * the demo when there is no video, does not leave a gap in the numbering.
  */
 export async function Section({ id, children }: { id: SectionId; children: ReactNode }) {
   if (!sectionIds.includes(id)) throw new Error(`Unknown case-study section "${id}"`);
   const t = await getTranslations("case.sections");
-  const number = String(sectionIds.indexOf(id) + 1).padStart(2, "0");
   return (
-    <section id={id} aria-labelledby={`${id}-title`} data-rule className="grid-12 gap-y-6 border-t border-line py-12 md:py-16">
+    <section id={id} aria-labelledby={`${id}-title`} data-rule className="case-section grid-12 gap-y-6 border-t border-line py-12 md:py-16">
       <h2 id={`${id}-title`} className="col-span-4 md:col-span-3">
-        <span aria-hidden="true" className="block font-mono text-label text-muted">
-          {number}
-        </span>
+        <span aria-hidden="true" className="case-section-number block font-mono text-label text-muted" />
         <span className="mt-2 block text-lg font-semibold tracking-tight">{t(id)}</span>
       </h2>
       <div data-reveal className="prose-case col-span-4 min-w-0 md:col-span-9 md:max-w-none">

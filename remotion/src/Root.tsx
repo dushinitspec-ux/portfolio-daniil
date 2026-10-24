@@ -1,6 +1,6 @@
 import { Composition, Still } from "remotion";
 
-import { Cover } from "./Cover";
+import { Cover, coverIds } from "./Cover";
 import { Promo, PROMO_FRAMES } from "./Promo";
 import type { ProjectId } from "./projects";
 import { FPS } from "./theme";
@@ -22,7 +22,7 @@ export function RemotionRoot() {
           height={1080}
         />
       ))}
-      {ids.map((id) => (
+      {coverIds.map((id) => (
         <Still
           key={`cover-${id}`}
           id={`cover-${id}`}

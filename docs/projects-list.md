@@ -20,6 +20,22 @@ on GitHub with a README.
 | 9 | Sales chatbot for an online shop | Buyers leave without asking | Planned |
 | 10 | Personal portfolio site | The employer needs to see everything in 30 seconds | **Built** — [site](../site) |
 
+## Second set: what European employers need now (built)
+
+Seven more projects, each tied to an EU rule or market change of 2025–2026 that employers
+are dealing with right now. Same rules as below: demo mode, tests, ruff, Docker files,
+README and a BUGFIX file with the real bugs.
+
+| # | Project | Pain it solves | EU context | Status |
+|---|---------|----------------|------------|--------|
+| 04 | PII Guard | Staff paste customer personal data into AI chats | GDPR: data minimisation, processors | **Built** — [projects/04-pii-guard](../projects/04-pii-guard) |
+| 05 | E-Invoice | PDF invoices, but partners need structured e-invoices | EN 16931, XRechnung; German B2B e-invoicing from 2025 | **Built** — [projects/05-e-invoice](../projects/05-e-invoice) (covers part of #8 above) |
+| 06 | Helpdesk Copilot | IT support answers the same questions every day | AI Act Art. 50: tell users they talk to an AI | **Built** — [projects/06-helpdesk-copilot](../projects/06-helpdesk-copilot) |
+| 07 | Network Inventory | Nobody knows what is on the office network | NIS2 Art. 21: asset management | **Built** — [projects/07-network-inventory](../projects/07-network-inventory) |
+| 08 | Accessibility Check | Shop websites that people with disabilities cannot use | European Accessibility Act, from 28 June 2025 | **Built** — [projects/08-accessibility-check](../projects/08-accessibility-check) |
+| 09 | Energy Saver | Boilers and chargers run in the most expensive hours | Dynamic electricity price contracts, 15-minute day-ahead market | **Built** — [projects/09-energy-saver](../projects/09-energy-saver) |
+| 10 | Allergen Labels | Allergen information on menus goes stale | Regulation (EU) No 1169/2011, Annex II | **Built** — [projects/10-allergen-labels](../projects/10-allergen-labels) |
+
 ## Rules for every project
 
 Write clean, commented code. Add a README in English with: the business problem, features,

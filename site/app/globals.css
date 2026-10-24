@@ -326,6 +326,18 @@ html.intro .hero-rise {
   }
 }
 
+/* Case-study section numbers (components/case/Section.tsx): counted, not fixed, so leaving a
+   section out does not leave a gap. */
+.case-body {
+  counter-reset: case-section;
+}
+.case-section {
+  counter-increment: case-section;
+}
+.case-section-number::before {
+  content: counter(case-section, decimal-leading-zero);
+}
+
 /* Shiki emits both themes as CSS variables; choose one per colour scheme. */
 .shiki,
 .shiki span {

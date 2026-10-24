@@ -81,7 +81,7 @@ export default async function CaseStudyPage({ params: { locale, slug } }: Props)
         <ProjectCover image={project.cover} sizes="(min-width: 1440px) 1360px, 100vw" priority />
       </div>
 
-      <div className="page-x relative z-[1] mt-16">
+      <div className="case-body page-x relative z-[1] mt-16">
         <CaseStudyBody project={project} />
       </div>
 

@@ -10,7 +10,18 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
+// Projects with a promo video; every project in coverIds gets a cover.
 const ids = ["fridge-alert-bot", "hotel-ai-concierge", "uptime-monitor"];
+const coverIds = [
+  ...ids,
+  "pii-guard",
+  "e-invoice",
+  "helpdesk-copilot",
+  "network-inventory",
+  "accessibility-check",
+  "energy-saver",
+  "allergen-labels",
+];
 const site = path.resolve("..", "site", "public");
 const onlyCovers = process.argv.includes("covers");
 
@@ -20,7 +31,7 @@ function remotion(...args) {
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
 
-for (const id of ids) {
+for (const id of coverIds) {
   const dir = path.join(site, "projects", id);
   fs.mkdirSync(dir, { recursive: true });
   remotion("still", "src/index.ts", `cover-${id}`, path.join(dir, "cover.png"));
