@@ -10,45 +10,58 @@ Self-driven developer building Telegram bots and websites for small businesses. 
 development with real IT and networking background, so I understand both the product and
 the infrastructure behind it. I build with AI coding agents (Claude Code, OpenAI Codex,
 ChatGPT) to ship working products fast, and I work daily with a real AI computer-vision
-product in the field.
+product in the field. My recent projects target what European businesses need now:
+GDPR-safe use of LLMs, structured e-invoicing, accessibility and network asset inventories.
 
 ## Projects
 
-**Hotel AI concierge** — Python, aiogram 3, Anthropic / OpenAI API, SQLite
+**E-Invoice** — Python, FastAPI, pdfplumber, lxml, Anthropic API
 
-- Problem: hotel reception answers the same questions all day, in several languages.
-- Built: a Telegram bot that answers guests in English, Russian, Turkish and German using
-  only the hotel's knowledge base. Questions it cannot answer go to a staff group, and the
-  staff reply is translated back to the guest. Structured LLM output, so it never invents
-  an answer.
-- Result: offline demo mode, 57 automated tests. [Result with a real hotel, if any]
-- [GitHub link] · [Demo video]
+- Turns a PDF invoice into an XRechnung (UBL 2.1) e-invoice, for the EU move to structured
+  e-invoicing (EN 16931; in Germany every business must accept them since 1 January 2025).
+- Extraction with Claude (structured output) or offline rules, then 67 EN 16931 / XRechnung
+  rules with their official IDs and a plain explanation each.
+- Matches the official CEN and KoSIT rules on all five sample invoices; 180 tests.
+  [Case study](https://site-production-898c.up.railway.app/en/projects/e-invoice)
 
-**Fridge temperature alert bot** — FastAPI, aiogram 3, SQLite, matplotlib
+**Helpdesk Copilot** — Python, BM25 retrieval, Anthropic API, aiogram 3, FastAPI
 
-- Problem: spoiled food and failed hygiene inspections when a fridge warms up unnoticed.
-- Built: an HTTP API for temperature sensors and a Telegram bot that alerts when a fridge
-  stays above its limit for 5 minutes, with no alert spam; `/status`, `/history` charts,
-  `/setlimit`, daily reports, and a simulator of door openings and compressor failures.
-- Result: 69 automated tests. [Result, if used on real equipment]
-- [GitHub link] · [Demo video]
+- Telegram IT assistant that answers from the company's own how-tos with numbered sources;
+  when it is not sure, it opens a ticket with a priority (P1–P4). Tells users they are
+  talking to an AI (EU AI Act, Art. 50).
+- Right document in the top 3 for 30 of 30 evaluation questions (15 of 15 held out); 95
+  tests. [Case study](https://site-production-898c.up.railway.app/en/projects/helpdesk-copilot)
 
-**Network and device uptime monitor** — Python asyncio, FastAPI, HTMX, aiogram 3
+**PII Guard** — Python, FastAPI, HTMX, Anthropic API
 
-- Problem: cameras, routers or Wi-Fi go down and nobody notices for days.
-- Built: a service that checks every device each minute (ping + TCP ports), alerts in
-  Telegram on down / up with the downtime, and shows uptime for 24 h and 7 days on a status
-  page.
-- Result: 45 automated tests, including real ping output from Windows and Linux.
-- [GitHub link] · [Demo video]
+- Gateway that hides personal data (e-mail, phones, IBAN, cards, EU VAT IDs, IP addresses)
+  before a prompt reaches the LLM and puts it back into the answer (GDPR); mask / block /
+  allow policy, audit log without values.
+- A property test on 500 random texts shows no original value reaches the model; 152 tests.
+  [Case study](https://site-production-898c.up.railway.app/en/projects/pii-guard)
 
-**HookahPlace Lara website** (hookahplacelara.com) — website for a lounge in Antalya.
+**Hotel AI concierge** — Python, aiogram 3, Anthropic / OpenAI API
 
-- [Add: what it does, integrations, result]
+- Telegram bot that answers guests in EN, RU, TR and DE only from the hotel's knowledge
+  base; unknown questions go to staff and the reply is translated back to the guest.
+- Offline demo mode, 57 tests. [Result with a real hotel, if any]
+  [Case study](https://site-production-898c.up.railway.app/en/projects/hotel-ai-concierge)
 
-**Portfolio website** — Next.js, TypeScript, Tailwind CSS, MDX; four languages (EN, RU, TR, DE).
+**Also built** — each with a demo mode, tests and a case study on my site:
 
-- [site-production-898c.up.railway.app](https://site-production-898c.up.railway.app)
+- **Allergen Labels** — the 14 EU allergens on every dish in four languages, confirmed by a
+  chef before printing (207 tests).
+- **Energy Saver** — runs boilers and EV chargers in the cheapest day-ahead slots; −29.6 %
+  spot cost on 30 days of real German prices (100 tests).
+- **Accessibility Check** — WCAG 2.2 checks for small business websites (European
+  Accessibility Act) (200 tests).
+- **Network Inventory** — asset register for office networks (NIS2): new devices, risky open
+  ports (107 tests).
+- **Fridge alert bot** (69 tests) and **uptime monitor** (45 tests) — Telegram alerts when a
+  fridge gets too warm or a camera, router or access point goes down.
+- **HookahPlace Lara website** (hookahplacelara.com) — [Add: what it does, result]
+- **Portfolio website** — Next.js, TypeScript, MDX, four languages:
+  [site-production-898c.up.railway.app](https://site-production-898c.up.railway.app)
 
 ## Experience
 
@@ -63,7 +76,8 @@ product in the field.
 
 Telegram Bot API, Python (FastAPI, aiogram 3, pytest), HTML/CSS, JavaScript, React
 Native/Expo (learning), Git, AI-assisted development (Claude Code, OpenAI Codex, ChatGPT),
-AI automation, LLM APIs.
+AI automation, LLM APIs (structured output), retrieval (BM25) and evaluation sets, PDF and
+XML processing (pdfplumber, lxml), SQLite.
 
 ## Languages
 

@@ -36,6 +36,13 @@ Russian-speaking clients.
 
 Personal projects, code and demos on GitHub: [github.com/dushinitspec-ux](https://github.com/dushinitspec-ux)
 
+- **Network inventory** ([case study](https://site-production-898c.up.railway.app/en/projects/network-inventory)) — finds the devices on an office
+  network (ping sweep, ARP table, open TCP ports, MAC vendor), keeps a register of them over
+  time, flags new devices and risky services such as Telnet or exposed RDP, and exports the
+  register to CSV (asset management is one of the NIS2 security measures).
+- **IT helpdesk assistant** ([case study](https://site-production-898c.up.railway.app/en/projects/helpdesk-copilot)) — answers employees' IT
+  questions in Telegram from the company's own how-tos, with sources; anything else becomes
+  a ticket with a priority (P1–P4) for the IT person.
 - **Network and device uptime monitor** — Python service that checks routers, cameras and
   Wi-Fi access points every minute (ping + TCP ports), sends Telegram alerts with the
   downtime, and shows 24 h / 7 day uptime on a web status page.

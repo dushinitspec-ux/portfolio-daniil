@@ -22,6 +22,12 @@ live-in (lojman) and contracts abroad with accommodation and work visa.
 
 Guest Relations, Front Office, Concierge, Transfer/Tour assistant, hotel IT support.
 
+## Projects for hotels and restaurants
+
+I also build software for hotels and restaurants: an AI concierge that answers guests in four
+languages, allergen labels for menus confirmed by the chef, and fridge temperature alerts
+for kitchens. Case studies on my site.
+
 ## Strengths
 
 Russian native, calm with demanding clients, technical problem-solving, driving licence B.
