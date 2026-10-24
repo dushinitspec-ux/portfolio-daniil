@@ -1,0 +1,12 @@
+services:
+  bot:
+    build: .
+    env_file: .env
+    volumes:
+      - concierge-data:/app/data
+      # Edit knowledge/hotel.md on the host, then send /reload to the bot. No rebuild needed.
+      - ./knowledge:/app/knowledge:ro
+    restart: unless-stopped
+
+volumes:
+  concierge-data:
