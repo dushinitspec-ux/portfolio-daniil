@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}{{ inv.number or "Invoice" }} · E-Invoice{% endblock %}
+{% block content %}
+<style>
+  .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
+  .head .sub { margin-top: 6px; }
+  .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 40px; }
+  .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .party .name { font-weight: 700; }
+  .party div { font-size: 13px; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0; font-size: 13px; }
+  dt { color: var(--muted); }
+  dd { margin: 0; }
+  .totals td { border-bottom: 1px solid var(--line); }
+  .totals tr.strong td { font-weight: 700; border-top: 1.5px solid var(--text); border-bottom: 0; }
+  .totals tr.flag td { color: var(--bad); }
+  .totals tr.flag td:first-child::before { content: "✕ "; font-weight: 700; }
+  .bt { color: var(--muted); font-size: 11px; font-family: var(--mono); }
+  .derived { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--warn);
+    border: 1px solid currentColor; padding: 0 4px; margin-left: 4px; vertical-align: 1px; }
+  .notes { margin: 10px 0 0; padding-left: 16px; font-size: 12px; color: var(--muted); }
+  .summary { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .rule { padding: 10px 12px; margin-bottom: 8px; border-left: 3px solid; }
+  .rule.fatal { border-color: var(--bad); background: var(--bad-bg); }
+  .rule.warning { border-color: var(--warn); background: var(--warn-bg); }
+  .rule .id { font-family: var(--mono); font-weight: 700; font-size: 12.5px; }
+  .rule.fatal .id { color: var(--bad); }
+  .rule.warning .id { color: var(--warn); }
+  .rule .msg { font-weight: 600; margin: 2px 0; }
+  .rule .text { font-size: 12px; color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip { font-family: var(--mono); font-size: 11px; padding: 2px 6px; background: var(--ok-bg); color: var(--ok); }
+  .chip::before { content: "✓ "; }
+  .na { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  pre.xml { background: var(--panel); padding: 12px; overflow-x: auto; font-size: 11.5px; line-height: 1.5; margin: 0; max-height: 420px; }
+  .fix { background: var(--panel); padding: 12px; margin-bottom: 8px; }
+  .fix form { display: flex; gap: 8px; margin-top: 8px; }
+  @media (max-width: 960px) { .grid, .parties { grid-template-columns: 1fr; gap: 8px; } }
+</style>
+
+<div class="head">
+  <div>
+    <div class="muted mono" style="font-size:12px">{{ row.filename }} · extracted by {{ x.extractor }}</div>
+    <h1>Invoice {{ inv.number or "(no number)" }}</h1>
+    <div class="sub">{{ inv.seller.name or "?" }} → {{ inv.buyer.name or "?" }} · issued {{ inv.issue_date | day }} · {{ inv.totals.payable | money }} {{ inv.currency }}</div>
+  </div>
+  <div class="actions">
+    {% if report.valid %}
+      <span class="pill ok">No errors</span>
+    {% else %}
+      <span class="pill bad">{{ report.errors | length }} error{{ "s" if report.errors | length != 1 }}</span>
+    {% endif %}
+    {% if report.warnings %}<span class="pill warn">{{ report.warnings | length }} warning{{ "s" if report.warnings | length != 1 }}</span>{% endif %}
+    <a class="btn" href="/invoices/{{ row.id }}/xml">Download XML</a>
+    <a class="btn ghost" href="/invoices/{{ row.id }}/pdf" target="_blank" rel="noopener">Original PDF</a>
+  </div>
+</div>
+
+<div class="grid">
+  <div>
+    <h2>Seller and buyer</h2>
+    <div class="parties">
+      {% for role, p in [("Seller", inv.seller), ("Buyer", inv.buyer)] %}
+      <div class="party">
+        <div class="bt">{{ role }}</div>
+        <div class="name">{{ p.name or "—" }}</div>
+        <div>{{ p.address.street }}</div>
+        <div>{{ p.address.postcode }} {{ p.address.city }}{% if p.address.country %}, {{ p.address.country }}{% endif %}</div>
+        <div class="mono">{{ p.vat_id or "no VAT ID" }}</div>
+        <div class="mono">{{ p.electronic_address or "no e-invoice address" }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <h2>Lines</h2>
+    <table>
+      <thead><tr><th>#</th><th>Item</th><th class="num">Qty</th><th class="num">Price</th><th class="num">VAT</th><th class="num">Net</th></tr></thead>
+      <tbody>
+      {% for line in inv.lines %}
+        <tr>
+          <td class="muted">{{ line.id }}</td>
+          <td>{{ line.name }}</td>
+          <td class="num">{{ line.quantity.normalize() if line.quantity is not none else "—" }} <span class="bt">{{ line.unit_code }}</span></td>
+          <td class="num">{{ line.net_price | money }}</td>
+          <td class="num">{{ line.vat_category.value if line.vat_category else "?" }} {{ line.vat_rate | rate }}</td>
+          <td class="num">{{ line.net_amount | money }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" class="muted">No lines found.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    <h2>Totals</h2>
+    <table class="totals">
+      <tr class="{{ 'flag' if 'BT-106' in flagged }}"><td>Sum of line net amounts <span class="bt">BT-106</span></td><td class="num">{{ inv.totals.line_net_total | money }}</td></tr>
+      {% for b in inv.vat_breakdown %}
+      <tr class="{{ 'flag' if 'BT-117' in flagged }}"><td>VAT {{ b.category.value }} {{ b.rate | rate }} on {{ b.taxable_amount | money }} <span class="bt">BT-117</span></td><td class="num">{{ b.tax_amount | money }}</td></tr>
+      {% endfor %}
+      <tr class="{{ 'flag' if 'BT-109' in flagged }}"><td>Total without VAT <span class="bt">BT-109</span></td><td class="num">{{ inv.totals.tax_exclusive | money }}</td></tr>
+      <tr class="{{ 'flag' if 'BT-110' in flagged }}"><td>Total VAT <span class="bt">BT-110</span></td><td class="num">{{ inv.totals.vat_total | money }}</td></tr>
+      <tr class="{{ 'flag' if 'BT-112' in flagged }}"><td>Total with VAT <span class="bt">BT-112</span></td><td class="num">{{ inv.totals.tax_inclusive | money }}</td></tr>
+      <tr class="strong {{ 'flag' if 'BT-115' in flagged }}"><td>Amount due <span class="bt">BT-115</span></td><td class="num">{{ inv.totals.payable | money }} {{ inv.currency }}</td></tr>
+    </table>
+    {% if x.derived or x.warnings %}
+    <ul class="notes">
+      {% for note in x.derived %}<li><span class="derived">derived</span> {{ note }}</li>{% endfor %}
+      {% for note in x.warnings %}<li>{{ note }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    <h2>Details</h2>
+    <dl>
+      <dt>Issue date</dt><dd>{{ inv.issue_date | day }}</dd>
+      <dt>Due date</dt><dd>{{ inv.due_date | day }}</dd>
+      {% if inv.delivery_date %}<dt>Delivery date</dt><dd>{{ inv.delivery_date | day }}</dd>{% endif %}
+      {% if inv.period_start %}<dt>Service period</dt><dd>{{ inv.period_start | day }} – {{ inv.period_end | day }}</dd>{% endif %}
+      <dt>Buyer reference</dt><dd class="mono">{{ inv.buyer_reference or "—" }}</dd>
+      <dt>Order reference</dt><dd class="mono">{{ inv.order_reference or "—" }}</dd>
+      <dt>IBAN</dt><dd class="mono">{{ (inv.payment.iban | iban) if inv.payment.iban else "—" }}</dd>
+      <dt>Payment terms</dt><dd>{{ inv.payment.terms or "—" }}</dd>
+      <dt>Seller contact</dt><dd>{{ inv.seller.contact_name or "—" }} · {{ inv.seller.contact_phone or "—" }} · {{ inv.seller.contact_email or "—" }}</dd>
+      {% if inv.note %}<dt>Note</dt><dd>{{ inv.note }}</dd>{% endif %}
+    </dl>
+  </div>
+
+  <aside>
+    <h2>Business rules</h2>
+    <div class="summary">
+      <span class="pill ok">{{ report.passed | length }} passed</span>
+      {% if report.errors %}<span class="pill bad">{{ report.errors | length }} failed</span>{% endif %}
+      {% if report.warnings %}<span class="pill warn">{{ report.warnings | length }} warning{{ "s" if report.warnings | length != 1 }}</span>{% endif %}
+      <span class="pill" style="color:var(--muted)">{{ report.not_applicable | length }} not applicable</span>
+    </div>
+
+    {% for r in failed %}
+    <div class="rule {{ r.severity.value }}">
+      <div><span class="id">{{ r.id }}</span> <span class="bt">{{ r.source.value }} · {{ r.severity.value }}</span></div>
+      <div class="msg">{{ r.message }}</div>
+      <div class="text">{{ r.title }}</div>
+    </div>
+    {% if r.id == "PEPPOL-EN16931-R010" %}
+    <div class="fix">
+      Add the address the buyer gave you for e-invoices, and the XML is generated again.
+      <form action="/invoices/{{ row.id }}/buyer-email" method="post">
+        <input type="email" name="buyer_email" required placeholder="invoices@buyer.example" aria-label="Buyer e-invoice address">
+        <button class="btn" type="submit">Apply</button>
+      </form>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    <div class="chips" style="margin-top:12px">
+      {% for r in report.passed %}<span class="chip" title="{{ r.title }}">{{ r.id }}</span>{% endfor %}
+    </div>
+    {% if report.not_applicable %}
+    <p class="na">Not applicable here: {{ report.not_applicable | map(attribute="id") | join(", ") }}</p>
+    {% endif %}
+
+    <h2>XRechnung UBL</h2>
+    <pre class="xml">{{ xml_preview }}{% if xml_more %}
+… {{ xml_more }} more lines in the download{% endif %}</pre>
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+services:
+  e-invoice:
+    build: .
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8105
+    ports:
+      - "8105:8105"
+    volumes:
+      # The SQLite history (processed invoices, their XML and PDFs) survives rebuilds.
+      - e-invoice-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  e-invoice-data:

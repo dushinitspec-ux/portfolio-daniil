@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}E-Invoice{% endblock %}</title>
+  <style>
+    :root {
+      --bg: #ffffff; --panel: #f5f5f3; --text: #111111; --muted: #6a6a6a; --line: #e2e2df;
+      --ok: #157a46; --bad: #c8102e; --warn: #a86400; --ok-bg: #eaf5ee; --bad-bg: #fbecee;
+      --warn-bg: #fbf3e4; --accent: #c8102e;
+      --mono: ui-monospace, "SF Mono", Consolas, "Liberation Mono", monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #121212; --panel: #1b1b1b; --text: #ededed; --muted: #9a9a9a; --line: #2c2c2c;
+        --ok: #4cc283; --bad: #ff5a6e; --warn: #f0b04a; --ok-bg: #16281e; --bad-bg: #2d171b;
+        --warn-bg: #2b2213;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 14px/1.45 "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    .top {
+      display: flex; align-items: baseline; gap: 16px; padding: 14px 32px;
+      border-bottom: 2px solid var(--text);
+    }
+    .brand { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; text-decoration: none; }
+    .brand span { color: var(--accent); }
+    .tag { font-size: 12px; color: var(--muted); }
+    .top nav { margin-left: auto; display: flex; gap: 18px; font-size: 13px; }
+    .badge {
+      font-size: 11px; text-transform: uppercase; letter-spacing: .06em; padding: 2px 8px;
+      border: 1px solid var(--line); color: var(--muted);
+    }
+    main { max-width: 1240px; margin: 0 auto; padding: 24px 32px 56px; }
+    h1 { font-size: 26px; line-height: 1.15; letter-spacing: -0.02em; margin: 0; }
+    h2 {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+      margin: 26px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--text);
+    }
+    .muted { color: var(--muted); }
+    .mono { font-family: var(--mono); font-size: 12.5px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; padding-right: 0; padding-left: 8px; }
+    .btn {
+      display: inline-block; font: inherit; font-weight: 600; font-size: 13px; padding: 8px 14px;
+      border: 1.5px solid var(--text); background: var(--text); color: var(--bg);
+      text-decoration: none; cursor: pointer;
+    }
+    .btn.ghost { background: transparent; color: var(--text); }
+    .pill { display: inline-block; font-weight: 700; font-size: 12px; padding: 3px 10px; }
+    .pill.ok { background: var(--ok-bg); color: var(--ok); }
+    .pill.bad { background: var(--bad-bg); color: var(--bad); }
+    .pill.warn { background: var(--warn-bg); color: var(--warn); }
+    .error { border-left: 3px solid var(--bad); background: var(--bad-bg); padding: 10px 14px; margin: 0 0 18px; }
+    input[type=text], input[type=email], input[type=file] {
+      font: inherit; padding: 7px 9px; border: 1px solid var(--line); background: var(--bg);
+      color: var(--text); width: 100%;
+    }
+    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+    @media (max-width: 860px) {
+      .top { padding: 12px 16px; flex-wrap: wrap; }
+      main { padding: 18px 16px 40px; }
+      .hide-sm { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/">E-Invoice<span>.</span></a>
+    <span class="tag hide-sm">PDF invoice → XRechnung UBL, checked against EN 16931 rules</span>
+    {% if demo %}<span class="badge">demo · offline extractor</span>{% else %}<span class="badge">extractor: {{ extractor }}</span>{% endif %}
+    <nav><a href="/">New invoice</a><a href="/#history">History</a></nav>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

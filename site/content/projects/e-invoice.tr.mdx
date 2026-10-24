@@ -1,0 +1,170 @@
+---
+title: E-Invoice
+summary: PDF faturayı XRechnung e-faturasına dönüştürür ve kural kural neyin yanlış olduğunu açıklar.
+categories: [AI, Web]
+order: 5
+featured: false
+year: 2026
+role: Kişisel proje — tasarım, kod, testler
+stack: [Python 3.12, FastAPI, Jinja2, Anthropic API, pdfplumber, lxml, SQLite, pytest]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+cover:
+  src: /projects/e-invoice/cover.png
+  alt: E-Invoice kapak görseli — fatura toplamları ve dönüştükleri XML yan yana
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/e-invoice/result-with-errors.png
+    alt: Ara toplamı yanlış ve IBAN'ında yazım hatası olan bir Alman faturasının sonuç sayfası — iki kırmızı kural, bir uyarı ve kırmızıyla işaretlenmiş yanlış toplamlar
+    width: 1280
+    height: 800
+    caption: Bilerek iki yazım hatası eklenmiş örnek bir fatura. Her ihlal edilen kural resmî kimliğini ve arkasındaki rakamları gösteriyor.
+  - src: /projects/e-invoice/result-reverse-charge.png
+    alt: Avusturya'dan gelen, KDV'nin alıcıya devredildiği (reverse charge) bir faturanın sonuç sayfası — uygulanabilir 63 kuralın hepsi geçti, XRechnung XML'i çıkarılan alanların yanında
+    width: 1280
+    height: 1080
+    caption: Avusturya'dan reverse charge faturası. Okunmak yerine hesaplanan değerler "derived" olarak işaretli.
+  - src: /projects/e-invoice/upload-and-history.png
+    alt: Yükleme formu, beş örnek fatura ve işlenen faturaların durum ve ihlal edilen kurallarıyla geçmişini gösteren başlangıç sayfası
+    width: 1280
+    height: 800
+    caption: Yükleme, hazır örnekler ve SQLite geçmişi.
+---
+
+<Section id="problem">
+
+1 Ocak 2025'ten beri Almanya'da şirketler arasındaki faturaların e-fatura olması gerekiyor: PDF
+değil, Avrupa standardı EN 16931'e uyan yapılandırılmış bir format. Kâğıt ve PDF'e 31 Aralık
+2026'ya kadar, önceki yıl cirosu 800.000 euroyu geçmeyen şirketler için ise 31 Aralık 2027'ye
+kadar hâlâ izin var. Almanın geçiş süresi yok: 1 Ocak 2025'ten beri her şirketin e-fatura
+alabilmesi gerekiyor.
+
+Birçok küçük şirket faturalarını hâlâ Word'de yazıp PDF olarak gönderiyor. Bir PDF insana doğru
+görünüp makine için yine de yanlış olabilir: tutmayan toplamlar, eksik alıcı referansı, yazım
+hatalı bir IBAN. Avrupa'da çalışmak istiyorum ve Almanya'da şu anda her şirket bu değişimden
+geçiyor; bu yüzden muhasebeci olsam kullanmak isteyeceğim dönüştürücüyü yaptım.
+
+</Section>
+
+<Section id="solution">
+
+- PDF'in metin katmanı, kelimelerin konumlarından satırlara ve tablo hücrelerine yeniden kuruluyor; böylece bir tablo satırı satır olarak kalıyor.
+- **Claude** faturayı sabit bir JSON şemasına okuyor (structured output). Ona basılı olanı kopyalaması ve rakamları düzeltmemesi söyleniyor: "düzeltilmiş" bir toplam, doğrulayıcının bulmak için var olduğu hatayı gizlerdi.
+- API anahtarı olmadan **kural tabanlı bir okuyucu**, hazır Almanca ve İngilizce şablonları çevrimdışı okuyor (demo modu).
+- PDF'te basılı olmayan ama standardın istediği değerler hesaplanıyor ve **"derived" olarak işaretleniyor**; böylece "hesaplandı" asla "kontrol edildi" ile karışmıyor.
+- Resmî kimlikleriyle **67 iş kuralı**: 51'i EN 16931'den, 15'i XRechnung'dan, 1'i benim. Her ihlal edilen kural kimliğini ve rakamları gösteriyor: "BR-CO-10: the lines add up to 882.30, the invoice says 882.80".
+- Sonuç, web uygulamasından ya da komut satırından indirilebilen bir **XRechnung 3.0 UBL 2.1** dosyası. SQLite geçmişi her faturayı, durumunu ve XML'ini saklıyor.
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Para her yerde `Decimal` ve resmî kurallardaki XPath `round()` gibi yarımlar yukarı
+yuvarlanıyor; Python'un `round()` fonksiyonu 0,125'i 0,12'ye yuvarlar. LLM şeması tutarları metin
+olarak döndürüyor, böylece hiçbir zaman float'tan geçmiyorlar. Referans, resmî KoSIT
+doğrulayıcısı (Java). Kendi kural alt kümemin ne kadar yakın olduğunu görmek için bir betik, her
+örneğin XML'inde resmî UBL şemasını, CEN EN 16931 schematron'unu ve KoSIT XRechnung
+schematron'unu çalıştırıyor.
+
+</Section>
+
+<Section id="code">
+
+Her kural, resmî kimliği ve metniyle kaydedilen küçük bir fonksiyon. Fatura geçerse `None`,
+geçmezse gerçek rakamları içeren bir cümle döndürüyor. Bir test her kuralı bilerek bozuyor;
+başka bir test de yeni bir kuralın böyle bir durumu yoksa başarısız oluyor:
+
+```python
+@rule(
+    "BR-CO-15",
+    "Invoice total amount with VAT (BT-112) = Invoice total amount without VAT (BT-109) + "
+    "Invoice total VAT amount (BT-110).",
+)
+def br_co_15(inv: Invoice) -> str | None:
+    t = inv.totals
+    if t.tax_inclusive is None or t.tax_exclusive is None or t.vat_total is None:
+        raise NotApplicable
+    expected = _xpath_round(t.tax_exclusive + t.vat_total)
+    if t.tax_inclusive == expected:
+        return None
+    return (
+        f"{t.tax_exclusive:f} + {t.vat_total:f} = {expected:f}, "
+        f"but the total with VAT is {t.tax_inclusive:f}"
+    )
+```
+
+</Section>
+
+<Section id="bug">
+
+### Benim BR-CO-13 kuralım, resmî kuralların görmediği bir hata buluyordu
+
+<BugPart id="problem">
+
+Ara toplamı yanlış olan örnekte (satırların toplamı 882,30, PDF'te 882,80 yazıyor) doğrulayıcım
+üç hata gösteriyordu. Aynı XML üzerinde çalışan resmî CEN schematron'u ise iki hata gösterdi:
+BR-CO-10 ve BR-CO-15, ama BR-CO-13 değil.
+
+</BugPart>
+
+<BugPart id="cause">
+
+BR-CO-13'ü kural metninden uygulamıştım: "KDV hariç toplam = satır net tutarlarının toplamı −
+indirimler + ek ücretler". Resmî test satırları toplamıyor. İndirim ve ek ücret yoksa KDV hariç
+toplamı (BT-109), faturada basılı olan satır toplamıyla (BT-106) karşılaştırıyor. Satırları
+BT-106 ile karşılaştırmak BR-CO-10'un işi; bu yüzden tek bir yazım hatası raporda iki kez
+görünüyordu ve raporum alıcının doğrulayıcısının söyleyeceğiyle örtüşmüyordu.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Artık schematron'daki testi izliyorum ve bir regresyon testi bunun böyle kalmasını sağlıyor. O
+zamandan beri her aritmetik kuralın yalnızca tek satırlık metnini değil, resmî testini de
+okuyorum. Beş örneğin hepsinde doğrulayıcım ve resmî schematron artık birebir aynı kural
+kimliklerini bildiriyor.
+
+</BugPart>
+
+<Diff>
+
+```python
+expected = _xpath_round(_sum(line.net_amount for line in inv.lines))
+if inv.totals.tax_exclusive == expected:
+    return None
+```
+
+```python
+# The official schematron compares BT-109 with BT-106 (LineExtensionAmount), not with the
+# sum of the lines: that sum is BR-CO-10's job.
+if t.tax_exclusive == t.line_net_total:
+    return None
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **180 otomatik test**: her örnek şablonda okuma, 67 kuralın her birinin hem geçmesi hem ihlal edilmesi, `Decimal` yuvarlama, öğe öğe geri ayrıştırılan XML, web uygulaması ve komut satırı.
+- Beş örneğin hepsinde resmî CEN ve KoSIT schematron'u doğrulayıcımla birebir aynı kural kimliklerini bildiriyor ve her XML dosyası UBL 2.1 şemasına göre geçerli.
+- Bir örneğin çevrimdışı dönüştürülmesi (okuma, çıkarma, 67 kural, XML) 16–29 ms sürüyor.
+- [Gerçek faturalarla sonuç, örneğin "Almanya'daki bir şirket için N tedarikçi faturası dönüştürüldü"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

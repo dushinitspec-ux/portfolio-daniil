@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .intro { display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; align-items: start; }
+  .upload { background: var(--panel); padding: 20px; }
+  .upload .row { margin-bottom: 12px; }
+  .samples form { display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .samples button { font: inherit; font-size: 13px; background: none; border: 0; padding: 0;
+    text-decoration: underline; cursor: pointer; color: var(--text); }
+  .status { padding-left: 20px; }
+  .status-valid { color: var(--ok); font-weight: 600; }
+  .status-invalid { color: var(--bad); font-weight: 600; }
+  @media (max-width: 860px) { .intro { grid-template-columns: 1fr; gap: 8px; } }
+</style>
+
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+<div class="intro">
+  <section>
+    <h1>Turn a PDF invoice into an e-invoice.</h1>
+    <p class="muted">Upload a text-based PDF. The fields are read, {{ "EN 16931" }} and XRechnung
+      business rules are checked, and you get an XRechnung 3.0 UBL file to download.
+      The official KoSIT validator remains the reference; this tool checks a subset of rules
+      and explains every failure.</p>
+    <form class="upload" action="/convert" method="post" enctype="multipart/form-data">
+      <div class="row">
+        <label for="file">Invoice PDF (max {{ max_mb }} MB)</label>
+        <input id="file" type="file" name="file" accept="application/pdf" required>
+      </div>
+      <div class="row">
+        <label for="buyer_email">Buyer's e-invoice address (BT-49), if the PDF does not show it</label>
+        <input id="buyer_email" type="email" name="buyer_email" placeholder="invoices@buyer.example">
+      </div>
+      <button class="btn" type="submit">Convert</button>
+    </form>
+  </section>
+
+  <section class="samples">
+    <h2>Sample invoices</h2>
+    {% for name in samples %}
+    <form action="/samples/{{ name }}" method="post">
+      <span class="mono">{{ name }}</span>
+      <button type="submit">Convert →</button>
+    </form>
+    {% else %}
+    <p class="muted">No sample PDFs found.</p>
+    {% endfor %}
+    <p class="muted" style="font-size:12px">Fictional companies, VAT IDs and IBANs. The last
+      one has two typos on purpose.</p>
+  </section>
+</div>
+
+<h2 id="history">History</h2>
+{% if history %}
+<table>
+  <thead>
+    <tr><th>Processed (UTC)</th><th>Invoice</th><th class="hide-sm">Seller</th><th class="num">Amount due</th><th class="status">Status</th><th class="hide-sm">Failed rules</th></tr>
+  </thead>
+  <tbody>
+  {% for row in history %}
+    <tr>
+      <td class="muted">{{ row.created_at.strftime("%d %b %H:%M") }}</td>
+      <td><a href="/invoices/{{ row.id }}">{{ row.number or "(no number)" }}</a><div class="muted mono" style="font-size:11px">{{ row.filename }}</div></td>
+      <td class="hide-sm">{{ row.seller }}</td>
+      <td class="num">{{ row.total | money }} {{ row.currency }}</td>
+      <td class="status status-{{ 'valid' if row.valid else 'invalid' }}">{{ "valid" if row.valid else "invalid" }}</td>
+      <td class="hide-sm mono" style="font-size:12px">{{ row.failed_rules | join(", ") }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">Nothing processed yet.</p>
+{% endif %}
+{% endblock %}
