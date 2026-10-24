@@ -1,5 +1,7 @@
 # Daniil Dushin — Portfolio
 
+[![CI](https://github.com/[github-username]/portfolio-daniil/actions/workflows/ci.yml/badge.svg)](https://github.com/[github-username]/portfolio-daniil/actions/workflows/ci.yml)
+
 Job-search portfolio: CVs, a personal website and three small production-style projects
 that solve real problems for restaurants, hotels and small offices.
 
@@ -41,7 +43,8 @@ uv sync
 uv run pytest
 ```
 
-See the README inside each project for details.
+See the README inside each project for details. GitHub Actions runs `ruff` and `pytest` for
+all three projects on every push ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
 
 ## Contact
 
