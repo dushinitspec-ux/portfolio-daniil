@@ -1,0 +1,25 @@
+services:
+  app:
+    build: .
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - fridge-data:/app/data
+    restart: unless-stopped
+
+  # Fake sensors. Start with: docker compose --profile demo up
+  simulator:
+    build: .
+    command: ["python", "simulator.py", "--url", "http://app:8000", "--backfill-hours", "24"]
+    env_file: .env
+    depends_on:
+      app:
+        condition: service_healthy
+    profiles: ["demo"]
+
+volumes:
+  fridge-data:

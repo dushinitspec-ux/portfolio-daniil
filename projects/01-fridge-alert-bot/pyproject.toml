@@ -1,0 +1,36 @@
+[project]
+name = "fridge-alert-bot"
+version = "0.1.0"
+description = "Telegram alerts when a restaurant or hotel fridge stays too warm."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "aiogram>=3.31.0",
+    "aiosqlite>=0.22.1",
+    "fastapi>=0.162.0",
+    "httpx>=0.28.1",
+    "matplotlib>=3.11.2",
+    "pydantic-settings>=2.16.1",
+    "tzdata>=2026.5",
+    "uvicorn>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.17.2",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "ASYNC", "RUF"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
