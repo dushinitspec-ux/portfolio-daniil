@@ -1,0 +1,15 @@
+services:
+  accessibility-check:
+    build: .
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8108
+    ports:
+      - "8108:8108"
+    volumes:
+      - reports-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  reports-data:

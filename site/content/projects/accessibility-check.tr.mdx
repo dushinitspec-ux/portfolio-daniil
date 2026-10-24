@@ -1,0 +1,175 @@
+---
+title: Accessibility Check
+summary: Küçük bir web sitesini tarar, HTML'ini WCAG 2.2'ye göre kontrol eder ve neyin düzeltilmesi gerektiğini sade bir dille açıklar.
+categories: [Web]
+order: 8
+featured: false
+year: 2026
+role: Kişisel proje — tasarım, kod, testler
+stack: [Python 3.12, asyncio, httpx, FastAPI, Jinja2, BeautifulSoup, lxml, SQLite, Anthropic API, pytest, Docker]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+cover:
+  src: /projects/accessibility-check/cover.png
+  alt: Accessibility Check kapak görseli — geçen ve kalan WCAG kontrolleri
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/accessibility-check/report-broken.png
+    alt: Bozuk örnek mağazanın raporu; 10 başarısız kontrol, 7 uyarı ve Fail ya da Warning olarak işaretlenmiş ilk WCAG 2.2 kriterleri
+    width: 1280
+    height: 800
+    caption: Bilerek bozulmuş örnek mağaza. 10 kontrol başarısız, 7 kontrol uyarı veriyor.
+  - src: /projects/accessibility-check/report-issues.png
+    alt: Metin alternatifi olmayan görseller için What to fix bölümü; her bulgu için düzeltme, sayfa ve HTML parçası
+    width: 1280
+    height: 800
+    caption: Her bulgunun tek satırlık bir düzeltmesi, sayfası ve HTML parçası var.
+  - src: /projects/accessibility-check/report-explanation.png
+    alt: Mağaza sahibi için sade dille yazılmış özet; her biri kimin etkilendiğini ve ne yapılacağını söyleyen altı numaralı adım
+    width: 1280
+    height: 760
+    caption: Demo modunda hazır çevrimdışı metinlerden yazılmış mağaza sahibi özeti.
+  - src: /projects/accessibility-check/report-fixed.png
+    alt: Düzeltilmiş örnek mağazanın raporu; 0 başarısız kontrol, 0 uyarı, 16 geçen ve 1 uygulanamaz
+    width: 1280
+    height: 800
+    caption: Düzeltmelerden sonra aynı mağaza. Uygulanabilen 16 kontrolün hepsi geçiyor.
+---
+
+<Section id="problem">
+
+28 Haziran 2025'ten beri Avrupa Erişilebilirlik Yasası (Direktif (AB) 2019/882), AB'de tüketicilere
+satılan birçok hizmet için geçerli; çevrimiçi mağazalar da bunlara dahil. Web sitelerinin
+"algılanabilir, işletilebilir, anlaşılabilir ve sağlam" olması gerekiyor ve Avrupa standardı
+EN 301 549 ayrıntılar için artık WCAG 2.2'yi gösteriyor. Hizmet veren çok küçük şirketler
+(10 kişiden az) muaf, ama birçok çevrimiçi mağaza muaf değil.
+
+Böyle bir işletmenin sahibi genellikle web sitesinin ne durumda olduğunu bilmez. Profesyonel bir
+denetim para ister; axe gibi araçlar ise her seferinde tek bir sayfayı kontrol eder ve
+geliştiricinin dilini konuşur. Mağaza sahibinin okuyup web geliştiricisine iletebileceği ilk bir
+rapor istedim: ne yanlış, hangi sayfada ve neyin değişmesi gerekiyor.
+
+</Section>
+
+<Section id="solution">
+
+- Sitenin adresini girersiniz. Kibar bir tarayıcı (crawler) aynı sitedeki en fazla 20 sayfayı okur, robots.txt'e uyar ve her istekten sonra yarım saniye bekler.
+- Her sayfanın HTML'inde **17 kontrol** çalışır: alt metni olmayan görseller, etiketi olmayan form alanları, eksik sayfa başlığı ve dil bilgisi, metni olmayan ikon bağlantıları ve düğmeler, engellenmiş yakınlaştırma, başlığı olmayan çerçeveler, kendiliğinden oynayan medya ve iki rengin de HTML'de yazılı olduğu yerlerde renk kontrastı.
+- Her bulgu seviyesiyle birlikte bir **WCAG 2.2 başarı kriterine** bağlanır; tek satırlık bir düzeltmesi ve soruna yol açan HTML parçası vardır.
+- Rapor sonucu kritere, kurala ve sayfaya göre gösterir; tek bir HTML dosyası ya da JSON olarak indirilebilir. Raporlar SQLite'ta saklanır.
+- "Explain for a shop owner" sade bir özet yazar: çevrimdışı hazır metinlerden ya da Claude ile İngilizce, Almanca, Rusça veya Türkçe olarak.
+- Rapor neyi kontrol **edemediğini** açıkça söyler: ekranda görünen renkler, klavyeyle kullanım, odak sırası ve ekran okuyucunun gerçek davranışı hâlâ elle test edilmeli.
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Tarayıcı httpx ve asyncio ile çalışır: iki işçi, bir sayfa sınırı ve her istekten sonra bir
+bekleme. robots.txt'i RFC 9309'a uyan kendi ayrıştırıcım okur, çünkü Python'un yerleşik
+ayrıştırıcısı en uzun kuralı değil ilk eşleşen satırı uygular ve `*` joker karakterini anlamaz.
+HTML, BeautifulSoup ve lxml ile ayrıştırılır. Özel ağlara çıkan adresler reddedilir; böylece
+aracın herkese açık bir kopyası sunucunun kendi ağını yoklamak için kullanılamaz.
+
+</Section>
+
+<Section id="code">
+
+Kontrast kontrolü doğrudan WCAG 2.2 formüllerini kullanır. Beyaz üzerinde `#777` 4.48:1 çıkar;
+normal boyuttaki metnin ihtiyaç duyduğu 4.5:1'in hemen altında:
+
+```python
+def _channel(value_8bit: int) -> float:
+    c = value_8bit / 255
+    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+
+def relative_luminance(color: RGBA) -> float:
+    return 0.2126 * _channel(color.r) + 0.7152 * _channel(color.g) + 0.0722 * _channel(color.b)
+
+
+def contrast_ratio(a: RGBA, b: RGBA) -> float:
+    la, lb = relative_luminance(a), relative_luminance(b)
+    lighter, darker = max(la, lb), min(la, lb)
+    return (lighter + 0.05) / (darker + 0.05)
+```
+
+</Section>
+
+<Section id="bug">
+
+### Ana sayfa iki kez analiz edildi, bu yüzden sorunları iki kez sayıldı
+
+<BugPart id="problem">
+
+Bozuk örnek mağazamın ilk taraması, engellenmiş yakınlaştırmayı "2 sayfada" ve dil sorununu
+3 sayfada gösterdi. Yakınlaştırma hatasını yalnızca ana sayfaya, dil hatasını ise iki sayfaya
+koymuştum; yani sayılar yanlıştı.
+
+</BugPart>
+
+<BugPart id="cause">
+
+Tarama `/samples/broken/` adresinden başlar ve menü `index.html`'e bağlantı verir. Sunucu iki adres
+için de aynı belgeyi döndürür. Tarayıcı yalnızca URL'lere bakarak bunların aynı sayfa olduğunu
+bilemez; bu yüzden ana sayfayı iki kez analiz etti ve her sorununu iki kez saydı.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Tarayıcı artık her sayfanın HTML'inin özetini (hash) hesaplıyor. HTML'i daha önce analiz edilmiş
+bir sayfayla tamamen aynı olan sayfa, durum koduyla listede kalıyor, kopya olarak işaretleniyor
+ve bir daha analiz edilmiyor ya da taranmıyor. Aynı tarama artık 4 analiz edilmiş sayfa ve doğru
+sayıları gösteriyor; bir test de her kural için bulgu sayısını tam olarak sabitliyor.
+
+</BugPart>
+
+<Diff>
+
+```python
+if page.final_url != page.url and page.final_url in self._final_urls:
+    page.error = page.error or f"Redirects to {page.final_url}, which is already scanned"
+    page.soup = None
+self._final_urls.add(page.final_url)
+```
+
+```python
+if page.final_url != page.url and page.final_url in self._final_urls:
+    page.duplicate_of = self._final_urls[page.final_url]
+elif page.body_hash and page.body_hash in self._hashes:
+    page.duplicate_of = self._hashes[page.body_hash]
+if page.duplicate_of:
+    page.soup = None  # same document: do not analyse it or follow its links again
+else:
+    self._final_urls.setdefault(page.final_url, page.url)
+    if page.body_hash:
+        self._hashes[page.body_hash] = page.url
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **200 otomatik test** (103 test fonksiyonu): her kural geçen ve kalan HTML ile, kontrast hesabı bilinen değerlerle ve tarayıcı sahte web sitelerinde (robots.txt, sayfa sınırı, yönlendirmeler, eşzamanlılık) test ediliyor.
+- Bozuk örnek mağaza: 4 sayfada 10 başarısız kontrol ve 7 uyarı. Düzeltilmiş sürüm: 16 kontrol geçiyor, 0 başarısız. Her tarama kibar beklemelerle birlikte yaklaşık 2 saniye sürüyor.
+- Kendi portfolyo sitemin gerçek taraması: 7,5 saniyede 15 sayfa, 0 başarısız kontrol, 13 geçen, 4 uygulanamaz (form, HTML içinde renk ve çerçeve yok).
+- [Gerçek bir sitedeki sonuç, örn. "bir mağaza ya da otel sitesi için ilk rapor"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

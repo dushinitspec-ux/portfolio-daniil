@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Accessibility Check{% endblock %}</title>
+  {% block head %}{% endblock %}
+  <style>
+{% include "_styles.css" %}
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span class="label">Accessibility Check</span></a>
+      <nav aria-label="Main">
+        <a class="label" href="/">New scan</a>
+        <a class="label" href="/#reports">Reports</a>
+      </nav>
+    </header>
+    <main id="main">
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="foot">
+      <p class="label">Static checks against WCAG 2.2 levels A and AA · not a legal compliance audit</p>
+    </footer>
+  </div>
+</body>
+</html>

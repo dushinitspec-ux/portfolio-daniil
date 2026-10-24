@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}New scan – Accessibility Check{% endblock %}
+{% block content %}
+<h1>Is your website usable for every customer?</h1>
+<p class="lead">Enter the address of a small website. The checker reads up to {{ max_pages }} pages
+(same site only, following robots.txt), runs {{ rule_count }} automated checks mapped to WCAG 2.2, and
+explains what to fix in plain language.</p>
+
+<form class="scan" method="post" action="/scan">
+  <div>
+    <label for="url">Website address</label>
+    <input id="url" name="url" type="text" inputmode="url" autocomplete="url" required
+           value="{{ url }}" aria-describedby="url-help{% if error %} url-error{% endif %}">
+  </div>
+  <div>
+    <label for="max_pages">Max pages</label>
+    <input id="max_pages" name="max_pages" type="number" min="1" max="200" value="{{ max_pages }}">
+  </div>
+  <div><button type="submit">Scan website</button></div>
+</form>
+<p id="url-help" class="muted" style="margin-top:8px">For example https://example.com. Scan only sites you own or are allowed to test.</p>
+{% if error %}<p id="url-error" class="notice error" role="alert">{{ error }}</p>{% endif %}
+
+<section aria-labelledby="demo-title">
+  <div class="section-head">
+    <h2 id="demo-title">Demo: before and after</h2>
+    <span class="label">{% if demo %}demo mode{% else %}offline sample{% endif %}</span>
+  </div>
+  <div class="grid-2" style="margin-top:20px">
+    {% for name, title in samples.items() %}
+    <div class="box">
+      <p class="label">{{ "Before" if name == "broken" else "After" }}</p>
+      <h3>{{ title }}</h3>
+      <p class="muted">{% if name == "broken" %}Four pages with typical mistakes: images without alt text, unlabeled form fields, blocked zoom, vague links.{% else %}The same four pages with every finding fixed, plus the missing cart page.{% endif %}</p>
+      <div class="actions">
+        {% if sample_reports[name] %}<a class="button" href="/reports/{{ sample_reports[name] }}">Open the {{ name }} sample report</a>{% endif %}
+        <form method="post" action="/demo/{{ name }}"><button class="secondary" type="submit">Scan the {{ name }} sample{% if sample_reports[name] %} again{% endif %}</button></form>
+        <a class="button secondary" href="/samples/{{ name }}/">View the {{ name }} sample pages</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section id="reports" aria-labelledby="reports-title">
+  <div class="section-head"><h2 id="reports-title">Recent reports</h2><span class="label">stored in SQLite</span></div>
+  {% if recent %}
+  <table>
+    <thead><tr><th scope="col">Website</th><th scope="col" class="hide-sm">Started (UTC)</th><th scope="col">Status</th><th scope="col" class="num">Pages</th><th scope="col" class="num">Failed</th><th scope="col" class="num">Warnings</th></tr></thead>
+    <tbody>
+    {% for row in recent %}
+      <tr>
+        <td><a href="/reports/{{ row.id }}">{{ row.start_url }}</a>{% if row.sample %} <span class="muted">(sample)</span>{% endif %}</td>
+        <td class="hide-sm mono">{{ row.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+        <td>{{ row.status.value }}</td>
+        <td class="num">{{ row.pages }}</td>
+        <td class="num">{{ row.failed }}</td>
+        <td class="num">{{ row.warnings }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted" style="margin-top:16px">No reports yet. Scan a website or one of the samples above.</p>
+  {% endif %}
+</section>
+
+<section aria-labelledby="scope-title">
+  <div class="section-head"><h2 id="scope-title">What this tool does and does not do</h2></div>
+  <div class="grid-2" style="margin-top:20px">
+    <p>It reads the HTML of each page and checks things that can be decided from the markup:
+    text alternatives, labels, page titles, language, link texts, zoom, landmarks, frames, autoplay
+    and inline colour contrast. Each finding names its WCAG 2.2 success criterion.</p>
+    <p>It cannot see the rendered page, keyboard behaviour, focus order or what a screen reader
+    really announces. A clean report is a good start, not proof of accessibility or of compliance
+    with the European Accessibility Act. Test manually and with tools such as axe DevTools as well.</p>
+  </div>
+</section>
+{% endblock %}

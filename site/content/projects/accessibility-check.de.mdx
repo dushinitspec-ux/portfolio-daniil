@@ -1,0 +1,176 @@
+---
+title: Accessibility Check
+summary: Durchsucht eine kleine Website, prüft ihr HTML nach WCAG 2.2 und erklärt in einfachen Worten, was zu beheben ist.
+categories: [Web]
+order: 8
+featured: false
+year: 2026
+role: Eigenes Projekt — Konzept, Code, Tests
+stack: [Python 3.12, asyncio, httpx, FastAPI, Jinja2, BeautifulSoup, lxml, SQLite, Anthropic API, pytest, Docker]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+cover:
+  src: /projects/accessibility-check/cover.png
+  alt: Titelbild von Accessibility Check — WCAG-Prüfungen, bestanden und nicht bestanden
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/accessibility-check/report-broken.png
+    alt: Bericht über den fehlerhaften Beispielshop mit 10 nicht bestandenen Prüfungen, 7 Warnungen und den ersten WCAG-2.2-Kriterien mit Fail oder Warning
+    width: 1280
+    height: 800
+    caption: Der absichtlich fehlerhafte Beispielshop. 10 Prüfungen schlagen fehl, 7 geben Warnungen.
+  - src: /projects/accessibility-check/report-issues.png
+    alt: Der Abschnitt What to fix für Bilder ohne Textalternative, mit Korrektur, Seite und HTML-Ausschnitt zu jedem Befund
+    width: 1280
+    height: 800
+    caption: Jeder Befund hat eine einzeilige Korrektur, die Seite und den HTML-Ausschnitt.
+  - src: /projects/accessibility-check/report-explanation.png
+    alt: Zusammenfassung in einfachen Worten für Shop-Inhaber mit sechs nummerierten Schritten, jeweils mit Betroffenen und Maßnahme
+    width: 1280
+    height: 760
+    caption: Die Zusammenfassung für Shop-Inhaber, im Demo-Modus aus den Offline-Texten erstellt.
+  - src: /projects/accessibility-check/report-fixed.png
+    alt: Bericht über den korrigierten Beispielshop mit 0 nicht bestandenen Prüfungen, 0 Warnungen, 16 bestanden und 1 nicht anwendbar
+    width: 1280
+    height: 800
+    caption: Derselbe Shop nach den Korrekturen. Alle 16 anwendbaren Prüfungen bestehen.
+---
+
+<Section id="problem">
+
+Seit dem 28. Juni 2025 gilt der European Accessibility Act (Richtlinie (EU) 2019/882) für viele
+Dienstleistungen, die an Verbraucher in der EU verkauft werden, darunter Onlineshops. Websites
+müssen „wahrnehmbar, bedienbar, verständlich und robust“ sein, und die europäische Norm
+EN 301 549 verweist für die Einzelheiten inzwischen auf WCAG 2.2. Sehr kleine Dienstleister
+(weniger als 10 Beschäftigte) sind ausgenommen, viele Onlineshops aber nicht.
+
+Die Inhaber solcher Betriebe wissen meist nicht, wo ihre Website steht. Ein professionelles Audit
+kostet Geld, und Werkzeuge wie axe prüfen jeweils eine Seite und sprechen die Sprache von
+Entwicklern. Ich wollte einen ersten Bericht, den ein Shop-Inhaber lesen und an seinen
+Webentwickler weitergeben kann: was nicht stimmt, auf welcher Seite und was zu ändern ist.
+
+</Section>
+
+<Section id="solution">
+
+- Man gibt die Adresse der Website ein. Ein höflicher Crawler liest bis zu 20 Seiten derselben Website, hält sich an robots.txt und wartet nach jeder Anfrage eine halbe Sekunde.
+- Auf dem HTML jeder Seite laufen **17 Prüfungen**: Bilder ohne Alt-Text, Formularfelder ohne Beschriftung, fehlender Seitentitel und fehlende Sprachangabe, Icon-Links und Buttons ohne Text, gesperrter Zoom, Frames ohne Titel, automatisch abgespielte Medien und Farbkontrast dort, wo beide Farben direkt im HTML stehen.
+- Jeder Befund ist einem **WCAG-2.2-Erfolgskriterium** mit seiner Stufe zugeordnet und hat eine einzeilige Korrektur und den HTML-Ausschnitt, der ihn ausgelöst hat.
+- Der Bericht zeigt das Ergebnis nach Kriterium, nach Regel und nach Seite und lässt sich als eine HTML-Datei oder als JSON herunterladen. Berichte werden in SQLite gespeichert.
+- „Explain for a shop owner“ schreibt eine Zusammenfassung in einfachen Worten: offline aus festen Texten oder mit Claude auf Englisch, Deutsch, Russisch oder Türkisch.
+- Der Bericht sagt klar, was er **nicht** prüfen kann: dargestellte Farben, Tastaturbedienung, Fokusreihenfolge und das tatsächliche Verhalten von Screenreadern brauchen weiterhin manuelle Tests.
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Der Crawler nutzt httpx und asyncio mit zwei Workern, einem Seitenlimit und einer Pause nach
+jeder Anfrage. robots.txt liest mein eigener Parser nach RFC 9309, weil der in Python eingebaute
+die erste passende Zeile statt der längsten anwendet und den Platzhalter `*` nicht kennt. Das HTML
+wird mit BeautifulSoup und lxml geparst. Adressen, die in private Netze führen, werden abgelehnt,
+damit eine öffentliche Instanz des Werkzeugs nicht das Netz des eigenen Servers abtasten kann.
+
+</Section>
+
+<Section id="code">
+
+Die Kontrastprüfung verwendet direkt die Formeln aus WCAG 2.2. `#777` auf Weiß ergibt 4.48:1,
+knapp unter den 4.5:1, die Text in normaler Größe braucht:
+
+```python
+def _channel(value_8bit: int) -> float:
+    c = value_8bit / 255
+    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+
+def relative_luminance(color: RGBA) -> float:
+    return 0.2126 * _channel(color.r) + 0.7152 * _channel(color.g) + 0.0722 * _channel(color.b)
+
+
+def contrast_ratio(a: RGBA, b: RGBA) -> float:
+    la, lb = relative_luminance(a), relative_luminance(b)
+    lighter, darker = max(la, lb), min(la, lb)
+    return (lighter + 0.05) / (darker + 0.05)
+```
+
+</Section>
+
+<Section id="bug">
+
+### Die Startseite wurde doppelt analysiert, ihre Probleme also doppelt gezählt
+
+<BugPart id="problem">
+
+Der erste Scan meines fehlerhaften Beispielshops meldete den gesperrten Zoom auf „2 Seiten“ und
+ein Sprachproblem auf 3 Seiten. Den Zoom-Fehler hatte ich nur auf der Startseite eingebaut, den
+Sprachfehler auf zwei Seiten – die Zahlen stimmten also nicht.
+
+</BugPart>
+
+<BugPart id="cause">
+
+Der Scan beginnt bei `/samples/broken/`, und das Menü verlinkt auf `index.html`. Der Server liefert
+für beide Adressen dasselbe Dokument. Allein aus den URLs kann der Crawler nicht erkennen, dass es
+dieselbe Seite ist. Deshalb hat er die Startseite zweimal analysiert und jedes ihrer Probleme
+doppelt gezählt.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Der Crawler bildet jetzt einen Hash über das HTML jeder Seite. Eine Seite mit genau demselben HTML
+wie eine bereits analysierte bleibt mit ihrem Statuscode in der Liste, wird als Duplikat markiert
+und weder erneut analysiert noch weiterverfolgt. Derselbe Scan zeigt jetzt 4 analysierte Seiten
+und die richtigen Zahlen, und ein Test legt die genaue Anzahl der Befunde für jede Regel fest.
+
+</BugPart>
+
+<Diff>
+
+```python
+if page.final_url != page.url and page.final_url in self._final_urls:
+    page.error = page.error or f"Redirects to {page.final_url}, which is already scanned"
+    page.soup = None
+self._final_urls.add(page.final_url)
+```
+
+```python
+if page.final_url != page.url and page.final_url in self._final_urls:
+    page.duplicate_of = self._final_urls[page.final_url]
+elif page.body_hash and page.body_hash in self._hashes:
+    page.duplicate_of = self._hashes[page.body_hash]
+if page.duplicate_of:
+    page.soup = None  # same document: do not analyse it or follow its links again
+else:
+    self._final_urls.setdefault(page.final_url, page.url)
+    if page.body_hash:
+        self._hashes[page.body_hash] = page.url
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **200 automatisierte Tests** (103 Testfunktionen): jede Regel mit bestehendem und nicht bestehendem HTML, die Kontrastberechnung mit bekannten Werten und der Crawler gegen nachgebaute Websites (robots.txt, Seitenlimit, Weiterleitungen, Parallelität).
+- Der fehlerhafte Beispielshop: 10 nicht bestandene Prüfungen und 7 Warnungen auf 4 Seiten. Die korrigierte Version: 16 Prüfungen bestanden, 0 nicht bestanden. Jeder Scan dauert mit den höflichen Pausen etwa 2 Sekunden.
+- Ein echter Scan meiner eigenen Portfolio-Website: 15 Seiten in 7,5 Sekunden, 0 nicht bestandene Prüfungen, 13 bestanden, 4 nicht anwendbar (keine Formulare, keine Farben im HTML, keine Frames).
+- [Ergebnis auf einer echten Website, z. B. „erster Bericht für die Website eines Shops oder Hotels“]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

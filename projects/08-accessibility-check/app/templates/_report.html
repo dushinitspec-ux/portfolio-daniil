@@ -1,0 +1,98 @@
+{# The report body, shared by the page and the standalone HTML export. #}
+<p class="label" style="margin-top:40px">Report {{ report.id }} · {{ report.created_at.strftime("%d %b %Y, %H:%M") }} UTC · {{ report.standard }}</p>
+<h1 style="margin-top:8px">{{ sample_name or report.origin or report.start_url }}</h1>
+<p class="lead">{% if sample_name %}<span class="mono">{{ report.start_url }}</span><br>{% endif %}{{ report.summary.pages_analysed }} of {{ report.summary.pages_requested }} pages analysed{% if report.duration_s is not none %} in {{ "%.1f"|format(report.duration_s) }} s{% endif %}{% if report.robots %} · {{ report.robots }}{% endif %}.</p>
+{% if report.error %}<p class="notice error" role="alert">{{ report.error }}</p>{% endif %}
+
+<div class="stats" role="list" aria-label="Automated checks">
+  <div class="stat{% if failed_count %} fail{% endif %}" role="listitem"><div class="label">Failed checks</div><div class="num">{{ failed_count }}</div></div>
+  <div class="stat" role="listitem"><div class="label">Warnings</div><div class="num">{{ warning_count }}</div></div>
+  <div class="stat" role="listitem"><div class="label">Passed</div><div class="num">{{ pass_count }}</div></div>
+  <div class="stat" role="listitem"><div class="label">Not applicable</div><div class="num">{{ na_count }}</div></div>
+</div>
+
+<section aria-labelledby="criteria-title">
+  <div class="section-head"><h2 id="criteria-title">By WCAG 2.2 success criterion</h2><span class="label">{{ criteria|length }} criteria</span></div>
+  <table>
+    <thead><tr><th scope="col">Criterion</th><th scope="col" class="hide-sm">Level</th><th scope="col">Result</th><th scope="col" class="num">Issues</th><th scope="col" class="num hide-sm">Pages</th></tr></thead>
+    <tbody>
+    {% for c in criteria %}
+      <tr>
+        <td><span class="mono">{{ c.number }}</span> <a href="{{ criteria_info[c.number].url }}">{{ c.name }}</a>{% if c.obsolete %}<br><span class="muted">Removed in WCAG 2.2, listed as a best practice</span>{% endif %}</td>
+        <td class="hide-sm mono">{{ c.level }}</td>
+        <td><span class="status {{ status_class(c.status) }}">{{ status_label(c.status) }}</span></td>
+        <td class="num">{{ c.issues }}</td>
+        <td class="num hide-sm">{{ c.pages_affected }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section id="issues" aria-labelledby="issues-title">
+  <div class="section-head"><h2 id="issues-title">What to fix</h2><span class="label">most serious first</span></div>
+  {% for g in groups %}
+  <article class="rule" aria-labelledby="rule-{{ g.summary.rule_id }}">
+    <div class="meta">
+      <span class="status {{ status_class(g.summary.status) }}">{{ status_label(g.summary.status) }}</span>
+      <span class="sev {{ g.summary.severity.value }}">{{ g.summary.severity.value }} impact</span>
+      <span class="mono muted">{% for c in g.criteria %}{{ c.number }} {{ c.level }}{% if not loop.last %} · {% endif %}{% endfor %}</span>
+      <span class="mono muted">{{ g.summary.issues }} issue{{ "s" if g.summary.issues != 1 }} on {{ g.summary.pages_affected }} of {{ g.summary.pages_checked }} page{{ "s" if g.summary.pages_checked != 1 }}</span>
+    </div>
+    <div>
+      <h3 id="rule-{{ g.summary.rule_id }}">{{ g.summary.title }}</h3>
+      <p class="fix"><strong>Fix:</strong> {{ g.summary.fix }}</p>
+      <ul class="examples">
+        {% for ex in g.examples %}
+        <li><a href="{{ ex.page.url }}">{{ short_url(ex.page.url) }}</a> — {{ ex.issue.message }}{% if ex.issue.snippet %}<br><code>{{ ex.issue.snippet }}</code>{% endif %}</li>
+        {% endfor %}
+        {% if g.more %}<li class="muted">and {{ g.more }} more in the JSON export</li>{% endif %}
+      </ul>
+    </div>
+  </article>
+  {% else %}
+  <p style="margin-top:16px">The automated checks found nothing to fix. Read the section below on what they cannot see.</p>
+  {% endfor %}
+</section>
+
+<section aria-labelledby="passed-title">
+  <div class="section-head"><h2 id="passed-title">Passed and not applicable</h2></div>
+  <div class="grid-2" style="margin-top:16px">
+    <div>
+      <p class="label">Passed on every page where it applied</p>
+      <ul class="examples">{% for r in passed %}<li><span class="status pass">{{ r.title }}</span> <span class="mono muted">{{ r.criteria|join(", ") }}</span></li>{% else %}<li class="muted">None</li>{% endfor %}</ul>
+    </div>
+    <div>
+      <p class="label">Nothing to check on these pages</p>
+      <ul class="examples">{% for r in not_applicable %}<li><span class="status na">{{ r.title }}</span> <span class="mono muted">{{ r.criteria|join(", ") }}</span></li>{% else %}<li class="muted">None</li>{% endfor %}</ul>
+    </div>
+  </div>
+</section>
+
+<section id="pages" aria-labelledby="pages-title">
+  <div class="section-head"><h2 id="pages-title">Per page</h2><span class="label">{{ report.pages|length }} requested{% if report.skipped_total %} · {{ report.skipped_total }} skipped{% endif %}</span></div>
+  <table>
+    <thead><tr><th scope="col">Page</th><th scope="col" class="num">HTTP</th><th scope="col" class="num">Issues</th><th scope="col" class="hide-sm">Checks failed</th></tr></thead>
+    <tbody>
+    {% for p in report.pages %}
+      <tr>
+        <td><a href="{{ p.url }}">{{ short_url(p.url) }}</a>{% if p.title %}<br><span class="muted">{{ p.title }}</span>{% endif %}{% if p.redirects %}<br><span class="mono muted">redirected to {{ short_url(p.final_url) }}</span>{% endif %}{% if p.duplicate_of %}<br><span class="muted">same HTML as {{ short_url(p.duplicate_of) }}, not counted twice</span>{% elif p.error %}<br><span class="muted">{{ p.error }}</span>{% elif p.status_code and p.status_code >= 400 %}<br><span class="muted">error page, not analysed</span>{% elif not p.analysed %}<br><span class="muted">not HTML ({{ p.content_type or "no content type" }}), not analysed</span>{% endif %}</td>
+        <td class="num mono">{{ p.status_code or "—" }}</td>
+        <td class="num">{{ p.issue_count if p.analysed else "—" }}</td>
+        <td class="hide-sm mono">{% for rule_id, status in p.checks.items() if status.value == "fail" %}{{ rule_id }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if report.skipped %}
+  <details style="margin-top:16px"><summary>{{ report.skipped_total }} URL{{ "s" if report.skipped_total != 1 }} not requested</summary>
+    <ul class="examples">{% for s in report.skipped %}<li><span class="mono">{{ short_url(s.url) }}</span> — {{ s.reason }}</li>{% endfor %}</ul>
+  </details>
+  {% endif %}
+</section>
+
+<section aria-labelledby="limits-title">
+  <div class="section-head"><h2 id="limits-title">Not checked automatically</h2><span class="label">test these by hand</span></div>
+  <ul class="examples">{% for item in not_checked %}<li>{{ item }}</li>{% endfor %}</ul>
+  <p class="notice">{{ limits_note }}</p>
+</section>

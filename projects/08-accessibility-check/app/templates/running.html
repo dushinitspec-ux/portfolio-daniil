@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Scanning {{ report.start_url }} – Accessibility Check{% endblock %}
+{% block head %}<meta http-equiv="refresh" content="2">{% endblock %}
+{% block content %}
+<p class="label" style="margin-top:40px">Report {{ report.id }} · scanning</p>
+<h1 style="margin-top:8px">{{ report.start_url }}</h1>
+<p class="lead" role="status">{{ pages_done }} of at most {{ report.options.max_pages }} pages done. The crawler waits {{ report.options.delay_s }} s after each request, so the site is not overloaded. This page reloads every 2 seconds.</p>
+{% endblock %}
