@@ -1,0 +1,5 @@
+# Store text files with LF in the repository so Docker images and CI behave the same on every OS.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
