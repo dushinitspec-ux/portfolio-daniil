@@ -1,0 +1,187 @@
+---
+title: Fridge Alert Bot
+summary: Telegram alerts when a restaurant fridge stays too warm — and silence when someone just opened the door.
+categories: [Bots, Infrastructure]
+order: 1
+featured: true
+year: 2026
+role: Solo project — design, code, tests
+stack: [Python 3.12, FastAPI, aiogram 3, SQLite, matplotlib, pytest, Docker]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+video: /videos/fridge-alert-bot.mp4
+cover:
+  src: /projects/fridge-alert-bot/cover.png
+  alt: Fridge Alert Bot cover — a temperature line crossing the 5 °C limit
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/fridge-alert-bot/history-chart.png
+    alt: Six-hour temperature chart of kitchen-fridge-1 with short door-opening spikes and one compressor failure above the 5 °C limit
+    width: 960
+    height: 480
+    caption: The /history chart from the demo. Door openings stay short; the compressor failure is shaded red.
+---
+
+<Section id="problem">
+
+A fridge that warms up overnight means spoiled food in the morning. A gap in the temperature
+log means trouble at a hygiene inspection. Staff check thermometers a few times a day, which
+misses most failures.
+
+Cheap temperature probes exist. What is missing is something that watches them and calls a
+person at the right moment — without crying wolf every time someone opens the door. At Steady
+Control I work with fridge temperature sensors in hotels and restaurants, so I built the part
+that decides when to wake someone up.
+
+</Section>
+
+<Section id="solution">
+
+Sensors send readings to an HTTP API. A small state machine decides what each reading means:
+
+- A fridge must stay above its limit for **5 minutes** before an alert. A door open for a minute never alerts.
+- **One alert per incident**, then a "back to normal" message with the duration and the peak temperature.
+- Recovery needs the temperature **0.5 °C below the limit**, so a fridge hovering at the limit does not flood the chat.
+- Late or repeated readings from a sensor that was offline go into the history without moving the state backwards. Incidents older than 15 minutes are recorded but not announced.
+
+In Telegram the kitchen team uses `/status`, `/history <sensor>` (a PNG chart), `/setlimit`
+and `/report`, and a daily summary arrives every morning.
+
+</Section>
+
+<Section id="demo">
+
+<Demo />
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Python 3.12 with type hints, FastAPI for the API, aiogram 3 for the bot, SQLite for storage and
+matplotlib for the charts. The API, the bot and the report scheduler run in one asyncio process
+and share one service object, so they can never disagree about a fridge's state.
+
+</Section>
+
+<Section id="code">
+
+The alert rule is a pure function: no database, no Telegram, just "state + reading → new state
+and maybe an event". That turns every edge case into a three-line test.
+
+```python
+def evaluate(
+    current: AlertState,
+    *,
+    sensor_id: str,
+    temperature: float,
+    at: datetime,
+    limit: float,
+    rules: AlertRules,
+) -> tuple[AlertState, AlertEvent | None]:
+    """Return the next state and, if something worth telling people happened, an event."""
+    above = temperature > limit
+
+    if current.state is SensorState.OK:
+        if above:
+            return AlertState(SensorState.PENDING, at, temperature), None
+        return current, None
+
+    started = current.breach_started_at
+    peak = (
+        temperature
+        if current.peak_temperature is None
+        else max(current.peak_temperature, temperature)
+    )
+
+    if current.state is SensorState.PENDING:
+        if not above:
+            return AlertState(), None
+        if at - started >= rules.delay:
+            event = AlertEvent(EventKind.ALERT, sensor_id, temperature, limit, started, peak, at)
+            return AlertState(SensorState.ALERT, started, peak), event
+        return replace(current, peak_temperature=peak), None
+
+    # ALERT
+    if temperature <= limit - rules.hysteresis:
+        event = AlertEvent(EventKind.RECOVERED, sensor_id, temperature, limit, started, peak, at)
+        return AlertState(), event
+    return replace(current, peak_temperature=peak), None
+```
+
+</Section>
+
+<Section id="bug">
+
+### The simulator raised false alarms on ordinary door openings
+
+<BugPart id="problem">
+
+A test runs a simulated day of door openings through the real alert rules. It failed: 18 alert
+and recovery messages without a single equipment failure. Over 30 random seeds the demo raised
+**8.2 false alarms per day**. A demo that cries wolf makes the product look broken.
+
+</BugPart>
+
+<BugPart id="cause">
+
+The simulator treated an open door as "the probe moves towards room temperature (24 °C)". That
+is how a bare air sensor behaves. A probe inside a fridge sits among the food and sees mixed
+air. Two openings close together kept the reading above 5 °C for longer than the alert delay.
+
+</BugPart>
+
+<BugPart id="fix">
+
+An open door now raises the target a few degrees above the setpoint, and the compressor
+recovers faster. False alarms fell from 8.2 to **0.13 per day** on the same seeds. The vague
+test became two precise ones: a single opening must never alert, and a busy week may give at
+most two.
+
+</BugPart>
+
+<Diff>
+
+```python
+door_tau_s: float = 900.0
+cool_tau_s: float = 300.0
+
+elif self.mode is Mode.DOOR_OPEN:
+    target, tau = p.ambient_c, p.door_tau_s
+```
+
+```python
+door_delta_c: float = 5.0
+door_tau_s: float = 300.0
+cool_tau_s: float = 180.0
+
+elif self.mode is Mode.DOOR_OPEN:
+    target, tau = p.setpoint_c + p.door_delta_c, p.door_tau_s
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **69 automated tests** and zero linter warnings; GitHub Actions runs them on every push.
+- Runs end to end without hardware: the simulator produces door openings and compressor failures, and without a bot token the alerts print to the console.
+- In a live demo run, a forced compressor failure produced exactly one alert, and the door openings produced none.
+- [Result on real equipment, e.g. "tested with N sensors in a restaurant kitchen"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

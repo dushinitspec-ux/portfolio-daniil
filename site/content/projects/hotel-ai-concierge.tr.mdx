@@ -1,0 +1,171 @@
+---
+title: Hotel AI Concierge
+summary: Misafirlere otelin kendi bilgileriyle dört dilde cevap veren, geri kalan her şeyi resepsiyona ileten bir Telegram konsiyerji.
+categories: [AI, Bots]
+order: 2
+featured: true
+year: 2026
+role: Kişisel proje — tasarım, kod, testler
+stack: [Python 3.12, aiogram 3, Anthropic API, OpenAI API, SQLite, pytest, Docker]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+video: /videos/hotel-ai-concierge.mp4
+cover:
+  src: /projects/hotel-ai-concierge/cover.png
+  alt: Hotel AI Concierge kapak görseli — dört dilde sohbet balonları
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/hotel-ai-concierge/conversation.png
+    alt: Bir misafirin Rusça Wi-Fi sorup cevap aldığı, ardından doğum günü pastası sorduğu ve sorunun resepsiyona gittiği sohbet
+    width: 1920
+    height: 1080
+    caption: Çevrimdışı demodaki gerçek sohbet (python -m app.demo), tanıtım videosunda sohbet olarak gösteriliyor.
+---
+
+<Section id="problem">
+
+Resepsiyon bütün gün aynı soruları cevaplar: kahvaltı saatleri, Wi-Fi şifresi, havuzun ne zaman
+açıldığı, transferin nasıl ayarlandığı. Türkiye'deki bir tatil otelinde misafirler bu soruları
+Rusça, İngilizce, Türkçe ve Almanca sorar; personel ise bu dillerin hepsini konuşmaz.
+
+Basit bir sohbet botu burada risklidir. Çıkış saatini veya bir fiyatı uyduran bir yapay zekâ
+resepsiyonda gerçek sorunlar yaratır ve misafir botu değil oteli suçlar.
+
+</Section>
+
+<Section id="solution">
+
+Sadece otelin yazdığı bilgilere göre cevap veren, geri kalan her şeyi bir insana soran bir
+Telegram botu:
+
+- Bilgi tabanı, otelin düzenlediği tek bir Markdown dosyasıdır. `/reload` değişiklikleri yeniden başlatmadan uygular; bozuk bir dosya gelirse eski sürüm kullanılmaya devam eder.
+- Dil modeli (ayarlarda seçilen Claude veya OpenAI) `found_in_knowledge_base` alanı olan **yapılandırılmış JSON** döndürür; böylece "bunu biliyor muyum?" sorusu modelin cümlesinden tahmin edilmez, evet ya da hayır olur.
+- Bilinmeyen sorular İngilizce çevirisiyle birlikte **personelin Telegram grubuna** gider. Personel sadece "Yanıtla"ya basar; bot cevabı misafirin diline çevirir ve aslını altında gösterir.
+- Misafirin dili yapay zekâ olmadan belirlenir: alfabe, ı ş ğ veya ä ß gibi harfler ve sık kullanılan kelimeler. "ok" gibi kısa mesajlar sohbetin dilini korur.
+- Her hata bir insanla sonuçlanır: çalışmayan API, modelin reddi veya yarım kalan cevap personele gider; personel grubuna ulaşılamazsa misafire resepsiyona sormasını söyler.
+
+</Section>
+
+<Section id="demo">
+
+<Demo />
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Vektör araması yerine bilgi tabanının tamamı prompt'a girer: bir otelin SSS'si birkaç bin
+token'dır, arama sadece yeni bir hata kaynağı eklerdi. Bu prompt misafirden misafire
+değişmediği için Anthropic onu önbelleğe alır ve tekrarlanan istekler daha ucuza gelir.
+Çevrimdışı sahte bir model, tüm akışın API anahtarı olmadan çalışmasını sağlar.
+
+</Section>
+
+<Section id="code">
+
+Ana karar Telegram'dan bağımsızdır; bu yüzden bot, terminal demosu ve testler aynı kodu çalıştırır:
+
+```python
+async def handle_guest_message(self, guest: Guest, text: str) -> GuestReply:
+    language = await self.guest_language(guest, text)
+    history = format_history(
+        await self._repo.recent_messages(guest.chat_id, self._settings.history_messages)
+    )
+    await self._repo.upsert_guest(guest.chat_id, guest.name, guest.username, language)
+    await self._repo.log(guest.chat_id, Role.GUEST, Kind.QUESTION, text, language)
+
+    result: ConciergeAnswer | None = None
+    try:
+        result = await self._llm.answer(text, language, self._knowledge.text, history)
+    except LLMError as exc:
+        logger.warning("LLM failed, escalating to staff: %s", exc)
+
+    if result and result.found_in_knowledge_base and result.answer.strip():
+        answer = result.answer.strip()
+        await self._repo.log(guest.chat_id, Role.BOT, Kind.ANSWER, answer, language)
+        return GuestReply(language, answer)
+
+    # Not in the knowledge base, or the AI is unavailable: never guess, ask a human.
+    reason = "not in the knowledge base" if result else "AI assistant unavailable"
+    question_en = result.question_in_english if result else text
+    escalation_id = await self._repo.create_escalation(
+        guest.chat_id, language, text, question_en, reason
+    )
+    ...
+```
+
+</Section>
+
+<Section id="bug">
+
+### Misafir komutları yapay zekâya ve resepsiyona soru olarak gidiyordu
+
+<BugPart id="problem">
+
+Hiçbir şey çökmedi ve test geçti. Yönetici komutu `/reload` için uçtan uca test yazarken, bu
+komutu bir misafir gönderdiğinde ne olduğunu takip ettim. Bot bir yapay zekâ çağrısı için para
+ödüyor, bilgi tabanında bir şey bulamıyor ve "/reload" mesajını personel grubuna misafir sorusu
+olarak gönderiyordu. Aynısı `/help` ve diğer tüm komutlar için de geçerliydi.
+
+</BugPart>
+
+<BugPart id="cause">
+
+aiogram işleyicileri kayıt sırasına göre kontrol eder ve filtreleri uyan ilk işleyiciyi kullanır.
+Sadece yöneticiler için olan işleyici misafiri doğru şekilde atlıyordu; böylece mesaj, her
+metni soru sayan son işleyiciye düşüyordu.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Son işleyiciden önce, özel sohbetlerdeki komutlar için bir işleyici eklendi; bu işleyici karşılama
+metnini gösteriyor. Test artık iki tarafı da kontrol ediyor: misafir karşılama metnini aldı ve
+personel grubuna hiçbir şey gitmedi. Ders: sadece "kötü şey olmadı" diye kontrol eden bir test
+yanlış sebeple geçebilir.
+
+</BugPart>
+
+<Diff>
+
+```python
+router.message.register(on_staff_reply, IsStaffChat(), F.reply_to_message, F.text)
+router.message.register(on_guest_text, private, F.text)
+router.message.register(on_guest_other, private)
+```
+
+```python
+router.message.register(on_staff_reply, IsStaffChat(), F.reply_to_message, F.text)
+# /help or a command the guest may not use: show the welcome text, do not ask the LLM.
+router.message.register(cmd_start, private, F.text.startswith("/"))
+router.message.register(on_guest_text, private, F.text)
+router.message.register(on_guest_other, private)
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **57 otomatik test**; aralarında sahte bir Telegram bağlantısıyla aiogram dağıtıcısından geçen bir çalıştırma ve Claude ile OpenAI istemcilerinin sahte bir HTTP sunucusuna karşı testleri var.
+- Çevrimdışı demo dört misafire dört dilde cevap veriyor, beşinci soruyu personele gönderiyor ve personelin cevabını geri iletiyor.
+- Demo modunda hiçbir API anahtarı olmadan çalışır.
+- [Gerçek bir otelle sonuç, ör. "personel olmadan cevaplanan soruların oranı"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

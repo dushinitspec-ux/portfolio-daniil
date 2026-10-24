@@ -1,0 +1,172 @@
+---
+title: Hotel AI Concierge
+summary: A Telegram concierge that answers guests in four languages from the hotel's own facts — and hands everything else to reception.
+categories: [AI, Bots]
+order: 2
+featured: true
+year: 2026
+role: Solo project — design, code, tests
+stack: [Python 3.12, aiogram 3, Anthropic API, OpenAI API, SQLite, pytest, Docker]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+video: /videos/hotel-ai-concierge.mp4
+cover:
+  src: /projects/hotel-ai-concierge/cover.png
+  alt: Hotel AI Concierge cover — chat messages in four languages
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/hotel-ai-concierge/conversation.png
+    alt: Chat where a guest asks about Wi-Fi in Russian and gets an answer, then asks about a birthday cake and the question goes to reception
+    width: 1920
+    height: 1080
+    caption: The real conversation from the offline demo (python -m app.demo), shown as a chat in the promo video.
+---
+
+<Section id="problem">
+
+The reception desk answers the same questions all day: breakfast hours, the Wi-Fi password,
+when the pool opens, how to book a transfer. In a resort hotel in Turkey guests ask them in
+Russian, English, Turkish and German, and the staff do not speak all four.
+
+A plain chatbot is risky here. An AI that invents a check-out time or a price causes real
+trouble at the desk, and the guest blames the hotel, not the bot.
+
+</Section>
+
+<Section id="solution">
+
+A Telegram bot that answers only from facts the hotel wrote down, and asks a person about
+everything else:
+
+- The knowledge base is one Markdown file the hotel edits. `/reload` applies changes without a restart; a broken file keeps the old version.
+- The language model (Claude or OpenAI, chosen in the settings) returns **structured JSON** with a `found_in_knowledge_base` flag, so "do I know this?" is a yes/no value, not a guess from the model's wording.
+- Unknown questions go to a **staff Telegram group** with an English translation. Staff simply press Reply; the bot translates the answer into the guest's language and shows the original below.
+- The guest's language is detected without AI: alphabet, letters such as ı ş ğ or ä ß, and common words. Short messages like "ok" keep the language of the conversation.
+- Every failure ends with a person: API down, model refusal or a cut-off answer go to staff; if the staff group cannot be reached, the guest is told to ask at the desk.
+
+</Section>
+
+<Section id="demo">
+
+<Demo />
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+The whole knowledge base goes into the prompt instead of a vector search: a hotel FAQ is a few
+thousand tokens, so retrieval would only add a new way to fail. Because that prompt never
+changes between guests, Anthropic caches it and repeated requests cost less. An offline mock
+model lets the whole flow run without an API key.
+
+</Section>
+
+<Section id="code">
+
+The core decision, independent of Telegram, so the bot, the terminal demo and the tests all run
+the same code:
+
+```python
+async def handle_guest_message(self, guest: Guest, text: str) -> GuestReply:
+    language = await self.guest_language(guest, text)
+    history = format_history(
+        await self._repo.recent_messages(guest.chat_id, self._settings.history_messages)
+    )
+    await self._repo.upsert_guest(guest.chat_id, guest.name, guest.username, language)
+    await self._repo.log(guest.chat_id, Role.GUEST, Kind.QUESTION, text, language)
+
+    result: ConciergeAnswer | None = None
+    try:
+        result = await self._llm.answer(text, language, self._knowledge.text, history)
+    except LLMError as exc:
+        logger.warning("LLM failed, escalating to staff: %s", exc)
+
+    if result and result.found_in_knowledge_base and result.answer.strip():
+        answer = result.answer.strip()
+        await self._repo.log(guest.chat_id, Role.BOT, Kind.ANSWER, answer, language)
+        return GuestReply(language, answer)
+
+    # Not in the knowledge base, or the AI is unavailable: never guess, ask a human.
+    reason = "not in the knowledge base" if result else "AI assistant unavailable"
+    question_en = result.question_in_english if result else text
+    escalation_id = await self._repo.create_escalation(
+        guest.chat_id, language, text, question_en, reason
+    )
+    ...
+```
+
+</Section>
+
+<Section id="bug">
+
+### Guest commands were sent to the AI and to reception as questions
+
+<BugPart id="problem">
+
+Nothing crashed, and the test passed. While writing an end-to-end test for the admin command
+`/reload`, I traced what happens when a guest sends it. The bot paid for an AI call, found
+nothing in the knowledge base and posted "/reload" to the staff group as a guest question. The
+same happened to `/help` or any other command.
+
+</BugPart>
+
+<BugPart id="cause">
+
+aiogram checks handlers in registration order and uses the first one whose filters match. The
+admin-only handler correctly ignored the guest, so the message fell through to the catch-all
+handler, which treats any text as a question.
+
+</BugPart>
+
+<BugPart id="fix">
+
+A handler for commands in private chats, registered before the catch-all, shows the welcome
+text instead. The test now checks both sides: the guest gets the welcome text, and nothing
+reaches the staff group. Lesson: a test that only checks "the bad thing did not happen" can
+pass for the wrong reason.
+
+</BugPart>
+
+<Diff>
+
+```python
+router.message.register(on_staff_reply, IsStaffChat(), F.reply_to_message, F.text)
+router.message.register(on_guest_text, private, F.text)
+router.message.register(on_guest_other, private)
+```
+
+```python
+router.message.register(on_staff_reply, IsStaffChat(), F.reply_to_message, F.text)
+# /help or a command the guest may not use: show the welcome text, do not ask the LLM.
+router.message.register(cmd_start, private, F.text.startswith("/"))
+router.message.register(on_guest_text, private, F.text)
+router.message.register(on_guest_other, private)
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **57 automated tests**, including a run through aiogram's dispatcher with a fake Telegram connection, and tests of the Claude and OpenAI clients against a fake HTTP server.
+- The offline demo answers four scripted guests in four languages, sends the fifth question to staff, and delivers the staff reply back.
+- Runs without any API key in demo mode.
+- [Result with a real hotel, e.g. "share of questions answered without staff"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

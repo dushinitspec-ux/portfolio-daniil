@@ -1,0 +1,161 @@
+---
+title: Uptime Monitor
+summary: Router'ları, kameraları ve Wi-Fi erişim noktalarını izler; biri çöktüğü dakika Telegram'dan haber verir.
+categories: [Infrastructure, Web]
+order: 3
+featured: true
+year: 2026
+role: Kişisel proje — tasarım, kod, testler
+stack: [Python 3.12, asyncio, FastAPI, HTMX, Jinja2, aiogram 3, SQLite, pytest]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+video: /videos/uptime-monitor.mp4
+cover:
+  src: /projects/uptime-monitor/cover.png
+  alt: Uptime Monitor kapak görseli — biri kırmızı olan bir sıra çalışma süresi çubuğu
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/uptime-monitor/status-page.jpg
+    alt: Sekiz cihaz, 24 saatlik ve 7 günlük çalışma süreleri, saatlik çubuklar ve kapalı görünen bir Wi-Fi erişim noktası olan durum sayfası
+    width: 800
+    height: 600
+    caption: Demo modunda durum sayfası; bir erişim noktası kapalı.
+---
+
+<Section id="problem">
+
+Bir otelde, restoranda veya küçük bir ofiste çalışmayı bırakan bir kamera ya da Wi-Fi erişim
+noktası genellikle günler sonra fark edilir: biri olmayan kaydı aradığında ya da misafirler
+Wi-Fi'dan şikâyet ettiğinde.
+
+Zabbix veya PRTG gibi büyük izleme sistemleri, BT departmanı olmayan bir yer için fazla ağırdır.
+İşim kameralar, kayıt cihazları ve MikroTik ağları kurmak; bu yüzden tek bir küçük süreç ve tek
+bir YAML dosyası istedim.
+
+</Section>
+
+<Section id="solution">
+
+- Cihazlar `devices.yaml` dosyasında listelenir: ad, IP adresi, ping açık/kapalı ve kontrol edilecek TCP portları (IP kamera için 554, yazıcı için 9100).
+- Her 60 saniyede bir tüm cihazlar asyncio ile **paralel** kontrol edilir: bir ping ve her porta bir TCP bağlantısı.
+- Bir cihaz ancak **arka arkaya iki başarısız turdan** sonra KAPALI, iki başarılı turdan sonra AÇIK sayılır; böylece tek bir kayıp ping ya da gidip gelen bir erişim noktası sohbeti doldurmaz.
+- Telegram uyarıları neyin çalışmadığını ("ping: no reply; tcp/554: timed out"), düzeldiğinde ise kesintinin ne kadar sürdüğünü söyler.
+- Bir durum sayfası (FastAPI + HTMX, her 10 saniyede yenilenir) 24 saatlik ve 7 günlük çalışma süresini, saatlik çubukları ve son kesintileri gösterir.
+- Cihaz durumları kaydedilir; yeniden başlatmadan sonra aynı kesinti iki kez duyurulmaz.
+
+</Section>
+
+<Section id="demo">
+
+<Demo />
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Ping, yönetici yetkisi gerektiren ham soketler yerine sistemin `ping` komutunu kullanır. Cihaz
+adresleri komut satırına ulaşmadan önce doğrulanır; böylece "-" ile başlayan bir adres ping
+seçeneği olarak okunamaz. Çalışma süresi, dönemdeki başarılı kontrollerin tüm kontrollere
+oranıdır — tek bir SQL sorgusu.
+
+</Section>
+
+<Section id="code">
+
+AÇIK / KAPALI kararı saf bir fonksiyondur. Kesinti ilk başarısız kontrolde başlar ve toparlanmanın
+ilk başarılı kontrolünde biter; uyarıların gönderildiği anlarda değil:
+
+```python
+def apply(state, *, device, ok, at, rules, problems=()):
+    if ok:
+        first_success = state.first_success_at or at
+        state = replace(state, failures=0, first_failure_at=None,
+                        successes=state.successes + 1, first_success_at=first_success)
+        if state.status is Status.UNKNOWN:
+            return replace(state, status=Status.UP), None
+        if state.status is Status.DOWN and state.successes >= rules.recover_after:
+            event = Event(EventKind.UP, device, first_success, state.down_since)
+            return replace(state, status=Status.UP, down_since=None), event
+        return state, None
+
+    first_failure = state.first_failure_at or at
+    state = replace(state, successes=0, first_success_at=None,
+                    failures=state.failures + 1, first_failure_at=first_failure)
+    if state.status is not Status.DOWN and state.failures >= rules.fail_after:
+        event = Event(EventKind.DOWN, device, at, first_failure, problems)
+        return replace(state, status=Status.DOWN, down_since=first_failure), event
+    return state, None
+```
+
+</Section>
+
+<Section id="bug">
+
+### İngilizce olmayan Windows'ta ping gecikmesi hiç ölçülmüyordu
+
+<BugPart id="problem">
+
+Kontrolleri kendi ağımda çalıştırdığımda router'ım AÇIK görünüyordu ama gecikmesi hep boştu.
+İngilizce örnek çıktılarla yazılmış testlerin bunu yakalama şansı yoktu.
+
+</BugPart>
+
+<BugPart id="cause">
+
+Bilgisayarımda `ping` Rusça ve eski konsol kod sayfası cp866 ile cevap veriyor:
+`время<1мс TTL=128`. Kontrol, çıktıyı ASCII olarak çözer; `TTL=128` kalır ama her Rusça harf
+bir yer tutucu karaktere dönüşür. Gecikme kalıbı `ms` veya `мс` birimini arıyordu ve çözümlemeden
+sonra Kiril `мс` artık yoktu.
+
+</BugPart>
+
+<BugPart id="fix">
+
+"Milisaniye" kelimesine hiç bağlı kalmamak. Linux ve İngilizce Windows `time=12.3 ms` ile, diğer
+tüm Windows dilleri ise her dil sürümünün yazdığı ` TTL=` öncesindeki sayı ile eşleşir. Testler
+artık cp866 ile kodlanmış ve kontrolün yaptığı şekilde çözülmüş gerçek Rusça çıktıyı kullanıyor.
+
+</BugPart>
+
+<Diff>
+
+```python
+_LATENCY = re.compile(r"[=<]\s*(\d+(?:[.,]\d+)?)\s*(?:ms|мс)", re.IGNORECASE)
+
+match = _LATENCY.search(output) if ok else None
+```
+
+```python
+_LATENCY_LATIN = re.compile(r"time[=<]\s*(\d+(?:[.,]\d+)?)\s*ms", re.IGNORECASE)
+_LATENCY_BEFORE_TTL = re.compile(r"[=<]\s*(\d+(?:[.,]\d+)?)\S*\s+TTL=")
+
+match = _LATENCY_LATIN.search(output) or _LATENCY_BEFORE_TTL.search(output)
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **45 otomatik test**; aralarında Rusça Windows, İngilizce Windows ve Linux'tan gerçek ping çıktıları var.
+- Gerçek bir ağda test edildi: ev router'ı, Cloudflare DNS, kapalı bir port ve bilinmeyen bir sunucu adı; her biri doğru sonuç ve sebeple.
+- Demo modu sekiz cihazı simüle eder ve bir haftalık geçmişi yaklaşık bir saniyede üretir.
+- [Gerçek bir sahada sonuç, ör. "bir otelde N kameranın izlenmesi"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

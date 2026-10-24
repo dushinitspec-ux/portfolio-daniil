@@ -1,0 +1,172 @@
+---
+title: Hotel AI Concierge
+summary: Консьерж в Telegram, который отвечает гостям на четырёх языках по фактам самого отеля — и передаёт всё остальное на ресепшен.
+categories: [AI, Bots]
+order: 2
+featured: true
+year: 2026
+role: Личный проект — проектирование, код, тесты
+stack: [Python 3.12, aiogram 3, Anthropic API, OpenAI API, SQLite, pytest, Docker]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+video: /videos/hotel-ai-concierge.mp4
+cover:
+  src: /projects/hotel-ai-concierge/cover.png
+  alt: Обложка Hotel AI Concierge — сообщения в чате на четырёх языках
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/hotel-ai-concierge/conversation.png
+    alt: Чат, где гость спрашивает про Wi-Fi по-русски и получает ответ, потом спрашивает про торт, и вопрос уходит на ресепшен
+    width: 1920
+    height: 1080
+    caption: Настоящая переписка из офлайн-демо (python -m app.demo), показанная как чат в промо-ролике.
+---
+
+<Section id="problem">
+
+Ресепшен весь день отвечает на одни и те же вопросы: время завтрака, пароль от Wi-Fi, когда
+открывается бассейн, как заказать трансфер. В курортном отеле в Турции гости спрашивают
+по-русски, по-английски, по-турецки и по-немецки, а сотрудники говорят не на всех четырёх.
+
+Обычный чат-бот здесь опасен. ИИ, который выдумал время выезда или цену, создаёт настоящие
+проблемы на ресепшене, и гость винит отель, а не бота.
+
+</Section>
+
+<Section id="solution">
+
+Telegram-бот, который отвечает только по фактам, записанным отелем, а обо всём остальном
+спрашивает человека:
+
+- База знаний — один Markdown-файл, который редактирует отель. `/reload` применяет изменения без перезапуска; сломанный файл оставляет в работе старую версию.
+- Языковая модель (Claude или OpenAI, выбирается в настройках) возвращает **структурированный JSON** с флагом `found_in_knowledge_base`, поэтому «знаю ли я ответ?» — это да или нет, а не догадка по формулировке модели.
+- Неизвестные вопросы уходят в **группу персонала в Telegram** с переводом на английский. Сотрудник просто нажимает «Ответить»; бот переводит ответ на язык гостя и показывает оригинал ниже.
+- Язык гостя определяется без ИИ: по алфавиту, буквам вроде ı ş ğ или ä ß и частым словам. Короткие сообщения вроде «ok» сохраняют язык переписки.
+- Любой сбой заканчивается человеком: недоступный API, отказ модели или обрезанный ответ уходят персоналу; если группа персонала недоступна, гостю советуют подойти на ресепшен.
+
+</Section>
+
+<Section id="demo">
+
+<Demo />
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Вся база знаний идёт в промпт вместо векторного поиска: FAQ отеля — это несколько тысяч токенов,
+и поиск добавил бы только ещё один способ ошибиться. Этот промпт не меняется между гостями,
+поэтому Anthropic кэширует его, и повторные запросы стоят дешевле. Офлайн-мок модели позволяет
+прогнать весь сценарий без ключа API.
+
+</Section>
+
+<Section id="code">
+
+Главное решение не зависит от Telegram, поэтому бот, терминальное демо и тесты выполняют один и
+тот же код:
+
+```python
+async def handle_guest_message(self, guest: Guest, text: str) -> GuestReply:
+    language = await self.guest_language(guest, text)
+    history = format_history(
+        await self._repo.recent_messages(guest.chat_id, self._settings.history_messages)
+    )
+    await self._repo.upsert_guest(guest.chat_id, guest.name, guest.username, language)
+    await self._repo.log(guest.chat_id, Role.GUEST, Kind.QUESTION, text, language)
+
+    result: ConciergeAnswer | None = None
+    try:
+        result = await self._llm.answer(text, language, self._knowledge.text, history)
+    except LLMError as exc:
+        logger.warning("LLM failed, escalating to staff: %s", exc)
+
+    if result and result.found_in_knowledge_base and result.answer.strip():
+        answer = result.answer.strip()
+        await self._repo.log(guest.chat_id, Role.BOT, Kind.ANSWER, answer, language)
+        return GuestReply(language, answer)
+
+    # Not in the knowledge base, or the AI is unavailable: never guess, ask a human.
+    reason = "not in the knowledge base" if result else "AI assistant unavailable"
+    question_en = result.question_in_english if result else text
+    escalation_id = await self._repo.create_escalation(
+        guest.chat_id, language, text, question_en, reason
+    )
+    ...
+```
+
+</Section>
+
+<Section id="bug">
+
+### Команды гостей уходили в ИИ и на ресепшен как вопросы
+
+<BugPart id="problem">
+
+Ничего не падало, и тест проходил. Пока я писал сквозной тест для админской команды `/reload`,
+я проследил, что происходит, когда её отправляет гость. Бот платил за вызов ИИ, не находил
+ответа в базе знаний и публиковал «/reload» в группе персонала как вопрос гостя. То же самое
+было с `/help` и любой другой командой.
+
+</BugPart>
+
+<BugPart id="cause">
+
+aiogram проверяет обработчики в порядке регистрации и берёт первый, чьи фильтры подошли.
+Обработчик только для админов правильно пропускал гостя, и сообщение проваливалось в последний
+обработчик, который считает любой текст вопросом.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Перед этим обработчиком добавлен обработчик команд в личных чатах — он показывает
+приветствие. Тест теперь проверяет обе стороны: гость получил приветствие, и в группу персонала
+ничего не ушло. Вывод: тест, который проверяет только «плохое не случилось», может пройти по
+неправильной причине.
+
+</BugPart>
+
+<Diff>
+
+```python
+router.message.register(on_staff_reply, IsStaffChat(), F.reply_to_message, F.text)
+router.message.register(on_guest_text, private, F.text)
+router.message.register(on_guest_other, private)
+```
+
+```python
+router.message.register(on_staff_reply, IsStaffChat(), F.reply_to_message, F.text)
+# /help or a command the guest may not use: show the welcome text, do not ask the LLM.
+router.message.register(cmd_start, private, F.text.startswith("/"))
+router.message.register(on_guest_text, private, F.text)
+router.message.register(on_guest_other, private)
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **57 автоматических тестов**, включая прогон через диспетчер aiogram с поддельным подключением к Telegram и тесты клиентов Claude и OpenAI на поддельном HTTP-сервере.
+- Офлайн-демо отвечает четырём гостям на четырёх языках, отправляет пятый вопрос персоналу и доставляет ответ сотрудника обратно.
+- В демо-режиме работает без какого-либо ключа API.
+- [Результат с реальным отелем, например «доля вопросов, на которые бот ответил без персонала»]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

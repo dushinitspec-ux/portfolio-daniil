@@ -1,0 +1,162 @@
+---
+title: Uptime Monitor
+summary: Следит за роутерами, камерами и точками Wi-Fi и сообщает в Telegram в ту же минуту, когда что-то из них упало.
+categories: [Infrastructure, Web]
+order: 3
+featured: true
+year: 2026
+role: Личный проект — проектирование, код, тесты
+stack: [Python 3.12, asyncio, FastAPI, HTMX, Jinja2, aiogram 3, SQLite, pytest]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+video: /videos/uptime-monitor.mp4
+cover:
+  src: /projects/uptime-monitor/cover.png
+  alt: Обложка Uptime Monitor — ряд полос аптайма, одна из них красная
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/uptime-monitor/status-page.jpg
+    alt: Страница статуса с восемью устройствами, аптаймом за 24 часа и 7 дней, полосами по часам и одной упавшей точкой Wi-Fi
+    width: 800
+    height: 600
+    caption: Страница статуса в демо-режиме, одна точка доступа упала.
+---
+
+<Section id="problem">
+
+В отеле, ресторане или небольшом офисе камеру или точку Wi-Fi, которая перестала работать, обычно
+замечают через несколько дней: когда понадобилась запись, которой нет, или когда гости жалуются
+на Wi-Fi.
+
+Большие системы мониторинга вроде Zabbix или PRTG слишком тяжелы для места без IT-отдела. Я
+профессионально устанавливаю камеры, регистраторы и сети MikroTik, поэтому хотел один небольшой
+процесс и один YAML-файл.
+
+</Section>
+
+<Section id="solution">
+
+- Устройства перечислены в `devices.yaml`: имя, IP-адрес, ping вкл./выкл. и TCP-порты для проверки (554 для IP-камеры, 9100 для принтера).
+- Каждые 60 секунд все устройства проверяются **параллельно** через asyncio: ping плюс TCP-подключение к каждому порту.
+- Устройство считается упавшим только после **двух неудачных раундов подряд**, а поднявшимся — после двух удачных. Один потерянный ping или «мигающая» точка доступа не засыпают чат.
+- Тревоги в Telegram говорят, что именно не работает («ping: no reply; tcp/554: timed out»), а при восстановлении — сколько длился простой.
+- Страница статуса (FastAPI + HTMX, обновляется каждые 10 секунд) показывает аптайм за 24 часа и 7 дней, полосы по часам и последние аварии.
+- Состояния устройств сохраняются, поэтому после перезапуска одна и та же авария не объявляется дважды.
+
+</Section>
+
+<Section id="demo">
+
+<Demo />
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Ping использует системную команду `ping`, а не «сырые» сокеты, которым нужны права
+администратора. Адреса устройств проверяются до того, как попадут в командную строку, поэтому
+адрес, который начинается с «-», не может стать опцией ping. Аптайм — это удачные проверки,
+делённые на все проверки за период: один SQL-запрос.
+
+</Section>
+
+<Section id="code">
+
+Решение «упал / поднялся» — чистая функция. Простой начинается с первой неудачной проверки и
+заканчивается первой удачной проверкой восстановления, а не в моменты отправки тревог:
+
+```python
+def apply(state, *, device, ok, at, rules, problems=()):
+    if ok:
+        first_success = state.first_success_at or at
+        state = replace(state, failures=0, first_failure_at=None,
+                        successes=state.successes + 1, first_success_at=first_success)
+        if state.status is Status.UNKNOWN:
+            return replace(state, status=Status.UP), None
+        if state.status is Status.DOWN and state.successes >= rules.recover_after:
+            event = Event(EventKind.UP, device, first_success, state.down_since)
+            return replace(state, status=Status.UP, down_since=None), event
+        return state, None
+
+    first_failure = state.first_failure_at or at
+    state = replace(state, successes=0, first_success_at=None,
+                    failures=state.failures + 1, first_failure_at=first_failure)
+    if state.status is not Status.DOWN and state.failures >= rules.fail_after:
+        event = Event(EventKind.DOWN, device, at, first_failure, problems)
+        return replace(state, status=Status.DOWN, down_since=first_failure), event
+    return state, None
+```
+
+</Section>
+
+<Section id="bug">
+
+### На неанглийской Windows не измерялась задержка ping
+
+<BugPart id="problem">
+
+Когда я запустил проверки на своей сети, роутер был «UP», но его задержка всегда оставалась
+пустой. Тесты с английскими примерами вывода никак не могли это поймать.
+
+</BugPart>
+
+<BugPart id="cause">
+
+На моём компьютере `ping` отвечает по-русски, в старой кодировке консоли cp866:
+`время<1мс TTL=128`. Проверка декодирует вывод как ASCII: `TTL=128` сохраняется, а каждая русская
+буква превращается в знак-заменитель. Шаблон задержки искал единицу `ms` или `мс`, а
+кириллического `мс` после декодирования уже не было.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Совсем не опираемся на слово «миллисекунды». Linux и английская Windows распознаются по
+`time=12.3 ms`, любая другая Windows — по числу прямо перед ` TTL=`, которое печатает каждая
+языковая версия. Тесты теперь используют настоящий русский вывод, закодированный в cp866 и
+декодированный точно так же, как это делает проверка.
+
+</BugPart>
+
+<Diff>
+
+```python
+_LATENCY = re.compile(r"[=<]\s*(\d+(?:[.,]\d+)?)\s*(?:ms|мс)", re.IGNORECASE)
+
+match = _LATENCY.search(output) if ok else None
+```
+
+```python
+_LATENCY_LATIN = re.compile(r"time[=<]\s*(\d+(?:[.,]\d+)?)\s*ms", re.IGNORECASE)
+_LATENCY_BEFORE_TTL = re.compile(r"[=<]\s*(\d+(?:[.,]\d+)?)\S*\s+TTL=")
+
+match = _LATENCY_LATIN.search(output) or _LATENCY_BEFORE_TTL.search(output)
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **45 автоматических тестов**, включая настоящий вывод ping с русской Windows, английской Windows и Linux.
+- Проверено на настоящей сети: домашний роутер, DNS Cloudflare, закрытый порт и неизвестное имя хоста — у каждого правильный результат и причина.
+- Демо-режим моделирует восемь устройств и генерирует неделю истории примерно за секунду.
+- [Результат на реальном объекте, например «мониторинг N камер в отеле»]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

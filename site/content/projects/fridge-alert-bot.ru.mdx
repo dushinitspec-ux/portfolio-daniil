@@ -1,0 +1,192 @@
+---
+title: Fridge Alert Bot
+summary: Тревога в Telegram, когда холодильник в ресторане слишком тёплый, — и тишина, когда кто-то просто открыл дверь.
+categories: [Bots, Infrastructure]
+order: 1
+featured: true
+year: 2026
+role: Личный проект — проектирование, код, тесты
+stack: [Python 3.12, FastAPI, aiogram 3, SQLite, matplotlib, pytest, Docker]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+video: /videos/fridge-alert-bot.mp4
+cover:
+  src: /projects/fridge-alert-bot/cover.png
+  alt: Обложка Fridge Alert Bot — линия температуры пересекает лимит 5 °C
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/fridge-alert-bot/history-chart.png
+    alt: График температуры kitchen-fridge-1 за шесть часов — короткие всплески от открывания двери и одна поломка компрессора выше лимита 5 °C
+    width: 960
+    height: 480
+    caption: График /history из демо. Открывания двери остаются короткими, поломка компрессора закрашена красным.
+---
+
+<Section id="problem">
+
+Холодильник, который нагрелся за ночь, — это испорченные продукты утром. Пробел в журнале
+температур — это проблемы на санитарной проверке. Сотрудники смотрят на термометры несколько раз
+в день и пропускают большинство поломок.
+
+Дешёвые датчики температуры есть. Не хватает того, что следит за ними и зовёт человека в нужный
+момент — и не поднимает ложную тревогу каждый раз, когда кто-то открыл дверь. В Steady Control я
+работаю с датчиками температуры холодильников в отелях и ресторанах, поэтому сделал ту часть,
+которая решает, когда будить человека.
+
+</Section>
+
+<Section id="solution">
+
+Датчики отправляют показания в HTTP API. Небольшой конечный автомат решает, что значит каждое
+показание:
+
+- Холодильник должен быть выше лимита **5 минут**, прежде чем придёт тревога. Дверь, открытая на минуту, тревогу не вызывает.
+- **Одна тревога на инцидент**, потом сообщение «снова в норме» с длительностью и пиковой температурой.
+- Для возврата к норме температура должна опуститься на **0,5 °C ниже лимита** — так холодильник, который «висит» на границе, не засыпает чат сообщениями.
+- Опоздавшие или повторные показания от датчика, который был офлайн, попадают в историю, но не откатывают состояние назад. Инциденты старше 15 минут записываются, но не объявляются.
+
+В Telegram команда кухни пользуется `/status`, `/history <sensor>` (график PNG), `/setlimit` и
+`/report`, а каждое утро приходит сводка за сутки.
+
+</Section>
+
+<Section id="demo">
+
+<Demo />
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Python 3.12 с аннотациями типов, FastAPI для API, aiogram 3 для бота, SQLite для хранения и
+matplotlib для графиков. API, бот и планировщик отчётов работают в одном asyncio-процессе и
+делят один сервисный объект, поэтому они никогда не расходятся во мнении о состоянии
+холодильника.
+
+</Section>
+
+<Section id="code">
+
+Правило тревоги — чистая функция: без базы данных и без Telegram, только «состояние + показание
+→ новое состояние и, возможно, событие». Поэтому каждый пограничный случай проверяется тестом
+в три строки.
+
+```python
+def evaluate(
+    current: AlertState,
+    *,
+    sensor_id: str,
+    temperature: float,
+    at: datetime,
+    limit: float,
+    rules: AlertRules,
+) -> tuple[AlertState, AlertEvent | None]:
+    """Return the next state and, if something worth telling people happened, an event."""
+    above = temperature > limit
+
+    if current.state is SensorState.OK:
+        if above:
+            return AlertState(SensorState.PENDING, at, temperature), None
+        return current, None
+
+    started = current.breach_started_at
+    peak = (
+        temperature
+        if current.peak_temperature is None
+        else max(current.peak_temperature, temperature)
+    )
+
+    if current.state is SensorState.PENDING:
+        if not above:
+            return AlertState(), None
+        if at - started >= rules.delay:
+            event = AlertEvent(EventKind.ALERT, sensor_id, temperature, limit, started, peak, at)
+            return AlertState(SensorState.ALERT, started, peak), event
+        return replace(current, peak_temperature=peak), None
+
+    # ALERT
+    if temperature <= limit - rules.hysteresis:
+        event = AlertEvent(EventKind.RECOVERED, sensor_id, temperature, limit, started, peak, at)
+        return AlertState(), event
+    return replace(current, peak_temperature=peak), None
+```
+
+</Section>
+
+<Section id="bug">
+
+### Симулятор поднимал ложные тревоги при обычном открывании двери
+
+<BugPart id="problem">
+
+Тест прогоняет смоделированный день открываний двери через настоящие правила тревоги. Он упал:
+18 сообщений о тревоге и возврате к норме — без единой поломки оборудования. На 30 случайных
+seed'ах демо давало **8,2 ложной тревоги в сутки**. Демо, которое постоянно «кричит волк»,
+выглядит как сломанный продукт.
+
+</BugPart>
+
+<BugPart id="cause">
+
+Симулятор считал, что при открытой двери датчик стремится к комнатной температуре (24 °C). Так
+ведёт себя голый датчик воздуха. Датчик внутри холодильника стоит среди продуктов и видит
+смешанный воздух. Два открывания подряд держали показания выше 5 °C дольше, чем задержка
+тревоги.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Теперь открытая дверь поднимает цель на несколько градусов выше уставки, а компрессор
+возвращает холод быстрее. Ложных тревог стало **0,13 в сутки** вместо 8,2 на тех же seed'ах.
+Размытый тест превратился в два точных: одно открывание двери никогда не даёт тревогу, а
+оживлённая неделя — максимум две.
+
+</BugPart>
+
+<Diff>
+
+```python
+door_tau_s: float = 900.0
+cool_tau_s: float = 300.0
+
+elif self.mode is Mode.DOOR_OPEN:
+    target, tau = p.ambient_c, p.door_tau_s
+```
+
+```python
+door_delta_c: float = 5.0
+door_tau_s: float = 300.0
+cool_tau_s: float = 180.0
+
+elif self.mode is Mode.DOOR_OPEN:
+    target, tau = p.setpoint_c + p.door_delta_c, p.door_tau_s
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **69 автоматических тестов** и ноль предупреждений линтера; GitHub Actions запускает их при каждом push.
+- Работает от начала до конца без оборудования: симулятор создаёт открывания двери и поломки компрессора, а без токена бота тревоги печатаются в консоль.
+- В живом запуске демо принудительная поломка компрессора дала ровно одну тревогу, а открывания двери — ни одной.
+- [Результат на реальном оборудовании, например «проверено на N датчиках на кухне ресторана»]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

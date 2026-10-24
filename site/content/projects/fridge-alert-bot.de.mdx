@@ -1,0 +1,191 @@
+---
+title: Fridge Alert Bot
+summary: Telegram-Alarm, wenn ein Restaurant-Kühlschrank zu warm wird — und Ruhe, wenn nur jemand die Tür geöffnet hat.
+categories: [Bots, Infrastructure]
+order: 1
+featured: true
+year: 2026
+role: Eigenes Projekt — Konzept, Code, Tests
+stack: [Python 3.12, FastAPI, aiogram 3, SQLite, matplotlib, pytest, Docker]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+video: /videos/fridge-alert-bot.mp4
+cover:
+  src: /projects/fridge-alert-bot/cover.png
+  alt: Titelbild von Fridge Alert Bot — eine Temperaturkurve überschreitet das Limit von 5 °C
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/fridge-alert-bot/history-chart.png
+    alt: Sechsstündige Temperaturkurve von kitchen-fridge-1 mit kurzen Spitzen beim Türöffnen und einem Kompressorausfall über dem Limit von 5 °C
+    width: 960
+    height: 480
+    caption: Das /history-Diagramm aus der Demo. Türöffnungen bleiben kurz; der Kompressorausfall ist rot markiert.
+---
+
+<Section id="problem">
+
+Ein Kühlschrank, der sich über Nacht erwärmt, bedeutet verdorbene Lebensmittel am Morgen. Eine
+Lücke im Temperaturprotokoll bedeutet Ärger bei der Hygienekontrolle. Das Personal schaut ein paar
+Mal am Tag aufs Thermometer und verpasst so die meisten Ausfälle.
+
+Günstige Temperaturfühler gibt es. Was fehlt, ist etwas, das sie überwacht und im richtigen
+Moment einen Menschen ruft — ohne jedes Mal Alarm zu schlagen, wenn jemand die Tür öffnet. Bei
+Steady Control arbeite ich mit Temperaturfühlern in Kühlschränken von Hotels und Restaurants,
+deshalb habe ich den Teil gebaut, der entscheidet, wann jemand geweckt wird.
+
+</Section>
+
+<Section id="solution">
+
+Die Fühler senden Messwerte an eine HTTP-API. Ein kleiner Zustandsautomat entscheidet, was jeder
+Messwert bedeutet:
+
+- Ein Kühlschrank muss **5 Minuten** über dem Limit bleiben, bevor ein Alarm kommt. Eine Tür, die eine Minute offen steht, löst nie Alarm aus.
+- **Ein Alarm pro Vorfall**, danach eine „wieder normal"-Nachricht mit Dauer und Höchsttemperatur.
+- Für die Entwarnung muss die Temperatur **0,5 °C unter dem Limit** liegen, damit ein Kühlschrank, der genau am Limit pendelt, den Chat nicht überflutet.
+- Verspätete oder doppelte Messwerte eines Fühlers, der offline war, landen in der Historie, setzen den Zustand aber nicht zurück. Vorfälle, die älter als 15 Minuten sind, werden gespeichert, aber nicht gemeldet.
+
+In Telegram nutzt das Küchenteam `/status`, `/history <sensor>` (ein PNG-Diagramm), `/setlimit` und
+`/report`, und jeden Morgen kommt eine Tageszusammenfassung.
+
+</Section>
+
+<Section id="demo">
+
+<Demo />
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Python 3.12 mit Typannotationen, FastAPI für die API, aiogram 3 für den Bot, SQLite als Speicher und
+matplotlib für die Diagramme. API, Bot und Berichtsplaner laufen in einem asyncio-Prozess und
+teilen sich ein Service-Objekt, deshalb sind sie sich über den Zustand eines Kühlschranks immer
+einig.
+
+</Section>
+
+<Section id="code">
+
+Die Alarmregel ist eine reine Funktion: keine Datenbank, kein Telegram, nur „Zustand + Messwert →
+neuer Zustand und vielleicht ein Ereignis". So wird jeder Grenzfall zu einem dreizeiligen Test.
+
+```python
+def evaluate(
+    current: AlertState,
+    *,
+    sensor_id: str,
+    temperature: float,
+    at: datetime,
+    limit: float,
+    rules: AlertRules,
+) -> tuple[AlertState, AlertEvent | None]:
+    """Return the next state and, if something worth telling people happened, an event."""
+    above = temperature > limit
+
+    if current.state is SensorState.OK:
+        if above:
+            return AlertState(SensorState.PENDING, at, temperature), None
+        return current, None
+
+    started = current.breach_started_at
+    peak = (
+        temperature
+        if current.peak_temperature is None
+        else max(current.peak_temperature, temperature)
+    )
+
+    if current.state is SensorState.PENDING:
+        if not above:
+            return AlertState(), None
+        if at - started >= rules.delay:
+            event = AlertEvent(EventKind.ALERT, sensor_id, temperature, limit, started, peak, at)
+            return AlertState(SensorState.ALERT, started, peak), event
+        return replace(current, peak_temperature=peak), None
+
+    # ALERT
+    if temperature <= limit - rules.hysteresis:
+        event = AlertEvent(EventKind.RECOVERED, sensor_id, temperature, limit, started, peak, at)
+        return AlertState(), event
+    return replace(current, peak_temperature=peak), None
+```
+
+</Section>
+
+<Section id="bug">
+
+### Der Simulator löste bei normalen Türöffnungen Fehlalarme aus
+
+<BugPart id="problem">
+
+Ein Test schickt einen simulierten Tag voller Türöffnungen durch die echten Alarmregeln. Er schlug
+fehl: 18 Alarm- und Entwarnungsnachrichten ohne einen einzigen Geräteausfall. Über 30 zufällige
+Seeds erzeugte die Demo **8,2 Fehlalarme pro Tag**. Eine Demo, die ständig falschen Alarm schlägt,
+lässt das Produkt kaputt aussehen.
+
+</BugPart>
+
+<BugPart id="cause">
+
+Der Simulator behandelte eine offene Tür als „der Fühler geht Richtung Raumtemperatur (24 °C)".
+So verhält sich ein frei hängender Luftfühler. Ein Fühler im Kühlschrank sitzt zwischen den
+Lebensmitteln und misst gemischte Luft. Zwei Türöffnungen kurz hintereinander hielten den Messwert
+länger als die Alarmverzögerung über 5 °C.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Eine offene Tür hebt den Zielwert jetzt nur ein paar Grad über den Sollwert, und der Kompressor
+erholt sich schneller. Die Fehlalarme sanken bei denselben Seeds von 8,2 auf **0,13 pro Tag**. Aus
+dem vagen Test wurden zwei genaue: Eine einzelne Türöffnung darf nie Alarm auslösen, und eine
+geschäftige Woche höchstens zwei.
+
+</BugPart>
+
+<Diff>
+
+```python
+door_tau_s: float = 900.0
+cool_tau_s: float = 300.0
+
+elif self.mode is Mode.DOOR_OPEN:
+    target, tau = p.ambient_c, p.door_tau_s
+```
+
+```python
+door_delta_c: float = 5.0
+door_tau_s: float = 300.0
+cool_tau_s: float = 180.0
+
+elif self.mode is Mode.DOOR_OPEN:
+    target, tau = p.setpoint_c + p.door_delta_c, p.door_tau_s
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **69 automatische Tests** und null Linter-Warnungen; GitHub Actions führt sie bei jedem Push aus.
+- Läuft von Anfang bis Ende ohne Hardware: Der Simulator erzeugt Türöffnungen und Kompressorausfälle, und ohne Bot-Token erscheinen die Alarme in der Konsole.
+- In einem Live-Durchlauf der Demo löste ein erzwungener Kompressorausfall genau einen Alarm aus, die Türöffnungen keinen.
+- [Ergebnis mit echter Hardware, z. B. „mit N Fühlern in einer Restaurantküche getestet"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

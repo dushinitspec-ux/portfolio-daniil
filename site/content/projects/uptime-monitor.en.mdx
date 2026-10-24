@@ -1,0 +1,162 @@
+---
+title: Uptime Monitor
+summary: Watches routers, cameras and Wi-Fi access points, and tells you in Telegram the minute one goes down.
+categories: [Infrastructure, Web]
+order: 3
+featured: true
+year: 2026
+role: Solo project — design, code, tests
+stack: [Python 3.12, asyncio, FastAPI, HTMX, Jinja2, aiogram 3, SQLite, pytest]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+video: /videos/uptime-monitor.mp4
+cover:
+  src: /projects/uptime-monitor/cover.png
+  alt: Uptime Monitor cover — a row of uptime bars, one of them red
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/uptime-monitor/status-page.jpg
+    alt: Status page with eight devices, their uptime for 24 hours and 7 days, hourly bars, and one Wi-Fi access point marked down
+    width: 800
+    height: 600
+    caption: The status page in demo mode, with one access point down.
+---
+
+<Section id="problem">
+
+In a hotel, a restaurant or a small office, a camera or a Wi-Fi access point that stops working
+is usually noticed days later: when someone needs the recording that is not there, or when
+guests complain about the Wi-Fi.
+
+Big monitoring systems such as Zabbix or PRTG are too heavy for a place without an IT
+department. I install cameras, recorders and MikroTik networks for a living, so I wanted one
+small process and one YAML file.
+
+</Section>
+
+<Section id="solution">
+
+- Devices are listed in `devices.yaml`: a name, an IP address, ping on or off, and the TCP ports to check (554 for an IP camera, 9100 for a printer).
+- Every 60 seconds all devices are checked **in parallel** with asyncio: a ping plus a TCP connection to each port.
+- A device is DOWN only after **two failed rounds in a row** and UP only after two good ones, so one lost ping or a flapping access point does not flood the chat.
+- Telegram alerts say what failed ("ping: no reply; tcp/554: timed out") and, on recovery, how long the outage lasted.
+- A status page (FastAPI + HTMX, refreshed every 10 seconds) shows uptime for 24 hours and 7 days, hourly bars and recent outages.
+- Device states are stored, so a restart never announces the same outage twice.
+
+</Section>
+
+<Section id="demo">
+
+<Demo />
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Ping uses the system `ping` command instead of raw sockets, which would need administrator
+rights. Device addresses are validated before they reach the command line, so an address
+starting with "-" cannot be read as a ping option. Uptime is good checks divided by all checks
+in the window — one SQL query.
+
+</Section>
+
+<Section id="code">
+
+The UP / DOWN decision is a pure function. The downtime starts at the first failed check and
+ends at the first good check of the recovery, not at the moments the alerts were sent:
+
+```python
+def apply(state, *, device, ok, at, rules, problems=()):
+    if ok:
+        first_success = state.first_success_at or at
+        state = replace(state, failures=0, first_failure_at=None,
+                        successes=state.successes + 1, first_success_at=first_success)
+        if state.status is Status.UNKNOWN:
+            return replace(state, status=Status.UP), None
+        if state.status is Status.DOWN and state.successes >= rules.recover_after:
+            event = Event(EventKind.UP, device, first_success, state.down_since)
+            return replace(state, status=Status.UP, down_since=None), event
+        return state, None
+
+    first_failure = state.first_failure_at or at
+    state = replace(state, successes=0, first_success_at=None,
+                    failures=state.failures + 1, first_failure_at=first_failure)
+    if state.status is not Status.DOWN and state.failures >= rules.fail_after:
+        event = Event(EventKind.DOWN, device, at, first_failure, problems)
+        return replace(state, status=Status.DOWN, down_since=first_failure), event
+    return state, None
+```
+
+</Section>
+
+<Section id="bug">
+
+### Ping latency was never measured on a non-English Windows
+
+<BugPart id="problem">
+
+When I ran the checks against my own network, my router was reported as UP, but its latency
+was always empty. The tests with English sample output had no way to catch it.
+
+</BugPart>
+
+<BugPart id="cause">
+
+On my computer `ping` answers in Russian, in the old console code page cp866:
+`время<1мс TTL=128`. The checker decodes the output as ASCII, which keeps `TTL=128` but turns
+every Russian letter into a replacement character. The latency pattern looked for the unit
+`ms` or `мс`, and after decoding the Cyrillic `мс` no longer existed.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Do not depend on the word for "milliseconds" at all. Linux and English Windows are matched by
+`time=12.3 ms`; any other Windows language by the number right before ` TTL=`, which every
+language version prints. The tests now use the real Russian output, encoded to cp866 and
+decoded exactly the way the checker does it.
+
+</BugPart>
+
+<Diff>
+
+```python
+_LATENCY = re.compile(r"[=<]\s*(\d+(?:[.,]\d+)?)\s*(?:ms|мс)", re.IGNORECASE)
+
+match = _LATENCY.search(output) if ok else None
+```
+
+```python
+_LATENCY_LATIN = re.compile(r"time[=<]\s*(\d+(?:[.,]\d+)?)\s*ms", re.IGNORECASE)
+_LATENCY_BEFORE_TTL = re.compile(r"[=<]\s*(\d+(?:[.,]\d+)?)\S*\s+TTL=")
+
+match = _LATENCY_LATIN.search(output) or _LATENCY_BEFORE_TTL.search(output)
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **45 automated tests**, including real ping output from Russian Windows, English Windows and Linux.
+- Tested against a real network: the home router, Cloudflare DNS, a closed port and an unknown host name, each with the right result and reason.
+- Demo mode simulates eight devices and generates a week of history in about a second.
+- [Result on a real site, e.g. "monitoring N cameras at a hotel"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

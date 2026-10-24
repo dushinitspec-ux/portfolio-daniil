@@ -1,0 +1,190 @@
+---
+title: Fridge Alert Bot
+summary: Restoran buzdolabı fazla ısındığında Telegram'dan uyarı — biri sadece kapıyı açtığında ise sessizlik.
+categories: [Bots, Infrastructure]
+order: 1
+featured: true
+year: 2026
+role: Kişisel proje — tasarım, kod, testler
+stack: [Python 3.12, FastAPI, aiogram 3, SQLite, matplotlib, pytest, Docker]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+video: /videos/fridge-alert-bot.mp4
+cover:
+  src: /projects/fridge-alert-bot/cover.png
+  alt: Fridge Alert Bot kapak görseli — 5 °C sınırını geçen bir sıcaklık çizgisi
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/fridge-alert-bot/history-chart.png
+    alt: kitchen-fridge-1 için altı saatlik sıcaklık grafiği; kısa kapı açılma sıçramaları ve 5 °C sınırının üzerinde bir kompresör arızası
+    width: 960
+    height: 480
+    caption: Demodaki /history grafiği. Kapı açılmaları kısa kalıyor; kompresör arızası kırmızıyla işaretli.
+---
+
+<Section id="problem">
+
+Gece ısınan bir buzdolabı, sabah bozulmuş yiyecek demektir. Sıcaklık kaydındaki bir boşluk,
+hijyen denetiminde sorun demektir. Personel termometrelere günde birkaç kez bakar ve arızaların
+çoğunu kaçırır.
+
+Ucuz sıcaklık sensörleri var. Eksik olan, onları izleyip doğru anda bir insanı çağıran şeydir —
+hem de biri kapıyı her açtığında boşuna alarm vermeden. Steady Control'de otel ve restoranlardaki
+buzdolabı sıcaklık sensörleriyle çalışıyorum; bu yüzden birini ne zaman uyandırmak gerektiğine
+karar veren kısmı geliştirdim.
+
+</Section>
+
+<Section id="solution">
+
+Sensörler ölçümleri bir HTTP API'ye gönderir. Küçük bir durum makinesi her ölçümün ne anlama
+geldiğine karar verir:
+
+- Uyarı gelmeden önce buzdolabının sınırın üzerinde **5 dakika** kalması gerekir. Bir dakika açık kalan kapı asla uyarı vermez.
+- **Her olay için tek uyarı**, ardından süre ve en yüksek sıcaklıkla birlikte "normale döndü" mesajı.
+- Normale dönmek için sıcaklığın **sınırın 0,5 °C altına** inmesi gerekir; böylece sınırda gidip gelen bir buzdolabı sohbeti mesaja boğmaz.
+- Çevrimdışı kalmış bir sensörden gelen geç veya tekrarlanan ölçümler geçmişe yazılır ama durumu geri almaz. 15 dakikadan eski olaylar kaydedilir ama duyurulmaz.
+
+Telegram'da mutfak ekibi `/status`, `/history <sensor>` (PNG grafik), `/setlimit` ve `/report`
+komutlarını kullanır; her sabah günlük özet gelir.
+
+</Section>
+
+<Section id="demo">
+
+<Demo />
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Tip ipuçlarıyla Python 3.12, API için FastAPI, bot için aiogram 3, depolama için SQLite ve
+grafikler için matplotlib. API, bot ve rapor zamanlayıcısı tek bir asyncio sürecinde çalışır ve
+aynı servis nesnesini paylaşır; bu yüzden bir buzdolabının durumu hakkında asla farklı düşünmezler.
+
+</Section>
+
+<Section id="code">
+
+Uyarı kuralı saf bir fonksiyondur: veritabanı yok, Telegram yok, sadece "durum + ölçüm → yeni
+durum ve belki bir olay". Bu sayede her uç durum üç satırlık bir test olur.
+
+```python
+def evaluate(
+    current: AlertState,
+    *,
+    sensor_id: str,
+    temperature: float,
+    at: datetime,
+    limit: float,
+    rules: AlertRules,
+) -> tuple[AlertState, AlertEvent | None]:
+    """Return the next state and, if something worth telling people happened, an event."""
+    above = temperature > limit
+
+    if current.state is SensorState.OK:
+        if above:
+            return AlertState(SensorState.PENDING, at, temperature), None
+        return current, None
+
+    started = current.breach_started_at
+    peak = (
+        temperature
+        if current.peak_temperature is None
+        else max(current.peak_temperature, temperature)
+    )
+
+    if current.state is SensorState.PENDING:
+        if not above:
+            return AlertState(), None
+        if at - started >= rules.delay:
+            event = AlertEvent(EventKind.ALERT, sensor_id, temperature, limit, started, peak, at)
+            return AlertState(SensorState.ALERT, started, peak), event
+        return replace(current, peak_temperature=peak), None
+
+    # ALERT
+    if temperature <= limit - rules.hysteresis:
+        event = AlertEvent(EventKind.RECOVERED, sensor_id, temperature, limit, started, peak, at)
+        return AlertState(), event
+    return replace(current, peak_temperature=peak), None
+```
+
+</Section>
+
+<Section id="bug">
+
+### Simülatör sıradan kapı açılmalarında yanlış alarm veriyordu
+
+<BugPart id="problem">
+
+Bir test, simüle edilmiş bir günlük kapı açılmalarını gerçek uyarı kurallarından geçirir. Test
+başarısız oldu: tek bir ekipman arızası olmadan 18 uyarı ve normale dönüş mesajı. 30 farklı
+rastgele tohumda demo **günde 8,2 yanlış alarm** üretti. Sürekli boşuna alarm veren bir demo,
+ürünü bozuk gösterir.
+
+</BugPart>
+
+<BugPart id="cause">
+
+Simülatör açık kapıyı "sensör oda sıcaklığına (24 °C) doğru gider" diye modelliyordu. Bu, çıplak
+bir hava sensörünün davranışıdır. Buzdolabının içindeki sensör yiyeceklerin arasında durur ve
+karışık havayı ölçer. Arka arkaya iki kapı açılması, ölçümü uyarı gecikmesinden daha uzun süre
+5 °C'nin üzerinde tutuyordu.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Artık açık kapı hedefi ayar değerinin birkaç derece üzerine çıkarıyor ve kompresör daha hızlı
+toparlıyor. Aynı tohumlarda yanlış alarmlar 8,2'den **günde 0,13'e** düştü. Belirsiz test iki
+kesin teste dönüştü: tek bir kapı açılması asla uyarı vermemeli, yoğun bir hafta en fazla iki
+uyarı verebilir.
+
+</BugPart>
+
+<Diff>
+
+```python
+door_tau_s: float = 900.0
+cool_tau_s: float = 300.0
+
+elif self.mode is Mode.DOOR_OPEN:
+    target, tau = p.ambient_c, p.door_tau_s
+```
+
+```python
+door_delta_c: float = 5.0
+door_tau_s: float = 300.0
+cool_tau_s: float = 180.0
+
+elif self.mode is Mode.DOOR_OPEN:
+    target, tau = p.setpoint_c + p.door_delta_c, p.door_tau_s
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **69 otomatik test** ve sıfır linter uyarısı; GitHub Actions her push'ta bunları çalıştırır.
+- Donanım olmadan baştan sona çalışır: simülatör kapı açılmaları ve kompresör arızaları üretir; bot token'ı yoksa uyarılar konsola yazılır.
+- Canlı bir demo çalıştırmasında zorla oluşturulan kompresör arızası tam olarak bir uyarı verdi, kapı açılmaları ise hiç vermedi.
+- [Gerçek ekipmanla sonuç, ör. "bir restoran mutfağında N sensörle test edildi"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

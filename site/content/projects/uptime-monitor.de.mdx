@@ -1,0 +1,163 @@
+---
+title: Uptime Monitor
+summary: Überwacht Router, Kameras und WLAN-Access-Points und meldet in Telegram, sobald einer ausfällt.
+categories: [Infrastructure, Web]
+order: 3
+featured: true
+year: 2026
+role: Eigenes Projekt — Konzept, Code, Tests
+stack: [Python 3.12, asyncio, FastAPI, HTMX, Jinja2, aiogram 3, SQLite, pytest]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+video: /videos/uptime-monitor.mp4
+cover:
+  src: /projects/uptime-monitor/cover.png
+  alt: Titelbild von Uptime Monitor — eine Reihe von Verfügbarkeitsbalken, einer davon rot
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/uptime-monitor/status-page.jpg
+    alt: Statusseite mit acht Geräten, ihrer Verfügbarkeit über 24 Stunden und 7 Tage, Stundenbalken und einem ausgefallenen WLAN-Access-Point
+    width: 800
+    height: 600
+    caption: Die Statusseite im Demo-Modus, ein Access Point ist ausgefallen.
+---
+
+<Section id="problem">
+
+In einem Hotel, einem Restaurant oder einem kleinen Büro fällt eine ausgefallene Kamera oder ein
+WLAN-Access-Point meist erst Tage später auf: wenn jemand eine Aufnahme braucht, die es nicht
+gibt, oder wenn sich Gäste über das WLAN beschweren.
+
+Große Monitoring-Systeme wie Zabbix oder PRTG sind zu schwer für einen Ort ohne IT-Abteilung. Ich
+installiere beruflich Kameras, Rekorder und MikroTik-Netzwerke, deshalb wollte ich einen kleinen
+Prozess und eine YAML-Datei.
+
+</Section>
+
+<Section id="solution">
+
+- Die Geräte stehen in `devices.yaml`: Name, IP-Adresse, Ping an oder aus und die zu prüfenden TCP-Ports (554 für eine IP-Kamera, 9100 für einen Drucker).
+- Alle 60 Sekunden werden alle Geräte mit asyncio **parallel** geprüft: ein Ping plus eine TCP-Verbindung zu jedem Port.
+- Ein Gerät gilt erst nach **zwei fehlgeschlagenen Runden in Folge** als DOWN und erst nach zwei erfolgreichen wieder als UP. So flutet weder ein verlorener Ping noch ein flackernder Access Point den Chat.
+- Telegram-Alarme sagen, was ausgefallen ist („ping: no reply; tcp/554: timed out"), und bei der Wiederherstellung, wie lange der Ausfall dauerte.
+- Eine Statusseite (FastAPI + HTMX, alle 10 Sekunden aktualisiert) zeigt die Verfügbarkeit über 24 Stunden und 7 Tage, Stundenbalken und die letzten Ausfälle.
+- Gerätezustände werden gespeichert, damit ein Neustart denselben Ausfall nie zweimal meldet.
+
+</Section>
+
+<Section id="demo">
+
+<Demo />
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Ping nutzt den Systembefehl `ping` statt Raw-Sockets, für die Administratorrechte nötig wären.
+Geräteadressen werden geprüft, bevor sie in die Kommandozeile gelangen, damit eine Adresse, die mit
+„-" beginnt, nicht als Ping-Option gelesen wird. Verfügbarkeit ist die Zahl erfolgreicher Prüfungen
+geteilt durch alle Prüfungen im Zeitraum — eine SQL-Abfrage.
+
+</Section>
+
+<Section id="code">
+
+Die UP-/DOWN-Entscheidung ist eine reine Funktion. Der Ausfall beginnt bei der ersten
+fehlgeschlagenen Prüfung und endet bei der ersten erfolgreichen Prüfung der Erholung, nicht in dem
+Moment, in dem die Alarme verschickt wurden:
+
+```python
+def apply(state, *, device, ok, at, rules, problems=()):
+    if ok:
+        first_success = state.first_success_at or at
+        state = replace(state, failures=0, first_failure_at=None,
+                        successes=state.successes + 1, first_success_at=first_success)
+        if state.status is Status.UNKNOWN:
+            return replace(state, status=Status.UP), None
+        if state.status is Status.DOWN and state.successes >= rules.recover_after:
+            event = Event(EventKind.UP, device, first_success, state.down_since)
+            return replace(state, status=Status.UP, down_since=None), event
+        return state, None
+
+    first_failure = state.first_failure_at or at
+    state = replace(state, successes=0, first_success_at=None,
+                    failures=state.failures + 1, first_failure_at=first_failure)
+    if state.status is not Status.DOWN and state.failures >= rules.fail_after:
+        event = Event(EventKind.DOWN, device, at, first_failure, problems)
+        return replace(state, status=Status.DOWN, down_since=first_failure), event
+    return state, None
+```
+
+</Section>
+
+<Section id="bug">
+
+### Auf einem nicht-englischen Windows wurde die Ping-Latenz nie gemessen
+
+<BugPart id="problem">
+
+Als ich die Prüfungen gegen mein eigenes Netzwerk laufen ließ, war mein Router UP, aber seine
+Latenz blieb immer leer. Die Tests mit englischen Beispielausgaben konnten das nicht entdecken.
+
+</BugPart>
+
+<BugPart id="cause">
+
+Auf meinem Rechner antwortet `ping` auf Russisch, in der alten Konsolen-Codepage cp866:
+`время<1мс TTL=128`. Die Prüfung dekodiert die Ausgabe als ASCII; `TTL=128` bleibt erhalten, aber
+jeder russische Buchstabe wird zu einem Ersatzzeichen. Das Latenz-Muster suchte nach der Einheit
+`ms` oder `мс`, und nach dem Dekodieren gab es das kyrillische `мс` nicht mehr.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Gar nicht mehr vom Wort für „Millisekunden" abhängen. Linux und englisches Windows erkennt das
+Muster `time=12.3 ms`, jede andere Windows-Sprache die Zahl direkt vor ` TTL=`, die jede
+Sprachversion ausgibt. Die Tests verwenden jetzt die echte russische Ausgabe, in cp866 kodiert und
+genau so dekodiert, wie es die Prüfung tut.
+
+</BugPart>
+
+<Diff>
+
+```python
+_LATENCY = re.compile(r"[=<]\s*(\d+(?:[.,]\d+)?)\s*(?:ms|мс)", re.IGNORECASE)
+
+match = _LATENCY.search(output) if ok else None
+```
+
+```python
+_LATENCY_LATIN = re.compile(r"time[=<]\s*(\d+(?:[.,]\d+)?)\s*ms", re.IGNORECASE)
+_LATENCY_BEFORE_TTL = re.compile(r"[=<]\s*(\d+(?:[.,]\d+)?)\S*\s+TTL=")
+
+match = _LATENCY_LATIN.search(output) or _LATENCY_BEFORE_TTL.search(output)
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **45 automatische Tests**, darunter echte Ping-Ausgaben von russischem Windows, englischem Windows und Linux.
+- In einem echten Netzwerk getestet: Heimrouter, Cloudflare-DNS, ein geschlossener Port und ein unbekannter Hostname, jeweils mit dem richtigen Ergebnis und Grund.
+- Der Demo-Modus simuliert acht Geräte und erzeugt eine Woche Historie in etwa einer Sekunde.
+- [Ergebnis an einem echten Standort, z. B. „Überwachung von N Kameras in einem Hotel"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>
