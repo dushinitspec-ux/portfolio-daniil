@@ -24,3 +24,23 @@ jobs:
         run: uv run ruff check . && uv run ruff format --check .
       - name: Test
         run: uv run pytest
+
+  site:
+    name: site
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint and type-check
+        run: npm run lint && npm run typecheck
+      - name: Build
+        run: npm run build
