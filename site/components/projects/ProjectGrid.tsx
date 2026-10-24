@@ -70,7 +70,7 @@ export function ProjectGrid({ projects }: { projects: ProjectMeta[] }) {
           on scroll, so the two never animate the same element. */}
       <m.ul layout data-assemble className="mt-10 grid gap-x-6 gap-y-14 md:grid-cols-2">
         <AnimatePresence mode="popLayout" initial={false}>
-          {visible.map((project) => (
+          {visible.map((project, i) => (
             <m.li
               key={project.slug}
               layout
@@ -86,6 +86,8 @@ export function ProjectGrid({ projects }: { projects: ProjectMeta[] }) {
                     alt={project.cover.alt}
                     fill
                     sizes="(min-width: 768px) 45vw, 100vw"
+                    // The first row is on screen at load and holds the largest image (LCP).
+                    priority={i < 2}
                     className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                   />
                 </div>
