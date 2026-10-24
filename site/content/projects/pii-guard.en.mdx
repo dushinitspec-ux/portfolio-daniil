@@ -1,0 +1,157 @@
+---
+title: PII Guard
+summary: A gateway that takes personal data out of a prompt before it reaches an LLM, and puts it back into the answer.
+categories: [AI, Web]
+order: 4
+featured: false
+year: 2026
+role: Solo project — design, code, tests
+stack: [Python 3.12, FastAPI, HTMX, Jinja2, Anthropic API, phonenumbers, SQLite, pytest]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+cover:
+  src: /projects/pii-guard/cover.png
+  alt: PII Guard cover — a message with an e-mail and an IBAN replaced by placeholders
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/pii-guard/round-trip.png
+    alt: Three columns. The original customer message with the name, IBAN, e-mail and phone highlighted; the same message with placeholders such as IBAN_1 and EMAIL_1; and the answer with the real values put back
+    width: 1280
+    height: 800
+    caption: The round trip in demo mode. The model only ever sees the middle column.
+  - src: /projects/pii-guard/blocked-and-audit.png
+    alt: A message with a card number refused by the policy, below it the audit log with entity types and counts, and the policy table
+    width: 1280
+    height: 1000
+    caption: A card number blocks the request. The audit log stores types and counts, never values.
+---
+
+<Section id="problem">
+
+Companies want their staff to use LLMs for everyday text work: "write a polite reply to this
+customer", "explain this log". Those texts are full of personal data, such as names, e-mail
+addresses, phone numbers and IBANs, and all of it would go to a third-party provider.
+
+The GDPR asks companies to keep personal data to what is necessary for the purpose. To draft a
+reply about a refund, the model does not need the real IBAN. It needs to know that there is
+one and where it goes. I wanted to see how far careful validation can get without a
+machine-learning model.
+
+</Section>
+
+<Section id="solution">
+
+- Detectors for e-mail, phone numbers, IBANs, card numbers, EU VAT IDs, IPv4 addresses and dates of birth, each with a **real check**: mod-97 for IBANs, Luhn plus issuer prefix for cards, libphonenumber's numbering plans for phones, the VIES format per country for VAT IDs.
+- Every value is replaced with a numbered placeholder (`<EMAIL_1>`, `<IBAN_1>`). The same value always gets the same placeholder, across the whole conversation.
+- Only the masked text goes to the model (Claude through the Anthropic SDK, or an offline demo model). The real values are put back into the answer, however often the model repeats a placeholder.
+- `policy.yaml` decides per type: **mask**, **block** the whole request, or **allow**. By default a card number blocks the request.
+- **Fail closed:** before anything is sent, every value that should be masked is searched for in the outgoing text. If one is still there, the request is refused.
+- An audit log in SQLite records the time, the decision and the types and counts. It has no column that could hold a value.
+- A JSON API (`POST /v1/chat`), a web page that shows the original, the masked text and the answer side by side, and a CLI.
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Names are the honest weak spot: without an NER model (I deliberately left out torch and spaCy)
+only names from a list are found, for example a CRM export. Phone numbers use Google's
+libphonenumber metadata, because numbering plans differ per country and change over time. The
+map from placeholders to values lives only in memory, for one request. Masked prompts are still
+personal data in the GDPR's sense (Recital 26), just less of it, so the README says what the
+tool does and does not claim to make anyone compliant.
+
+</Section>
+
+<Section id="code">
+
+"Real validation" means a candidate has to pass the rule the standard defines, not just look
+right. For an IBAN that is ISO 13616: the length registered for the country, check digits
+between 02 and 98, and the remainder 1 modulo 97:
+
+```python
+def iban_is_valid(value: str) -> bool:
+    iban = compact(value)
+    if not _IBAN_CHARS.fullmatch(iban):
+        return False
+    if IBAN_LENGTHS.get(iban[:2]) != len(iban):
+        return False
+    if not 2 <= int(iban[2:4]) <= 98:
+        return False
+    # Move country code and check digits to the end, then A=10 ... Z=35.
+    rearranged = iban[4:] + iban[:4]
+    number = "".join(str(int(char, 36)) for char in rearranged)
+    return int(number) % 97 == 1
+```
+
+</Section>
+
+<Section id="bug">
+
+### The leak check trusted the step it was checking
+
+<BugPart id="problem">
+
+After masking, the gateway searches the outgoing text for every value that should be gone and
+refuses the request if one is still there. I wrote a test that replaces the masking function
+with a broken one, which returns the text unchanged. The test expected the request to be
+refused. It went through, with the real IBAN in it.
+
+</BugPart>
+
+<BugPart id="cause">
+
+The check took its list of values from the vault, the map from placeholders to values. But the
+vault is filled by the masking function itself. A broken masking step leaves the vault empty,
+so the check had nothing to look for and passed every time.
+
+</BugPart>
+
+<BugPart id="fix">
+
+The check now takes the values from the detector's results, which do not depend on the masking
+step. The lesson I took: a safety check must not get its input from the thing it checks, and a
+test of a safety check has to break the protected step on purpose.
+
+</BugPart>
+
+<Diff>
+
+```python
+for value in vault.originals:
+    if any(contains_value(m.content, value) for m in masked):
+        raise LeakCheckError("a masked value is still present in the outgoing text")
+```
+
+```python
+for value in masked_values:  # from the detector, before masking
+    if any(contains_value(m.content, value) for m in masked):
+        raise LeakCheckError("a masked value is still present in the outgoing text")
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **152 automated tests**, including a round-trip property test on 500 random texts: no masked value, and no piece of one four characters or longer, ever reaches the model's input.
+- That property test found four of the six bugs I fixed; the tests with hand-picked examples had all passed with those bugs still in the code.
+- Masking the sample customer message takes 0.4 ms (median of 200 runs); a 16,700-character text takes 22 ms.
+- [Result in a real company, e.g. "N prompts a day masked for a support team"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

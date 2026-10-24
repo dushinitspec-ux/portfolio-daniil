@@ -1,0 +1,57 @@
+{% if error %}
+<div class="error">{{ error }}</div>
+{% elif prepared %}
+<div class="columns">
+  <div class="col">
+    <h2><span class="n">01</span>Original</h2>
+    <span class="label">What the user wrote</span>
+    <pre class="text">{% for p in original %}{% if p.kind %}<mark class="{{ p.action }}" title="{{ p.kind }}: {{ p.action }}{% if p.token %} → {{ p.token }}{% endif %}">{{ p.text }}</mark>{% else %}{{ p.text }}{% endif %}{% endfor %}</pre>
+  </div>
+  {% if prepared.blocked %}
+  <div class="col" style="grid-column: span 2">
+    <h2><span class="n">02</span>Blocked by policy</h2>
+    <span class="label">Nothing was sent to the model</span>
+    <div class="blocked">
+      <strong>Request refused</strong>
+      The policy blocks
+      {% for f in prepared.findings if f.action.value == "block" %}{{ f.type.value }}{% if not loop.last %}, {% endif %}{% endfor %}.
+      The user gets this message instead of an answer, and the audit log records the decision.
+    </div>
+  </div>
+  {% else %}
+  <div class="col">
+    <h2><span class="n">02</span>Sent to the model</h2>
+    <span class="label">The only text that leaves the gateway</span>
+    <pre class="text">{% for s in masked %}{% if s.token %}<span class="ph">{{ s.text }}</span>{% else %}{{ s.text }}{% endif %}{% endfor %}</pre>
+  </div>
+  <div class="col">
+    <h2><span class="n">03</span>Answer</h2>
+    <span class="label">Placeholders replaced with the real values</span>
+    <pre class="text">{% for s in answer %}{% if s.token %}<mark title="{{ s.token }}">{{ s.text }}</mark>{% else %}{{ s.text }}{% endif %}{% endfor %}</pre>
+    <details>
+      <summary>As the model wrote it</summary>
+      <pre class="text">{{ result.llm_answer }}</pre>
+    </details>
+  </div>
+  {% endif %}
+</div>
+
+<table class="findings">
+  <thead><tr><th>Found</th><th class="num">Count</th><th class="num">Distinct</th><th class="num">Action</th></tr></thead>
+  <tbody>
+    {% for f in prepared.findings %}
+    <tr>
+      <td class="mono">{{ f.type.value }}</td>
+      <td class="num">{{ f.count }}</td>
+      <td class="num">{{ f.distinct }}</td>
+      <td class="num"><span class="act {{ f.action.value }}">{{ f.action.value }}</span></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="empty">No personal data found: the text was sent as it is.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty" style="margin-top: 22px">Edit the text or pick a sample, then send it. You will see the original, the masked text the model receives, and the answer with the values put back.</p>
+{% endif %}
+{% if oob %}{% include "_audit.html" %}{% endif %}

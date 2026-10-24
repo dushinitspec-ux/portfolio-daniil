@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PII Guard</title>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <style>
+    :root {
+      --bg: #f5f3ee; --fg: #111111; --muted: #5e5a52; --surface: #ece9e2;
+      --line: rgb(17 17 17 / 0.14); --accent: #ff4f1f; --accent-text: #c2330a;
+      --mark: rgb(255 79 31 / 0.16);
+      --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111110; --fg: #edeae3; --muted: #a39e94; --surface: #1b1a18;
+        --line: rgb(237 234 227 / 0.14); --accent: #ff6338; --accent-text: #ff7852;
+        --mark: rgb(255 99 56 / 0.22);
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--fg);
+      font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    main { max-width: 1240px; margin: 0 auto; padding: 22px 24px 48px; }
+    .label { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+    header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; padding-bottom: 14px; border-bottom: 1px solid var(--fg); }
+    .brand { font-size: 20px; font-weight: 700; letter-spacing: -.01em; display: flex; align-items: center; gap: 10px; }
+    .brand::before { content: ""; width: 12px; height: 12px; background: var(--accent); }
+    .tagline { color: var(--muted); }
+    .meta { margin-left: auto; display: flex; gap: 8px; }
+    .tag { font-size: 12px; padding: 2px 8px; border: 1px solid var(--line); color: var(--muted); }
+    .tag.demo { border-color: var(--accent); color: var(--accent-text); }
+
+    form { margin: 16px 0 0; }
+    textarea {
+      display: block; width: 100%; margin-top: 6px; padding: 10px 12px; resize: vertical;
+      font: 13.5px/1.55 var(--mono); color: var(--fg); background: transparent;
+      border: 1px solid var(--line); border-radius: 0;
+    }
+    textarea:focus { outline: 2px solid var(--fg); outline-offset: -1px; }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 10px; }
+    .samples { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13.5px; }
+    .samples a { color: var(--fg); text-underline-offset: 3px; text-decoration-color: var(--line); }
+    .samples a:hover { text-decoration-color: var(--accent); }
+    button {
+      margin-left: auto; padding: 9px 18px; border: 0; border-radius: 0; cursor: pointer;
+      font: 600 14px system-ui, sans-serif; color: var(--bg); background: var(--fg);
+    }
+    button:hover { background: var(--accent-text); }
+    .htmx-request button { opacity: .5; }
+
+    .columns { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 22px; border-top: 1px solid var(--fg); }
+    .col { padding: 12px 18px 16px; border-left: 1px solid var(--line); min-width: 0; }
+    .col:first-child { border-left: 0; padding-left: 0; }
+    .col:last-child { padding-right: 0; }
+    .col h2 { display: flex; gap: 10px; align-items: baseline; margin: 0 0 2px; font-size: 15px; }
+    .col h2 .n { font: 600 12px var(--mono); color: var(--accent-text); }
+    .col .label { margin-bottom: 10px; display: block; }
+    .text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 13.5px/1.6 var(--mono); }
+    .empty { color: var(--muted); font-size: 14px; }
+    details { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 8px; }
+    summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+    details .text { margin-top: 8px; color: var(--muted); }
+
+    mark { color: inherit; background: var(--mark); box-shadow: inset 0 -2px 0 var(--accent); padding: 0 1px; }
+    mark.allow { background: none; box-shadow: none; text-decoration: underline dotted var(--muted); text-underline-offset: 3px; }
+    mark.block { background: var(--accent); color: #111; box-shadow: none; }
+    .ph { font-size: 12.5px; padding: 1px 4px; background: var(--fg); color: var(--bg); white-space: nowrap; }
+
+    .blocked { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; }
+    .blocked strong { display: block; font-size: 22px; letter-spacing: -.01em; }
+    .error { margin-top: 22px; border-left: 3px solid var(--accent); padding: 6px 14px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th { text-align: left; font-weight: 500; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+    th, td { padding: 7px 12px 7px 0; border-bottom: 1px solid var(--line); }
+    .num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 0; }
+    .mono { font-family: var(--mono); font-size: 12.5px; }
+    .findings { margin-top: 4px; }
+    .act { font: 600 12px var(--mono); text-transform: uppercase; }
+    .act.mask { color: var(--accent-text); }
+    .act.block { color: #fff; background: var(--accent); padding: 0 4px; }
+    .act.allow { color: var(--muted); }
+
+    .lower { display: grid; grid-template-columns: 2fr 1fr; gap: 0 36px; margin-top: 30px; }
+    .lower h3 { margin: 0 0 4px; font-size: 15px; }
+    .lower .label { display: block; margin-bottom: 8px; text-transform: none; letter-spacing: 0; font-size: 13px; }
+    .policy td:first-child { font-family: var(--mono); font-size: 12.5px; }
+
+    @media (max-width: 860px) {
+      .columns, .lower { grid-template-columns: 1fr; }
+      .col, .col:first-child, .col:last-child { padding: 12px 0; border-left: 0; border-top: 1px solid var(--line); }
+      .lower { gap: 28px; }
+      .meta { margin-left: 0; }
+      button { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <span class="brand">PII Guard</span>
+      <span class="tagline">Personal data is replaced before the prompt reaches the model and put back into the answer.</span>
+      <span class="meta">
+        {% if demo %}<span class="tag demo">demo model · offline</span>{% else %}<span class="tag">{{ model }}</span>{% endif %}
+      </span>
+    </header>
+
+    <form method="post" action="/" hx-post="/ui/run" hx-target="#result" hx-swap="innerHTML">
+      <label class="label" for="text">Prompt</label>
+      <textarea id="text" name="text" rows="5" maxlength="{{ max_chars }}" required>{{ text }}</textarea>
+      <div class="actions">
+        <span class="samples">
+          <span class="label">Samples</span>
+          {% for s in samples %}<a href="/?sample={{ s.id }}">{{ s.label }}</a>{% endfor %}
+        </span>
+        <button type="submit">Send through PII Guard</button>
+      </div>
+    </form>
+
+    <section id="result">
+      {% include "_result.html" %}
+    </section>
+
+    <div class="lower">
+      {% include "_audit.html" %}
+      <section>
+        <h3>Policy</h3>
+        <span class="label">policy.yaml: mask, block or allow per type.</span>
+        <table class="policy">
+          <tbody>
+            {% for entity_type, action in policy %}
+            <tr><td>{{ entity_type.value }}</td><td class="num"><span class="act {{ action.value }}">{{ action.value }}</span></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

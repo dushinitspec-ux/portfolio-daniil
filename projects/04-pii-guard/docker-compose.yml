@@ -1,0 +1,19 @@
+services:
+  pii-guard:
+    build: .
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8104
+    ports:
+      # Published on this machine only. In a company network, put it behind your reverse
+      # proxy with authentication instead of opening the port to everyone.
+      - "127.0.0.1:8104:8104"
+    volumes:
+      - audit-data:/app/data
+      # Edit the policy on the host and restart the container; no rebuild needed.
+      - ./policy.yaml:/app/policy.yaml:ro
+    restart: unless-stopped
+
+volumes:
+  audit-data:

@@ -1,0 +1,6 @@
+# Names the demo masks. Without an NER model, PII Guard only finds names it is given:
+# in a real setup this list would come from the CRM or the HR system (NAMES_FILE).
+# One name per line; a full name and a surname on its own can both be listed.
+Anna Schmidt
+Max Mustermann
+Erika Mustermann

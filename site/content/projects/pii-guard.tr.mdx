@@ -1,0 +1,158 @@
+---
+title: PII Guard
+summary: Kişisel verileri istemden LLM'e ulaşmadan önce çıkaran ve cevaba geri koyan bir ağ geçidi.
+categories: [AI, Web]
+order: 4
+featured: false
+year: 2026
+role: Kişisel proje — tasarım, kod, testler
+stack: [Python 3.12, FastAPI, HTMX, Jinja2, Anthropic API, phonenumbers, SQLite, pytest]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+cover:
+  src: /projects/pii-guard/cover.png
+  alt: PII Guard kapak görseli — e-posta adresi ve IBAN'ı yer tutucularla değiştirilmiş bir mesaj
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/pii-guard/round-trip.png
+    alt: Üç sütun. Adı, IBAN'ı, e-posta adresi ve telefonu işaretlenmiş orijinal müşteri mesajı; IBAN_1 ve EMAIL_1 gibi yer tutucularla aynı mesaj; ve gerçek değerleri geri konmuş cevap
+    width: 1280
+    height: 800
+    caption: Demo modunda gidiş ve dönüş. Model yalnızca ortadaki sütunu görür.
+  - src: /projects/pii-guard/blocked-and-audit.png
+    alt: Kart numarası içerdiği için politika tarafından reddedilen bir mesaj, altında veri türleri ve sayılarıyla denetim kaydı ve politika tablosu
+    width: 1280
+    height: 1000
+    caption: Kart numarası isteği engeller. Denetim kaydı türleri ve sayıları saklar, değerleri asla.
+---
+
+<Section id="problem">
+
+Şirketler çalışanlarının günlük metin işlerinde LLM kullanmasını istiyor: "bu müşteriye kibar
+bir cevap yaz", "bu logda ne olduğunu açıkla". Bu metinler kişisel verilerle dolu: adlar,
+e-posta adresleri, telefon numaraları, IBAN'lar. Hepsi üçüncü taraf bir sağlayıcıya gider.
+
+GDPR, şirketlerden kişisel verileri amaç için gerekli olanla sınırlı tutmalarını ister. Bir
+iade hakkında cevap taslağı yazmak için modelin gerçek IBAN'a ihtiyacı yoktur; bir IBAN
+olduğunu ve paranın nereye gideceğini bilmesi yeter. Makine öğrenmesi modeli olmadan, dikkatli
+doğrulamayla ne kadar ileri gidilebileceğini görmek istedim.
+
+</Section>
+
+<Section id="solution">
+
+- E-posta, telefon numarası, IBAN, kart numarası, AB KDV numarası (VAT ID), IPv4 adresi ve doğum tarihi için dedektörler; her birinde **gerçek bir kontrol** var: IBAN için mod-97, kartlar için Luhn ve kartı veren kurumun öneki, telefonlar için libphonenumber numaralandırma planları, VAT ID için her ülkenin VIES formatı.
+- Her değer numaralı bir yer tutucuyla değiştirilir (`<EMAIL_1>`, `<IBAN_1>`). Aynı değer, tüm konuşma boyunca hep aynı yer tutucuyu alır.
+- Modele yalnızca maskelenmiş metin gider (Anthropic SDK üzerinden Claude ya da çevrimdışı bir demo modeli). Model bir yer tutucuyu kaç kez tekrarlarsa tekrarlasın, gerçek değerler cevaba geri konur.
+- `policy.yaml` her tür için karar verir: **maskele**, isteğin tamamını **engelle** ya da **izin ver**. Varsayılan olarak bir kart numarası isteği engeller.
+- **Şüphede reddet (fail closed):** herhangi bir şey gönderilmeden önce, maskelenmesi gereken her değer giden metinde aranır. Biri hâlâ oradaysa istek reddedilir.
+- SQLite'taki denetim kaydı zamanı, kararı, veri türlerini ve sayılarını tutar. Bir değerin girebileceği tek bir sütunu bile yoktur.
+- Bir JSON API (`POST /v1/chat`), orijinali, maskelenmiş metni ve cevabı yan yana gösteren bir web sayfası ve bir CLI.
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Adlar dürüstçe söylemek gerekirse zayıf nokta: bir NER modeli olmadan (torch ve spaCy'yi
+bilerek kullanmadım) yalnızca bir listedeki adlar bulunur, örneğin bir CRM dışa aktarımı.
+Telefon numaraları Google'ın libphonenumber verilerini kullanır, çünkü numaralandırma planları
+ülkeden ülkeye değişir ve zamanla güncellenir. Yer tutucularla değerler arasındaki eşleşme
+yalnızca bellekte ve yalnızca tek bir istek boyunca yaşar. Maskelenmiş istemler GDPR'a göre
+hâlâ kişisel veridir (Gerekçe 26), yalnızca daha azdır; bu yüzden README aracın ne yaptığını
+anlatır ve kimseyi "GDPR'a uyumlu" yaptığını iddia etmez.
+
+</Section>
+
+<Section id="code">
+
+"Gerçek doğrulama", bir adayın yalnızca doğru görünmesi değil, standardın tanımladığı kuralı
+geçmesi demek. IBAN için bu ISO 13616'dır: ülke için kayıtlı uzunluk, 02 ile 98 arasında kontrol
+basamakları ve 97'ye bölümünden kalan 1:
+
+```python
+def iban_is_valid(value: str) -> bool:
+    iban = compact(value)
+    if not _IBAN_CHARS.fullmatch(iban):
+        return False
+    if IBAN_LENGTHS.get(iban[:2]) != len(iban):
+        return False
+    if not 2 <= int(iban[2:4]) <= 98:
+        return False
+    # Move country code and check digits to the end, then A=10 ... Z=35.
+    rearranged = iban[4:] + iban[:4]
+    number = "".join(str(int(char, 36)) for char in rearranged)
+    return int(number) % 97 == 1
+```
+
+</Section>
+
+<Section id="bug">
+
+### Sızıntı kontrolü, kontrol ettiği adıma güveniyordu
+
+<BugPart id="problem">
+
+Maskelemeden sonra ağ geçidi, giden metinde orada olmaması gereken her değeri arar ve biri hâlâ
+oradaysa isteği reddeder. Maskeleme fonksiyonunu bozuk bir sürümle değiştiren bir test yazdım:
+metni hiç değiştirmeden geri döndürüyordu. Test isteğin reddedilmesini bekliyordu. İstek, içinde
+gerçek IBAN ile geçti.
+
+</BugPart>
+
+<BugPart id="cause">
+
+Kontrol, değer listesini kasadan (vault), yani yer tutucu → değer tablosundan alıyordu. Ama bu
+tabloyu maskeleme fonksiyonunun kendisi dolduruyor. Bozuk bir maskeleme adımı tabloyu boş
+bırakır; kontrolün arayacağı bir şey kalmaz ve her seferinde geçer.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Kontrol artık değerleri, maskeleme adımına bağlı olmayan dedektör sonuçlarından alıyor.
+Çıkardığım ders: bir güvenlik kontrolü girdisini kontrol ettiği şeyden almamalı, ve bir
+güvenlik kontrolünün testi korunan adımı bilerek bozmalı.
+
+</BugPart>
+
+<Diff>
+
+```python
+for value in vault.originals:
+    if any(contains_value(m.content, value) for m in masked):
+        raise LeakCheckError("a masked value is still present in the outgoing text")
+```
+
+```python
+for value in masked_values:  # from the detector, before masking
+    if any(contains_value(m.content, value) for m in masked):
+        raise LeakCheckError("a masked value is still present in the outgoing text")
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **152 otomatik test**; aralarında 500 rastgele metin üzerinde bir gidiş-dönüş özellik testi var: maskelenmiş hiçbir değer ve bir değerin dört karakter ya da daha uzun hiçbir parçası modelin girdisine ulaşmıyor.
+- Bu özellik testi, düzelttiğim altı hatadan dördünü buldu; elle seçilmiş örneklerle yazılan testlerin hepsi, bu hatalar koddayken geçmişti.
+- Örnek müşteri mesajını maskelemek 0,4 ms sürüyor (200 çalıştırmanın medyanı); 16.700 karakterlik bir metin 22 ms.
+- [Gerçek bir şirkette sonuç, ör. "bir destek ekibi için günde N istem maskeleniyor"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

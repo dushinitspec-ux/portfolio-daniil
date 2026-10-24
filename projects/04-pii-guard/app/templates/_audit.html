@@ -1,0 +1,20 @@
+<section id="audit"{% if oob %} hx-swap-oob="true"{% endif %}>
+  <h3>Audit log</h3>
+  <span class="label">Types, counts and decisions only. Values and prompts are never stored.</span>
+  <table>
+    <thead><tr><th>Time (UTC)</th><th>Source</th><th>Decision</th><th>Entities</th><th class="num">Latency</th></tr></thead>
+    <tbody>
+      {% for e in audit %}
+      <tr>
+        <td class="mono">{{ e.ts.strftime('%H:%M:%S') }}</td>
+        <td>{{ e.source }}</td>
+        <td><span class="act {{ 'block' if e.decision == 'blocked' else ('mask' if e.decision == 'masked' else 'allow') }}">{{ e.decision }}</span></td>
+        <td class="mono">{{ e.summary }}</td>
+        <td class="num">{{ '%d ms' % e.latency_ms if e.latency_ms is not none else '—' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="empty">No requests yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
