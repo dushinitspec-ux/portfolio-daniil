@@ -1,0 +1,164 @@
+---
+title: Energy Saver
+summary: Lässt Warmwasserboiler, E-Auto-Ladestation und Wäscherei eines Hotels in den günstigsten Stunden des Day-Ahead-Strommarkts laufen und meldet in Telegram, wie viel das spart.
+categories: [Infrastructure, Bots]
+order: 9
+featured: false
+year: 2026
+role: Eigenes Projekt — Konzept, Code, Tests
+stack: [Python 3.12, asyncio, FastAPI, Jinja2, SVG, aiogram 3, SQLite, httpx, pytest]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+cover:
+  src: /projects/energy-saver/cover.png
+  alt: Titelbild von Energy Saver — stündliche Strompreise, die günstigsten Stunden hervorgehoben
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/energy-saver/plan-page.png
+    alt: Plan für Donnerstag, 22. Oktober 2026, mit geplanten Kosten von 8,39 Euro statt 15,86 Euro, einem Diagramm der 15-Minuten-Preise mit hervorgehobenen günstigen Zeitfenstern in der Nacht und mittags und einer Zeile pro Gerät
+    width: 1280
+    height: 800
+    caption: Die Planseite im Demo-Modus mit echten deutschen Day-Ahead-Preisen vom 22. Oktober 2026.
+  - src: /projects/energy-saver/dst-day.png
+    alt: Plan für Sonntag, 25. Oktober 2026, einen 25-Stunden-Tag, mit dem Hinweis auf die Zeitumstellung, Preisen nahe null von der Nacht bis zum Nachmittag und Laufzeiten in der doppelten Stunde mit CEST und CET gekennzeichnet
+    width: 1280
+    height: 1280
+    caption: Der Tag der Zeitumstellung. Laufzeiten in der doppelten Stunde sind mit CEST und CET gekennzeichnet.
+---
+
+<Section id="problem">
+
+Nach Artikel 11 der Richtlinie (EU) 2019/944 müssen die EU-Staaten jedem Kunden mit einem
+intelligenten Zähler ermöglichen, einen Vertrag mit dynamischen Stromtarifen zu verlangen. Bei
+einem solchen Vertrag folgt der Energieanteil der Rechnung dem Day-Ahead-Markt, und seit dem
+1. Oktober 2025 hat dieser Markt für jede Viertelstunde einen eigenen Preis. An einem
+gewöhnlichen Tag im Oktober 2026 lag der deutsche Preis zwischen 7 und 29 Cent pro kWh.
+
+Ein Hotel oder ein Café hat Verbraucher, denen es egal ist, wann sie laufen: ein Boiler mit
+großem Speicher, ein Wäschetrockner, ein E-Auto, das über Nacht steht, eine Poolpumpe. Sie in
+die günstigen Stunden zu verschieben spart Geld ohne neue Geräte, aber niemand an der Rezeption
+liest jeden Nachmittag eine Preiskurve.
+
+</Section>
+
+<Section id="solution">
+
+- Echte Preise kommen von der Energy-Charts-API des Fraunhofer ISE (ohne Token) und werden in SQLite zwischengespeichert; die ENTSO-E Transparency Platform ist eine optionale zweite Quelle. Stunden- und 15-Minuten-Preise werden beide verarbeitet.
+- Jeder Verbraucher steht in `devices.yaml`: Leistung, Laufzeit pro Tag, erlaubtes Zeitfenster (`22:00-07:00`), spätestes Ende, ein Block oder in Teilen mit einer Mindestblocklänge.
+- Der Planer wählt die günstigsten Zeitfenster: ein gleitendes Fenster für einen Block, die k günstigsten Viertelstunden für einen geteilten Lauf und eine kleine dynamische Programmierung, wenn jeder Block eine Mindestlänge hat. Eine Leistungsgrenze für den Standort verhindert, dass sich zu viele Verbraucher überlagern.
+- Jeder Plan wird mit einem naiven Ablauf verglichen, bei dem jedes Gerät startet, sobald sein Zeitfenster öffnet. Geld wird als `Decimal` gerechnet, die Ersparnis in Euro ist also exakt.
+- Jeden Nachmittag kommt in Telegram der Plan für morgen mit Uhrzeiten und erwarteter Ersparnis. Eine Webseite zeigt das Preisdiagramm und den Plan pro Gerät.
+- Shelly-Zwischenstecker lassen sich über ihre lokale HTTP-API schalten. Standard ist der Probelauf: Die Anfrage wird protokolliert, nicht gesendet.
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Alle Preise kommen auf ein gemeinsames 15-Minuten-Raster: Ein Stundenpreis wird zu vier gleichen
+Viertelstunden, der Planer muss also nicht wissen, welche Art von Daten er bekommen hat. Das
+Diagramm ist Inline-SVG, das auf dem Server gezeichnet wird, mit echter Zeit auf der x-Achse;
+ein 25-Stunden-Tag ist deshalb breiter. Die Demo läuft offline mit 36 Tagen echter Preise, die
+ich einmal heruntergeladen und mit Quelle und Lizenz (CC BY 4.0, Bundesnetzagentur | SMARD.de)
+beigelegt habe.
+
+</Section>
+
+<Section id="code">
+
+Zeitfenster sind in Ortszeit, Preise in UTC. Ein Fenster über Mitternacht gehört zu dem Tag,
+an dem es endet, damit der nächtliche Boilerlauf zusammen mit den Preisen für morgen geplant
+wird. Jede Uhrzeit wird an ihrem eigenen Tag umgerechnet; so ist dasselbe Fenster
+`22:00-07:00` 8 Stunden lang, wenn die Uhren vorgestellt werden, und 10 Stunden, wenn sie
+zurückgestellt werden:
+
+```python
+def _local(day: date, minute: int, tz: ZoneInfo) -> datetime:
+    day = day + timedelta(days=minute // 1440)
+    minute %= 1440
+    local = datetime.combine(day, time(minute // 60, minute % 60), tzinfo=tz)
+    return local.astimezone(UTC)
+
+
+def window_bounds(device: Device, day: date, tz: ZoneInfo) -> tuple[datetime, datetime]:
+    spec = device.spec  # start_day_offset is -1 when the window crosses midnight
+    start_day = day + timedelta(days=spec.start_day_offset)
+    return _local(start_day, spec.start_minute, tz), _local(start_day, spec.end_minute, tz)
+```
+
+</Section>
+
+<Section id="bug">
+
+### „-0.00 €" an einem Tag mit negativen Preisen
+
+<BugPart id="problem">
+
+Der erste Demo-Lauf gab den Plan für morgen mit `-0.00 € instead of 0.29 €` für den Boiler und
+`Expected cost -0.00 €` für den ganzen Tag aus. Die Seite zeigte den niedrigsten Preis als
+`-0.0`.
+
+</BugPart>
+
+<BugPart id="cause">
+
+Der 25. Oktober 2026 war ein windiger Sonntag: Der deutsche Preis lag von 02:00 bis 16:00 Uhr
+bei 0,00 oder −0,01 EUR/MWh. Der Planer wählte richtigerweise die Viertelstunden zu −0,01, der
+Boiler hätte also 0,00003 € fürs Laufen bekommen. `Decimal.quantize` behält das Vorzeichen einer
+Zahl, die auf null gerundet wird, und die Float-Formatierung tut dasselbe.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Eine Rundungsfunktion für Geld und eine für Cent pro kWh: Ein Wert, der auf null gerundet wird,
+verliert sein Vorzeichen, ein echter negativer Betrag wird weiterhin mit Minus ausgegeben. Der
+Test verwendet die echten Kosten einer dieser Viertelstunden.
+
+</BugPart>
+
+<Diff>
+
+```python
+def money(value: Decimal | None) -> str:
+    if value is None:
+        return "—"
+    return f"{value.quantize(CENT, ROUND_HALF_UP):.2f} €"
+```
+
+```python
+def cents(value: Decimal) -> Decimal:
+    rounded = value.quantize(CENT, ROUND_HALF_UP)
+    return abs(rounded) if rounded == 0 else rounded
+
+
+def money(value: Decimal | None) -> str:
+    return "—" if value is None else f"{cents(value):.2f} €"
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **100 automatisierte Tests**, darunter echte Preisdateien für beide Tage der Zeitumstellung (stündlich und viertelstündlich), der Wechsel von Stunden- zu 15-Minuten-Preisen und die dynamische Programmierung, geprüft gegen eine Brute-Force-Suche.
+- Backtest über 30 Tage mit echten deutschen Preisen (26. September bis 25. Oktober 2026) und fünf Beispielgeräten: 4,88 € Ersparnis pro Tag, 29,6 % der Spot-Energiekosten, 146,47 € im Monat.
+- Die Demo läuft offline und ohne Schlüssel; der Backtest dauert ein paar Sekunden.
+- [Ergebnis an einem echten Standort, z. B. „N € Ersparnis pro Monat in einem Hotel"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

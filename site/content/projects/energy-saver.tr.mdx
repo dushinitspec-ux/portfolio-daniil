@@ -1,0 +1,161 @@
+---
+title: Energy Saver
+summary: Bir otelin su ısıtıcısını, elektrikli araç şarjını ve çamaşırhanesini gün öncesi elektrik piyasasının en ucuz saatlerinde çalıştırır ve bunun ne kadar tasarruf sağladığını Telegram'dan bildirir.
+categories: [Infrastructure, Bots]
+order: 9
+featured: false
+year: 2026
+role: Kişisel proje — tasarım, kod, testler
+stack: [Python 3.12, asyncio, FastAPI, Jinja2, SVG, aiogram 3, SQLite, httpx, pytest]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+cover:
+  src: /projects/energy-saver/cover.png
+  alt: Energy Saver kapak görseli — en ucuz saatleri vurgulanmış saatlik elektrik fiyatları
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/energy-saver/plan-page.png
+    alt: 22 Ekim 2026 Perşembe planı; 15,86 avroya karşı 8,39 avroluk planlanan maliyet, gece ve öğle saatlerindeki ucuz dilimleri vurgulanmış 15 dakikalık fiyat grafiği ve her cihaz için bir satır
+    width: 1280
+    height: 800
+    caption: Demo modunda plan sayfası; 22 Ekim 2026 için gerçek Alman gün öncesi fiyatlarıyla.
+  - src: /projects/energy-saver/dst-day.png
+    alt: 25 saatlik bir gün olan 25 Ekim 2026 Pazar planı; saatlerin geri alındığına dair not, geceden öğleden sonraya kadar sıfıra yakın fiyatlar ve tekrarlanan saatteki çalışmalar CEST ve CET olarak işaretli
+    width: 1280
+    height: 1280
+    caption: Saatlerin geri alındığı gün. Tekrarlanan saatteki çalışmalar CEST ve CET olarak işaretli.
+---
+
+<Section id="problem">
+
+Direktif (AB) 2019/944'ün 11. maddesine göre AB ülkeleri, akıllı sayacı olan her tüketicinin
+dinamik fiyatlı elektrik sözleşmesi talep edebilmesini sağlamak zorundadır. Böyle bir
+sözleşmede faturanın enerji kısmı gün öncesi piyasasını izler ve bu piyasada 1 Ekim 2025'ten
+beri her 15 dakikanın ayrı bir fiyatı var. Ekim 2026'da sıradan bir günde Almanya'daki fiyat
+kWh başına 7 ile 29 sent arasında değişti.
+
+Bir otelin ya da kafenin ne zaman çalıştığı önemli olmayan yükleri vardır: büyük tanklı bir su
+ısıtıcısı, çamaşır kurutma makinesi, gece boyunca park hâlinde duran bir elektrikli araç, havuz
+pompası. Bunları ucuz saatlere kaydırmak yeni ekipman almadan para kazandırır, ama resepsiyonda
+kimse her öğleden sonra bir fiyat eğrisi okumaz.
+
+</Section>
+
+<Section id="solution">
+
+- Gerçek fiyatlar Fraunhofer ISE'nin Energy-Charts API'sinden gelir (token gerekmez) ve SQLite'ta önbelleğe alınır; ENTSO-E Transparency Platform isteğe bağlı ikinci kaynaktır. Hem saatlik hem 15 dakikalık fiyatlar desteklenir.
+- Her yük `devices.yaml` dosyasında tanımlanır: güç, günlük çalışma süresi, izin verilen zaman aralığı (`22:00-07:00`), en geç bitiş saati, tek blok ya da en kısa blok uzunluğuyla parçalı çalışma.
+- Planlayıcı en ucuz dilimleri seçer: tek blok için kayan pencere, parçalı çalışma için en ucuz k dilim ve her bloğun en kısa bir uzunluğu olduğunda küçük bir dinamik programlama. Tesis güç sınırı yüklerin fazla üst üste binmesini önler.
+- Her plan, her cihazın zaman aralığı açılır açılmaz çalıştığı basit bir programla karşılaştırılır. Para `Decimal` ile hesaplanır, bu yüzden avro cinsinden tasarruf kesindir.
+- Her öğleden sonra bir Telegram mesajı, çalışma saatleri ve beklenen tasarrufla birlikte yarının planını verir. Bir web sayfası fiyat grafiğini ve cihaz başına planı gösterir.
+- Shelly akıllı prizler yerel HTTP API'leri üzerinden açılıp kapatılabilir. Varsayılan deneme modudur: istek gönderilmez, sadece günlüğe yazılır.
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Tüm fiyatlar tek bir 15 dakikalık ızgaraya yerleştirilir: saatlik bir fiyat dört eşit dilime
+dönüşür, böylece planlayıcının hangi tür veri geldiğini bilmesi gerekmez. Grafik sunucuda
+çizilen satır içi SVG'dir ve x ekseninde gerçek zaman vardır, bu yüzden 25 saatlik bir gün daha
+geniştir. Demo, bir kez indirip kaynağı ve lisansıyla (CC BY 4.0, Bundesnetzagentur | SMARD.de)
+projeye eklediğim 36 günlük gerçek fiyatlarla çevrimdışı çalışır.
+
+</Section>
+
+<Section id="code">
+
+Zaman aralıkları yerel saatle, fiyatlar UTC ile tutulur. Gece yarısını geçen bir aralık bittiği
+güne aittir, böylece bu geceki su ısıtıcısı çalışması yarının fiyatlarıyla birlikte planlanır.
+Her saat değeri kendi gününde UTC'ye çevrilir; bu sayede aynı `22:00-07:00` aralığı saatler
+ileri alındığında 8 saat, geri alındığında 10 saat sürer:
+
+```python
+def _local(day: date, minute: int, tz: ZoneInfo) -> datetime:
+    day = day + timedelta(days=minute // 1440)
+    minute %= 1440
+    local = datetime.combine(day, time(minute // 60, minute % 60), tzinfo=tz)
+    return local.astimezone(UTC)
+
+
+def window_bounds(device: Device, day: date, tz: ZoneInfo) -> tuple[datetime, datetime]:
+    spec = device.spec  # start_day_offset is -1 when the window crosses midnight
+    start_day = day + timedelta(days=spec.start_day_offset)
+    return _local(start_day, spec.start_minute, tz), _local(start_day, spec.end_minute, tz)
+```
+
+</Section>
+
+<Section id="bug">
+
+### Negatif fiyatlı bir günde "-0.00 €"
+
+<BugPart id="problem">
+
+Demonun ilk çalıştırması yarının planını su ısıtıcısı için `-0.00 € instead of 0.29 €` ve tüm
+gün için `Expected cost -0.00 €` olarak yazdı. Sayfa en düşük fiyatı `-0.0` gösterdi.
+
+</BugPart>
+
+<BugPart id="cause">
+
+25 Ekim 2026 rüzgârlı bir pazardı: Almanya'daki fiyat 02:00'den 16:00'ya kadar 0,00 ya da
+−0,01 EUR/MWh'de kaldı. Planlayıcı doğru şekilde −0,01'lik dilimleri seçti, yani su ısıtıcısına
+çalıştığı için 0,00003 € ödenecekti. `Decimal.quantize` sıfıra yuvarlanan bir sayının işaretini
+korur; float biçimlendirme de aynısını yapar.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Para için bir, kWh başına sent için bir yuvarlama fonksiyonu: sıfıra yuvarlanan değer işaretini
+kaybeder, gerçek negatif bir tutar ise eksi işaretiyle yazılmaya devam eder. Test, bu
+dilimlerden birinin gerçek maliyetini kullanır.
+
+</BugPart>
+
+<Diff>
+
+```python
+def money(value: Decimal | None) -> str:
+    if value is None:
+        return "—"
+    return f"{value.quantize(CENT, ROUND_HALF_UP):.2f} €"
+```
+
+```python
+def cents(value: Decimal) -> Decimal:
+    rounded = value.quantize(CENT, ROUND_HALF_UP)
+    return abs(rounded) if rounded == 0 else rounded
+
+
+def money(value: Decimal | None) -> str:
+    return "—" if value is None else f"{cents(value):.2f} €"
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **100 otomatik test**; saat değişikliği olan iki günün gerçek fiyatları (saatlik ve 15 dakikalık), saatlik fiyatlardan 15 dakikalık fiyatlara geçiş ve kaba kuvvetle doğrulanan dinamik programlama dahil.
+- Beş örnek cihazla 30 günlük gerçek Alman fiyatları üzerinde geriye dönük test (26 Eylül – 25 Ekim 2026): günde 4,88 € tasarruf, spot enerji maliyetinin %29,6'sı, ay boyunca 146,47 €.
+- Demo internet ve anahtar olmadan çalışır; geriye dönük test birkaç saniye sürer.
+- [Gerçek bir sahada sonuç, ör. "bir otelde ayda N € tasarruf"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

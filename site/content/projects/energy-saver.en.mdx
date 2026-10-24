@@ -1,0 +1,161 @@
+---
+title: Energy Saver
+summary: Runs a hotel's boiler, EV charger and laundry in the cheapest hours of the day-ahead electricity market, and says in Telegram how much that saves.
+categories: [Infrastructure, Bots]
+order: 9
+featured: false
+year: 2026
+role: Solo project — design, code, tests
+stack: [Python 3.12, asyncio, FastAPI, Jinja2, SVG, aiogram 3, SQLite, httpx, pytest]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+cover:
+  src: /projects/energy-saver/cover.png
+  alt: Energy Saver cover — hourly electricity prices with the cheapest hours highlighted
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/energy-saver/plan-page.png
+    alt: Plan for Thursday 22 October 2026 with a planned cost of 8.39 euros against 15.86 euros, a chart of 15-minute prices with the cheap night and midday slots highlighted, and one row per device
+    width: 1280
+    height: 800
+    caption: The plan page in demo mode, on real German day-ahead prices for 22 October 2026.
+  - src: /projects/energy-saver/dst-day.png
+    alt: Plan for Sunday 25 October 2026, a 25-hour day, with a note that the clocks go back, near-zero prices from night to afternoon, and runs in the repeated hour labelled CEST and CET
+    width: 1280
+    height: 1280
+    caption: The day the clocks went back. Runs in the repeated hour are labelled CEST and CET.
+---
+
+<Section id="problem">
+
+Under Article 11 of Directive (EU) 2019/944, EU countries must let every customer with a
+smart meter ask for a dynamic electricity price contract. On such a contract the energy part of the bill
+follows the day-ahead market, and since 1 October 2025 that market has a price for every
+15 minutes. On an ordinary day in October 2026 the German price went from 7 to 29 cents per
+kWh.
+
+A hotel or a café has loads that do not care when they run: a boiler with a big tank, a
+laundry dryer, an EV parked overnight, a pool pump. Moving them to the cheap hours saves
+money without new equipment, but nobody at reception will read a price curve every
+afternoon.
+
+</Section>
+
+<Section id="solution">
+
+- Real prices come from the Energy-Charts API by Fraunhofer ISE (no token) and are cached in SQLite; the ENTSO-E Transparency Platform is an optional second source. Hourly and 15-minute prices are both handled.
+- Each load is described in `devices.yaml`: power, run time per day, allowed window (`22:00-07:00`), latest finish, one block or split with a minimum block length.
+- The planner picks the cheapest slots: a sliding window for one block, the k cheapest slots for a split run, and a small dynamic program when every block has a minimum length. A site power cap keeps the loads from overlapping too much.
+- Every plan is compared with a naive schedule, where each device starts when its window opens. Money is `Decimal`, so the saving in euros is exact.
+- Every afternoon a Telegram message gives tomorrow's plan with times and the expected saving. A web page shows the price chart and the plan per device.
+- Shelly smart plugs can be switched through their local HTTP API. Dry run is the default: the request is logged, not sent.
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+All prices go onto one 15-minute grid: an hourly price becomes four equal slots, so the
+planner never needs to know which kind it got. The chart is inline SVG drawn on the server,
+with real time on the x axis, so a 25-hour day is wider. The demo works offline on 36 days
+of real prices that I downloaded once and bundled with their source and licence (CC BY 4.0,
+Bundesnetzagentur | SMARD.de).
+
+</Section>
+
+<Section id="code">
+
+Windows are in local time, prices are in UTC. A window that crosses midnight belongs to the
+day it ends on, so tonight's boiler run is planned together with tomorrow's prices. Each
+wall-clock time is converted on its own day, which makes the same `22:00-07:00` window
+8 hours long when the clocks go forward and 10 hours long when they go back:
+
+```python
+def _local(day: date, minute: int, tz: ZoneInfo) -> datetime:
+    day = day + timedelta(days=minute // 1440)
+    minute %= 1440
+    local = datetime.combine(day, time(minute // 60, minute % 60), tzinfo=tz)
+    return local.astimezone(UTC)
+
+
+def window_bounds(device: Device, day: date, tz: ZoneInfo) -> tuple[datetime, datetime]:
+    spec = device.spec  # start_day_offset is -1 when the window crosses midnight
+    start_day = day + timedelta(days=spec.start_day_offset)
+    return _local(start_day, spec.start_minute, tz), _local(start_day, spec.end_minute, tz)
+```
+
+</Section>
+
+<Section id="bug">
+
+### "-0.00 €" on a day with negative prices
+
+<BugPart id="problem">
+
+The first demo run printed tomorrow's plan with `-0.00 € instead of 0.29 €` for the boiler
+and `Expected cost -0.00 €` for the whole day. The page showed the lowest price as `-0.0`.
+
+</BugPart>
+
+<BugPart id="cause">
+
+25 October 2026 was a windy Sunday: the German price sat at 0.00 or -0.01 EUR/MWh from
+02:00 to 16:00. The planner correctly chose the -0.01 slots, so the boiler would have been
+paid 0.00003 €. `Decimal.quantize` keeps the sign of a number that rounds to zero, and so
+does float formatting.
+
+</BugPart>
+
+<BugPart id="fix">
+
+One rounding helper for money and one for cents per kWh: a value that rounds to zero loses
+its sign, while a real negative amount still prints with a minus. The test uses the real
+cost of one of those slots.
+
+</BugPart>
+
+<Diff>
+
+```python
+def money(value: Decimal | None) -> str:
+    if value is None:
+        return "—"
+    return f"{value.quantize(CENT, ROUND_HALF_UP):.2f} €"
+```
+
+```python
+def cents(value: Decimal) -> Decimal:
+    rounded = value.quantize(CENT, ROUND_HALF_UP)
+    return abs(rounded) if rounded == 0 else rounded
+
+
+def money(value: Decimal | None) -> str:
+    return "—" if value is None else f"{cents(value):.2f} €"
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **100 automated tests**, including real price files for both DST days (hourly and 15-minute), the switch from hourly to 15-minute prices, and the dynamic program checked against brute force.
+- Backtest on 30 days of real German prices (26 September to 25 October 2026) with five sample devices: 4.88 € saved per day, 29.6 % of the spot cost, 146.47 € over the month.
+- The demo runs offline with no keys; the backtest takes a few seconds.
+- [Result at a real site, e.g. "N € saved per month at a hotel"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

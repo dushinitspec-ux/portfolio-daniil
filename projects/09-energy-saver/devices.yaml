@@ -1,0 +1,59 @@
+# Flexible loads to plan. SAMPLE values for a small hotel: replace them with your own.
+#
+#   name           shown on the page and in Telegram (must be unique)
+#   power_kw       power while running
+#   run_time       how long it must run per day: 3h, 45min, 1h30min (whole quarter-hours)
+#   window         when it may run, local time; 22:00-07:00 crosses midnight and belongs to
+#                  the day it ends on (the plan for Sunday includes Saturday 22:00 onwards)
+#   latest_finish  optional: must be done by this time (inside the window)
+#   contiguous     true = one uninterrupted block (a dryer cycle cannot pause)
+#   min_block      for split runs: shortest block, so a relay does not click every 15 min
+#   shelly         optional Shelly plug: host, generation (1 or 2 = Gen2 and newer), channel
+#
+# power_cap_kw is the most these loads may draw together, e.g. what the connection has
+# left after the kitchen and lifts. Leave it out for no cap.
+#
+# The Shelly addresses below are from 192.0.2.0/24, a range reserved for documentation,
+# so nothing is ever switched by accident. Plugs are only logged unless SHELLY_DRY_RUN=false.
+# A plug handles about 2.5-3.5 kW; for a 6 kW boiler the Shelly relay drives a contactor
+# that an electrician installs, it does not switch the load itself.
+
+site: Sample hotel (example values)
+power_cap_kw: 18
+
+devices:
+  - name: Hot-water boiler
+    power_kw: 6
+    run_time: 3h
+    window: "22:00-07:00"
+    latest_finish: "06:00"       # hot water for the morning showers
+    min_block: 30min
+    shelly: {host: 192.0.2.10, generation: 2}
+
+  - name: EV charger
+    power_kw: 11
+    run_time: 4h
+    window: "18:00-08:00"
+    latest_finish: "07:30"
+
+  - name: Dishwasher pre-heat
+    power_kw: 9
+    run_time: 1h
+    window: "04:00-07:00"
+    latest_finish: "06:30"       # rinse tank hot before breakfast
+    contiguous: true
+    shelly: {host: 192.0.2.11, generation: 1}
+
+  - name: Laundry dryer
+    power_kw: 5
+    run_time: 2h
+    window: "09:00-18:00"
+    latest_finish: "17:00"       # folded before the evening shift
+    contiguous: true
+
+  - name: Pool pump
+    power_kw: 1.5
+    run_time: 6h
+    window: "08:00-20:00"
+    min_block: 1h
+    shelly: {host: 192.0.2.12, generation: 2}

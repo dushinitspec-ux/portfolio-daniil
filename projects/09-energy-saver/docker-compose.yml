@@ -1,0 +1,22 @@
+services:
+  energy-saver:
+    build: .
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8109
+    ports:
+      - "8109:8109"
+    volumes:
+      # The price cache and the "plan already sent" notes survive restarts.
+      - energy-data:/app/data
+      # Edit devices.yaml on the host and restart the container; no rebuild needed.
+      - ./devices.yaml:/app/devices.yaml:ro
+    restart: unless-stopped
+    # Shelly plugs are switched over the LAN. Docker's default bridge network reaches the
+    # LAN through the host, which is enough for plain HTTP. On a Linux server you can also
+    # use the host network (then remove "ports" above):
+    # network_mode: host
+
+volumes:
+  energy-data:

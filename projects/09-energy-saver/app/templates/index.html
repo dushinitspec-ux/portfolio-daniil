@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Energy Saver · {{ title }}</title>
+  <style>
+    :root {
+      --bg: #f9f9f7; --surface: #fcfcfb; --text: #0b0b0b; --muted: #52514e; --faint: #898781;
+      --line: #e1e0d9; --rule: #0b0b0b; --accent: #2a78d6; --base: #eb6834; --good: #006300;
+      --warn-bg: #fff4dc;
+      --sans: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d0d0d; --surface: #1a1a19; --text: #f0efec; --muted: #c3c2b7; --faint: #898781;
+        --line: #2c2c2a; --rule: #f0efec; --accent: #3987e5; --base: #d95926; --good: #0ca30c;
+        --warn-bg: #2b2414;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 var(--sans); }
+    main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 56px; }
+    a { color: inherit; }
+    header { border-top: 3px solid var(--rule); padding-top: 14px; }
+    .eyebrow { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+    .eyebrow strong { color: var(--text); letter-spacing: .02em; }
+    .badge { border: 1px solid var(--line); padding: 0 8px; border-radius: 2px; }
+    .title { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+    h1 { font-size: 40px; line-height: 1.1; letter-spacing: -.02em; margin: 10px 0 4px; font-weight: 700; }
+    nav { display: flex; gap: 18px; font-size: 14px; }
+    nav a { text-decoration: none; border-bottom: 1px solid var(--line); }
+    nav a:hover { border-color: var(--text); }
+    nav .off { color: var(--faint); }
+    .note { margin: 12px 0 0; padding: 8px 12px; background: var(--warn-bg); font-size: 14px; }
+    .figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 24px 0 8px; border-top: 1px solid var(--line); }
+    .figures div { padding: 12px 16px 14px 0; border-bottom: 1px solid var(--line); }
+    .figures .label { display: block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+    .figures .value { display: block; font-size: 28px; font-weight: 700; letter-spacing: -.01em; margin-top: 2px; }
+    .figures .sub { font-size: 13px; color: var(--muted); }
+    .figures .saving .value { color: var(--good); }
+    figure { margin: 24px 0 0; background: var(--surface); border: 1px solid var(--line); padding: 8px 8px 4px; }
+    .scroll { overflow-x: auto; }
+    figure svg { display: block; width: 100%; min-width: 720px; height: auto; }
+    figcaption { display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 13px; color: var(--muted); padding: 8px 8px 6px; }
+    .key { display: inline-flex; align-items: center; gap: 6px; }
+    .key i { display: inline-block; width: 14px; height: 10px; }
+    .key .k-plan { background: var(--accent); }
+    .key .k-base { background: var(--base); height: 4px; }
+    .key .k-win { background: var(--line); }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; margin: 36px 0 0; padding-bottom: 8px; border-bottom: 2px solid var(--rule); }
+    .table { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px 12px 10px 0; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { font-size: 12px; font-weight: 600; color: var(--muted); }
+    .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .name { font-weight: 700; }
+    .sub { color: var(--muted); font-size: 13px; }
+    .runs { font-variant-numeric: tabular-nums; }
+    .runs .plan { border-left: 3px solid var(--accent); padding-left: 8px; }
+    .runs .base { border-left: 3px solid var(--base); padding-left: 8px; color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .problem { color: #d03b3b; }
+    .good { color: var(--good); font-weight: 600; }
+    footer { margin-top: 28px; font-size: 13px; color: var(--muted); display: grid; gap: 6px; }
+    footer code { font-size: 12px; overflow-wrap: anywhere; }
+    @media (max-width: 760px) {
+      h1 { font-size: 30px; }
+      .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .figures .value { font-size: 22px; }
+      .hide-sm { display: none; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">
+      <strong>Energy Saver</strong>
+      <span>{{ bidding_zone }} day-ahead prices</span>
+      <span>{{ site }}</span>
+      {% if demo %}<span class="badge">demo: bundled real prices, offline</span>{% endif %}
+    </div>
+    <div class="title">
+      <h1>{{ title }}</h1>
+      <nav aria-label="Day">
+        <a href="?day={{ prev_day.isoformat() }}">← {{ prev_day.strftime('%a %d %b') }}</a>
+        {% if next_day %}<a href="?day={{ next_day.isoformat() }}">{{ next_day.strftime('%a %d %b') }} →</a>
+        {% else %}<span class="off">next day not published</span>{% endif %}
+      </nav>
+    </div>
+    {% if dst_note %}<p class="note">{{ dst_note }}</p>{% endif %}
+  </header>
+
+  <section class="figures" aria-label="Summary">
+    <div><span class="label">Planned cost</span><span class="value">{{ cost }}</span><span class="sub">spot energy, all devices</span></div>
+    <div><span class="label">Baseline</span><span class="value">{{ baseline_cost }}</span><span class="sub">start when the window opens</span></div>
+    <div class="saving"><span class="label">Saving</span><span class="value">{{ saving }}</span><span class="sub">{{ saving_percent }} of the baseline</span></div>
+    <div><span class="label">Spot price</span><span class="value">{{ low }}–{{ high }}</span><span class="sub">ct/kWh, lowest–highest of the {{ hours }} h day</span></div>
+  </section>
+
+  <figure>
+    <div class="scroll">{{ chart }}</div>
+    <figcaption>
+      <span>Columns: spot price per 15 minutes; blue ones are used by the plan.</span>
+      <span class="key"><i class="k-win"></i>allowed window</span>
+      <span class="key"><i class="k-plan"></i>planned run</span>
+      <span class="key"><i class="k-base"></i>baseline</span>
+    </figcaption>
+  </figure>
+
+  <h2 id="devices">Devices</h2>
+  <div class="table">
+    <table>
+      <thead>
+        <tr>
+          <th>Device</th>
+          <th class="hide-sm">Window</th>
+          <th>Runs (local time)</th>
+          <th class="num">Planned</th>
+          <th class="num hide-sm">Baseline</th>
+          <th class="num">Saving</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>
+            <div class="name">{{ row.name }}</div>
+            <div class="sub">{{ row.power }} · {{ row.run_time }} · {{ row.mode }}</div>
+          </td>
+          <td class="hide-sm">{{ row.window }}{% if row.shelly %}<div class="sub">Shelly {{ row.shelly }}</div>{% endif %}</td>
+          <td class="runs">
+            {% if row.problem %}
+              <span class="problem">Not planned: {{ row.problem }}</span>
+            {% else %}
+              <div class="plan">{{ row.planned }}</div>
+              <div class="base">baseline {{ row.baseline }}</div>
+            {% endif %}
+          </td>
+          <td class="num">{{ row.cost }}</td>
+          <td class="num hide-sm">{{ row.baseline_cost }}</td>
+          <td class="num good">{{ row.saving }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <footer>
+    {% if cap %}<div>Power cap for these loads: {{ cap }}; planned peak {{ peak }}.</div>{% endif %}
+    {% if switching %}<div>Shelly plugs ({{ shelly_mode }}): requests for this plan, in local time.{% for line in switching %}<br><code>{{ line }}</code>{% endfor %}</div>{% endif %}
+    <div>Costs use the spot price only. Grid fees, taxes and the supplier margin are the same in every hour, so they do not change the saving in euros.</div>
+    {% if attribution %}<div>{{ attribution }}.</div>{% endif %}
+    <div>JSON: <a href="/api/plan?day={{ plan.day.isoformat() }}">/api/plan?day={{ plan.day.isoformat() }}</a> · SVG: <a href="/chart.svg?day={{ plan.day.isoformat() }}">/chart.svg</a></div>
+  </footer>
+</main>
+</body>
+</html>
