@@ -1,0 +1,17 @@
+services:
+  copilot:
+    build: .
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8106
+    ports:
+      - "8106:8106"
+    volumes:
+      - helpdesk-data:/app/data
+      # Edit the how-tos on the host and restart the container; no rebuild needed.
+      - ./knowledge:/app/knowledge:ro
+    restart: unless-stopped
+
+volumes:
+  helpdesk-data:

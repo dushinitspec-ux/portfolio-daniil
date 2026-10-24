@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Helpdesk Copilot{% endblock %} · {{ company }}</title>
+  <style>
+    :root {
+      --bg: #f6f7f9; --card: #ffffff; --text: #1d2330; --muted: #677085; --line: #e3e6ec;
+      --accent: #2456d6; --p1: #d63a3a; --p2: #e07a1b; --p3: #5b6478; --p4: #9aa2b3;
+      --ok: #1a9f5b; --soft: #f0f2f6; --row-p1: #fdf1f1;
+      --mono: ui-monospace, "SF Mono", Consolas, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #11141a; --card: #191d25; --text: #e6e9ef; --muted: #8f97a8; --line: #2a303b;
+        --accent: #7d9cf0; --soft: #222833; --row-p1: #2a1b1d; --p3: #9aa2b3; --p4: #6d7587;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    main { max-width: 1160px; margin: 0 auto; padding: 28px 16px 48px; }
+    a { color: var(--accent); }
+    nav { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 22px; margin-bottom: 26px; }
+    nav .brand { font-weight: 700; font-size: 17px; color: var(--text); text-decoration: none; }
+    nav .brand span { color: var(--muted); font-weight: 500; }
+    nav a.tab { color: var(--muted); text-decoration: none; font-weight: 500; padding-bottom: 2px; }
+    nav a.tab.active { color: var(--text); border-bottom: 2px solid var(--text); }
+    nav .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+    .badge { font-size: 12px; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+    h1 { font-size: 24px; margin: 0 0 4px; letter-spacing: -0.01em; }
+    h2 { font-size: 13px; margin: 30px 0 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+    .lead { color: var(--muted); margin: 0 0 22px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+    tr:last-child td { border-bottom: 0; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .muted { color: var(--muted); }
+    .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+    .mono { font-family: var(--mono); font-size: 12px; }
+    .pill { display: inline-block; min-width: 30px; text-align: center; font-weight: 700; font-size: 12px; padding: 2px 7px; border-radius: 6px; color: #fff; }
+    .pill.P1 { background: var(--p1); } .pill.P2 { background: var(--p2); }
+    .pill.P3 { background: var(--p3); } .pill.P4 { background: var(--p4); }
+    .empty { padding: 18px; color: var(--muted); }
+    button, .button {
+      font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 6px; cursor: pointer;
+      border: 1px solid var(--line); background: var(--card); color: var(--text);
+    }
+    button.primary { background: var(--text); color: var(--card); border-color: var(--text); padding: 8px 16px; font-size: 15px; }
+    @media (max-width: 760px) { .hide-sm { display: none; } th, td { padding: 10px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <nav>
+      <a class="brand" href="/">Helpdesk Copilot <span>· {{ company }}</span></a>
+      <a class="tab {% if page == 'tickets' %}active{% endif %}" href="/">Tickets</a>
+      <a class="tab {% if page == 'try' %}active{% endif %}" href="/try">Try a question</a>
+      <div class="right">
+        {% if demo %}<span class="badge">demo mode: sample data, no API key</span>{% endif %}
+        <span class="badge">{{ llm }}</span>
+      </div>
+    </nav>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

@@ -1,0 +1,172 @@
+---
+title: Helpdesk Copilot
+summary: An IT assistant that answers employees from the company's own how-tos with numbered sources, and turns everything else into a triaged ticket.
+categories: [AI, Bots]
+order: 6
+featured: false
+year: 2026
+role: Solo project — design, code, tests
+stack: [Python 3.12, Anthropic API, BM25, aiogram 3, FastAPI, Jinja2, SQLite, pytest]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+cover:
+  src: /projects/helpdesk-copilot/cover.png
+  alt: Helpdesk Copilot cover — an IT question and an answer with numbered sources
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/helpdesk-copilot/answer-view.png
+    alt: Try a question page with an answer about a clicked phishing link, its numbered source, the BM25 ranking with the matched words, and a P1 security ticket
+    width: 1280
+    height: 800
+    caption: The "Try a question" view in demo mode — the answer, its source, the ranking behind it and the P1 ticket it also opens.
+  - src: /projects/helpdesk-copilot/tickets.png
+    alt: Ticket list with statistics, P1 tickets for an office-wide outage and a phishing click at the top, then P2 and P3 tickets with the reason each one became a ticket
+    width: 1280
+    height: 800
+    caption: The ticket list in demo mode, filled by running sample questions through the real pipeline.
+---
+
+<Section id="problem">
+
+In a small company the IT department is one person, or an outside provider paid by the hour.
+A large part of their day is the same twenty questions: the guest Wi-Fi password, the VPN from
+home, a stuck print job, MFA on a new phone. The answers are usually written down somewhere,
+and nobody reads them.
+
+A general chatbot answers these confidently and wrongly. It does not know this company's
+network names, extensions or rules, and people do what an IT assistant tells them. This is a
+common first AI project for small companies and IT service providers, so I wanted to build it
+properly: answers only from the company's own how-tos, a visible source for every sentence, a
+measured evaluation, and a person for everything else.
+
+</Section>
+
+<Section id="solution">
+
+- The knowledge base is a folder of Markdown how-tos, one `## Section` per task. For the demo I wrote 15 of them for a fictional "Sample Office": Wi-Fi, guest Wi-Fi, VPN, printers, passwords, MFA, shared mailboxes, phishing, backups and more.
+- Search is **BM25** over sections, with no ML libraries. Light normalization (no accents, simple stemming, a small German/Russian/Turkish glossary of IT words) lets "Mein Druckauftrag hängt" find the English "Print job is stuck" section.
+- Claude answers only from the retrieved sections and cites them as **[1], [2]**. The code checks every citation; an answer without a valid source is never shown.
+- Anything it cannot answer becomes a **ticket** with a category, a priority from P1 to P4 and a one-line summary. Phishing and an office-wide outage are always P1, and the model cannot lower that.
+- In Telegram the employee gets the answer with sources and two buttons: **Solved** or **Create ticket**. New tickets go to the IT chat; the IT person works through them on a small web page.
+- The bot says it is an AI in `/start` and under every answer, as Article 50 of the EU AI Act requires for systems that talk to people.
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+BM25 instead of embeddings: for a few dozen pages it is fast (under 0.2 ms per question), needs
+no model or vector database, and its decisions can be shown on screen. The cheapest checks run
+first, so a question the how-tos cannot support becomes a ticket without any paid API call.
+Without an API key the app runs in demo mode: it quotes the best section and triages by rules.
+
+</Section>
+
+<Section id="code">
+
+The whole decision, independent of Telegram, so the bot, the web page, the evaluation and the
+tests run the same code:
+
+```python
+async def decide(self, question: str) -> Decision:
+    retrieval = self.retriever.search(question, self.top_k)
+    urgent = urgency(question)
+
+    if urgent is Urgency.OUTAGE:
+        return Decision(retrieval, route=Route.OUTAGE)
+    if is_action_request(question):
+        return Decision(retrieval, route=Route.ACTION)
+    if not retrieval.confident:  # no LLM call for what the how-tos cannot support
+        return Decision(retrieval, route=Route.NOT_FOUND)
+
+    sources = number_sources([hit.section for hit in retrieval.hits])
+    try:
+        draft = await self.llm.answer(question, sources)
+    except LLMError:
+        draft = await self.fallback.answer(question, sources)  # extractive, still grounded
+
+    if not draft.answered or not draft.answer.strip():
+        return Decision(retrieval, route=Route.NO_ANSWER)
+    check = check_citations(draft.answer, sources)
+    if not check.grounded:
+        return Decision(retrieval, route=Route.NO_CITATION)
+
+    route = Route.SECURITY if urgent is Urgency.SECURITY else None
+    return Decision(retrieval, check.text, check.cited, route=route)
+```
+
+</Section>
+
+<Section id="bug">
+
+### "The whole office has no internet" was filed as an access problem
+
+<BugPart id="problem">
+
+When I ran the triage rules over the evaluation questions, the office-wide outage got the
+right priority, P1, but the category **access**, next to password resets. A question about
+internet for workshop guests ended up in the same place.
+
+</BugPart>
+
+<BugPart id="cause">
+
+Keywords are matched at the start of a word, so that "phish" also finds "phishing" and
+"Phishing-Mail". The access keyword "intern" (accounts for interns) therefore also matched
+"internet", and when two categories tied, access was checked before network.
+
+</BugPart>
+
+<BugPart id="fix">
+
+A keyword can now require a whole word with a trailing `$`, and "intern" became "intern$".
+Network also wins a tie over access now. A test checks "No internet on my laptop" (network)
+next to "Account for our new intern" (access).
+
+</BugPart>
+
+<Diff>
+
+```python
+folded = fold(phrase.strip())
+parts.append(part + r"\b" if len(folded) <= 3 else part)
+
+ACCESS = keywords("... contractor, intern, passwort, ...")
+```
+
+```python
+folded = fold(phrase.strip())
+whole = folded.endswith("$") or len(folded) <= 3
+folded = folded.rstrip("$")
+parts.append(part + r"\b" if whole else part)
+
+ACCESS = keywords("... contractor, intern$, passwort, ...")
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **95 automated tests**: ranking, citation checks, every path to a ticket, triage rules, the Claude client against a fake API server, and the Telegram bot end to end with a fake Telegram session.
+- Search on 30 test questions in four languages: the right document comes first in **29 of 30** and is in the top three in **30 of 30**. On 15 held-out questions, scored once at the end: **14 of 15** and **15 of 15**.
+- All 13 questions the how-tos do not cover became tickets in the evaluation. The README also lists three that slipped through while I prepared the demo, and why.
+- Answer quality with Claude is not measured yet; that needs an API key. [Claude evaluation numbers]
+- [Result on a real helpdesk, e.g. "share of questions answered without a ticket"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

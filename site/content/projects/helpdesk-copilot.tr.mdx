@@ -1,0 +1,176 @@
+---
+title: Helpdesk Copilot
+summary: Çalışanlara şirketin kendi BT kılavuzlarından numaralı kaynaklarla yanıt veren, geri kalan her şeyi önceliklendirilmiş bir talebe dönüştüren bir BT asistanı.
+categories: [AI, Bots]
+order: 6
+featured: false
+year: 2026
+role: Kişisel proje — tasarım, kod, testler
+stack: [Python 3.12, Anthropic API, BM25, aiogram 3, FastAPI, Jinja2, SQLite, pytest]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+cover:
+  src: /projects/helpdesk-copilot/cover.png
+  alt: Helpdesk Copilot kapak görseli — bir BT sorusu ve numaralı kaynaklarla verilmiş bir yanıt
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/helpdesk-copilot/answer-view.png
+    alt: Tıklanan bir oltalama bağlantısıyla ilgili yanıtı, numaralı kaynağını, eşleşen kelimelerle BM25 sıralamasını ve P1 güvenlik talebini gösteren "Try a question" sayfası
+    width: 1280
+    height: 800
+    caption: Demo modunda "Try a question" görünümü — yanıt, kaynağı, arkasındaki sıralama ve ayrıca açtığı P1 talebi.
+  - src: /projects/helpdesk-copilot/tickets.png
+    alt: İstatistiklerle talep listesi; en üstte tüm ofisi etkileyen kesinti ve tıklanan oltalama bağlantısı için P1 talepleri, altında her birinin neden talebe dönüştüğünü gösteren P2 ve P3 talepleri
+    width: 1280
+    height: 800
+    caption: Demo modunda talep listesi; örnek sorular gerçek akıştan geçirilerek dolduruldu.
+---
+
+<Section id="problem">
+
+Küçük bir şirkette BT departmanı tek bir kişidir ya da saat ücretiyle çalışan dışarıdan bir
+firmadır. Günlerinin büyük kısmı aynı yirmi soruyla geçer: misafir Wi-Fi şifresi, evden VPN,
+takılan bir yazdırma işi, yeni telefonda MFA. Yanıtlar genellikle bir yerde yazılıdır ama
+kimse okumaz.
+
+Genel bir sohbet botu bu sorulara kendinden emin ve yanlış yanıtlar verir. Bu şirketin ağ
+adlarını, dahili numaralarını ve kurallarını bilmez; insanlar ise BT asistanının söylediğini
+yapar. Bu, küçük şirketlerin ve BT hizmet sağlayıcılarının sık istediği ilk yapay zekâ
+projelerinden biri; bu yüzden onu düzgün yapmak istedim: yalnızca şirketin kendi
+kılavuzlarından yanıtlar, her cümle için görünür bir kaynak, ölçülmüş bir değerlendirme ve geri
+kalan her şey için bir insan.
+
+</Section>
+
+<Section id="solution">
+
+- Bilgi tabanı Markdown kılavuzlarından oluşan bir klasördür; her görev için bir `## Section`. Demo için hayali bir "Sample Office" adına 15 kılavuz yazdım: Wi-Fi, misafir Wi-Fi, VPN, yazıcılar, şifreler, MFA, paylaşılan posta kutuları, oltalama, yedekler ve diğerleri.
+- Arama, ML kütüphanesi olmadan bölümler üzerinde **BM25** ile yapılır. Hafif bir normalleştirme (aksan yok, basit kök bulma, Almanca/Rusça/Türkçe küçük bir BT sözlüğü) sayesinde "Mein Druckauftrag hängt" sorusu İngilizce "Print job is stuck" bölümünü bulur.
+- Claude yalnızca bulunan bölümlerden yanıt verir ve onlara **[1], [2]** diye atıf yapar. Kod her atfı kontrol eder; geçerli kaynağı olmayan bir yanıt asla gösterilmez.
+- Yanıtlanamayan her şey kategori, P1'den P4'e öncelik ve tek satırlık özetle bir **talebe** dönüşür. Oltalama ve tüm ofisi etkileyen kesinti her zaman P1'dir ve model bunu düşüremez.
+- Telegram'da çalışan, kaynaklarıyla birlikte yanıtı ve iki düğme alır: **Solved** (çözüldü) veya **Create ticket** (talep oluştur). Yeni talepler BT sohbetine gider; BT sorumlusu bunları küçük bir web sayfasında yönetir.
+- Bot, AB Yapay Zekâ Yasası'nın (AI Act) 50. maddesinin insanlarla konuşan sistemler için istediği gibi, `/start` mesajında ve her yanıtın altında bir yapay zekâ olduğunu söyler.
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Gömme (embedding) yerine BM25: birkaç düzine sayfa için hızlıdır (soru başına 0,2 ms'den az),
+model ya da vektör veritabanı gerektirmez ve kararları ekranda gösterilebilir. En ucuz
+kontroller önce çalışır; böylece kılavuzların desteklemediği bir soru, ücretli tek bir API
+çağrısı yapılmadan talebe dönüşür. API anahtarı olmadan uygulama demo modunda çalışır: en iyi
+bölümü alıntılar ve talepleri kurallarla sınıflandırır.
+
+</Section>
+
+<Section id="code">
+
+Kararın tamamı Telegram'dan bağımsızdır; bu yüzden bot, web sayfası, değerlendirme ve testler
+aynı kodu çalıştırır:
+
+```python
+async def decide(self, question: str) -> Decision:
+    retrieval = self.retriever.search(question, self.top_k)
+    urgent = urgency(question)
+
+    if urgent is Urgency.OUTAGE:
+        return Decision(retrieval, route=Route.OUTAGE)
+    if is_action_request(question):
+        return Decision(retrieval, route=Route.ACTION)
+    if not retrieval.confident:  # no LLM call for what the how-tos cannot support
+        return Decision(retrieval, route=Route.NOT_FOUND)
+
+    sources = number_sources([hit.section for hit in retrieval.hits])
+    try:
+        draft = await self.llm.answer(question, sources)
+    except LLMError:
+        draft = await self.fallback.answer(question, sources)  # extractive, still grounded
+
+    if not draft.answered or not draft.answer.strip():
+        return Decision(retrieval, route=Route.NO_ANSWER)
+    check = check_citations(draft.answer, sources)
+    if not check.grounded:
+        return Decision(retrieval, route=Route.NO_CITATION)
+
+    route = Route.SECURITY if urgent is Urgency.SECURITY else None
+    return Decision(retrieval, check.text, check.cited, route=route)
+```
+
+</Section>
+
+<Section id="bug">
+
+### "Tüm ofiste internet yok" bir erişim sorunu olarak kaydediliyordu
+
+<BugPart id="problem">
+
+Önceliklendirme kurallarını değerlendirme sorularının üzerinden geçirdiğimde, tüm ofisi
+etkileyen kesinti doğru önceliği (P1) aldı ama kategorisi şifre sıfırlamalarının yanında
+**access** (erişim) oldu. Atölye misafirleri için internetle ilgili bir soru da aynı yere düştü.
+
+</BugPart>
+
+<BugPart id="cause">
+
+Anahtar kelimeler kelimenin başından eşleştirilir; böylece "phish" hem "phishing" hem de
+"Phishing-Mail" kelimesini bulur. Bu yüzden erişim kategorisindeki "intern" anahtar kelimesi
+(stajyer hesapları) "internet" kelimesiyle de eşleşiyordu ve iki kategori eşit olduğunda access,
+network'ten önce kontrol ediliyordu.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Artık bir anahtar kelime, sonuna `$` eklenerek tam kelime eşleşmesi isteyebiliyor; "intern"
+"intern$" oldu. Ayrıca eşitlikte artık network, access'i geçiyor. Bir test,
+"No internet on my laptop" (network) ile "Account for our new intern" (access) cümlelerini
+yan yana kontrol ediyor.
+
+</BugPart>
+
+<Diff>
+
+```python
+folded = fold(phrase.strip())
+parts.append(part + r"\b" if len(folded) <= 3 else part)
+
+ACCESS = keywords("... contractor, intern, passwort, ...")
+```
+
+```python
+folded = fold(phrase.strip())
+whole = folded.endswith("$") or len(folded) <= 3
+folded = folded.rstrip("$")
+parts.append(part + r"\b" if whole else part)
+
+ACCESS = keywords("... contractor, intern$, passwort, ...")
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **95 otomatik test**: sıralama, atıf kontrolleri, talebe giden her yol, önceliklendirme kuralları, sahte bir API sunucusuna karşı Claude istemcisi ve sahte bir Telegram oturumuyla uçtan uca Telegram botu.
+- Dört dilde 30 test sorusunda arama: doğru belge **30 sorunun 29'unda** ilk sırada ve **30'unun 30'unda** ilk üçte. En sonda yalnızca bir kez puanlanan 15 ayrılmış soruda: **15'te 14** ve **15'te 15**.
+- Kılavuzların kapsamadığı 13 sorunun tamamı değerlendirmede talebe dönüştü. README'de, demoyu hazırlarken gözden kaçan üç soruyu ve nedenlerini de listeliyorum.
+- Claude ile yanıt kalitesi henüz ölçülmedi; bunun için bir API anahtarı gerekiyor. [Claude değerlendirme sonuçları]
+- [Gerçek bir destek masasında sonuç, örneğin "talep açılmadan yanıtlanan soruların oranı"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

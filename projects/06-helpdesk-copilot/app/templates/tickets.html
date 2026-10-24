@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Tickets{% endblock %}
+{% block content %}
+<style>
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 26px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .stat .value { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .stat .label { color: var(--muted); font-size: 13px; }
+  .bypriority { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .filters { display: flex; gap: 6px; margin-bottom: 12px; }
+  .filters a { text-decoration: none; color: var(--muted); font-size: 14px; padding: 4px 10px; border-radius: 6px; }
+  .filters a.active { background: var(--soft); color: var(--text); font-weight: 600; }
+  tr.P1 td { background: var(--row-p1); }
+  tr.closed td { opacity: .55; }
+  .summary { font-weight: 600; }
+  .question { margin-top: 3px; }
+  .status { font-size: 13px; white-space: nowrap; }
+  .status.open { color: var(--p1); font-weight: 600; }
+  .status.in_progress { color: var(--p2); font-weight: 600; }
+  .actions { display: flex; gap: 6px; margin-top: 6px; }
+  .actions form { margin: 0; }
+  @media (max-width: 760px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+</style>
+
+<h1>IT tickets</h1>
+<p class="lead">Questions the copilot could not answer from the knowledge base, triaged for the IT team.</p>
+
+<div class="stats">
+  <div class="stat">
+    <div class="value">{{ stats.questions }}</div>
+    <div class="label">questions asked</div>
+  </div>
+  <div class="stat">
+    <div class="value">{{ stats.answered }}{% if stats.questions %} <span class="muted" style="font-size:15px;font-weight:500">· {{ (100 * stats.answered / stats.questions) | round | int }}%</span>{% endif %}</div>
+    <div class="label">answered with sources</div>
+  </div>
+  <div class="stat">
+    <div class="value">{{ stats.solved }}</div>
+    <div class="label">marked "solved" by the employee</div>
+  </div>
+  <div class="stat">
+    <div class="value">{{ stats.open_tickets }}</div>
+    <div class="label">open tickets</div>
+    <div class="bypriority">
+      {% for p in priorities %}<span class="pill {{ p }}" title="open {{ p }} tickets">{{ p }} · {{ stats.open_by_priority[p] }}</span>{% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="filters">
+  <a class="{% if status == 'open' %}active{% endif %}" href="/?status=open">Open</a>
+  <a class="{% if status == 'closed' %}active{% endif %}" href="/?status=closed">Closed</a>
+  <a class="{% if status == 'all' %}active{% endif %}" href="/?status=all">All</a>
+</div>
+
+<div class="card">
+  {% if tickets %}
+  <table>
+    <thead>
+      <tr>
+        <th class="num">#</th>
+        <th>Priority</th>
+        <th>Ticket</th>
+        <th class="hide-sm">From</th>
+        <th class="hide-sm">Created</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in tickets %}
+      <tr id="t{{ t.id }}" class="{{ t.triage.priority }} {{ t.status.value }}">
+        <td class="num muted">{{ t.id }}</td>
+        <td>
+          <span class="pill {{ t.triage.priority }}">{{ t.triage.priority }}</span>
+          <div class="sub">{{ t.triage.category }}</div>
+        </td>
+        <td>
+          <div class="summary">{{ t.triage.summary }}</div>
+          {% if t.question.rstrip(' .!?') != t.triage.summary.rstrip(' .!?') %}<div class="question">“{{ t.question }}”</div>{% endif %}
+          <div class="sub">Why a ticket: {{ t.route_reason }} · Priority: {{ t.triage.reason }} <span class="mono">({{ t.triage.by }})</span></div>
+        </td>
+        <td class="hide-sm">{{ t.requester.name }}<div class="sub">{{ t.requester.channel }}</div></td>
+        <td class="hide-sm" style="white-space:nowrap">{{ t.created_at | local }}</td>
+        <td>
+          <span class="status {{ t.status.value }}">{{ t.status.label }}</span>
+          <div class="actions">
+            {% if t.status == Status.OPEN %}
+            <form method="post" action="/tickets/{{ t.id }}/status"><input type="hidden" name="status" value="in_progress"><input type="hidden" name="back" value="{{ status }}"><button>Start</button></form>
+            {% endif %}
+            {% if t.status != Status.CLOSED %}
+            <form method="post" action="/tickets/{{ t.id }}/status"><input type="hidden" name="status" value="closed"><input type="hidden" name="back" value="{{ status }}"><button>Close</button></form>
+            {% else %}
+            <form method="post" action="/tickets/{{ t.id }}/status"><input type="hidden" name="status" value="open"><input type="hidden" name="back" value="{{ status }}"><button>Reopen</button></form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">No tickets here. Questions the copilot cannot answer will appear in this list.</div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Try a question{% endblock %}
+{% block content %}
+<style>
+  form.ask { display: flex; gap: 10px; margin-bottom: 26px; }
+  form.ask input { flex: 1; font: inherit; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
+  .layout { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px; align-items: start; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+  .question { font-size: 17px; font-weight: 600; margin: 0 0 14px; }
+  .outcome { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .outcome.answered { color: var(--ok); }
+  .outcome.ticket { color: var(--p1); }
+  .answer { white-space: pre-line; margin: 0; }
+  a.cite { display: inline-block; font-size: 11px; font-weight: 700; line-height: 16px; min-width: 16px; padding: 0 4px; border-radius: 4px; background: var(--soft); color: var(--accent); text-decoration: none; text-align: center; vertical-align: 2px; }
+  ol.sources { list-style: none; padding: 0; margin: 16px 0 0; border-top: 1px solid var(--line); }
+  ol.sources li { padding: 10px 0 0; display: flex; gap: 10px; }
+  ol.sources .n { font-weight: 700; color: var(--accent); min-width: 22px; }
+  .notice { margin-top: 16px; font-size: 13px; color: var(--muted); }
+  .note { margin-top: 12px; font-size: 13px; color: var(--p2); }
+  .ticket { margin-top: 12px; padding: 12px 14px; border-radius: 8px; background: var(--soft); }
+  .meter { height: 6px; border-radius: 3px; background: var(--soft); margin: 8px 0 4px; position: relative; overflow: hidden; }
+  .meter span { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ok); }
+  .meter.low span { background: var(--p1); }
+  .meter i { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--text); }
+  .terms { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .term { font-family: var(--mono); font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--soft); color: var(--muted); }
+  .term.hit { color: var(--text); font-weight: 600; }
+  .panel table td, .panel table th { padding: 8px 6px; }
+  .examples { display: flex; flex-wrap: wrap; gap: 8px; }
+  .examples a { font-size: 14px; padding: 4px 10px; border-radius: 6px; background: var(--card); border: 1px solid var(--line); text-decoration: none; color: var(--text); }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+</style>
+
+<h1>Try a question</h1>
+<p class="lead">The same pipeline the Telegram bot uses. Nothing is saved and no ticket is created.</p>
+
+<form class="ask" method="get" action="/try">
+  <input name="q" value="{{ q }}" placeholder="e.g. How do I connect to the VPN from home?" maxlength="2000" autofocus>
+  <button class="primary">Ask</button>
+</form>
+
+{% if reply %}
+{% set d = reply.decision %}
+<div class="layout">
+  <section class="panel">
+    <p class="question">{{ reply.question }}</p>
+    {% if reply.answered %}
+      <div class="outcome answered">● Answered from {{ d.sources | length }} source{% if d.sources | length != 1 %}s{% endif %}</div>
+      <p class="answer">{{ d.answer | cite }}</p>
+      {% if d.note %}<div class="note">{{ d.note }}</div>{% endif %}
+      <ol class="sources">
+        {% for s in d.sources %}
+        <li id="src-{{ s.number }}"><span class="n">[{{ s.number }}]</span><span>{{ s.label }}<div class="sub mono">knowledge/{{ s.section.doc_id }}.md</div></span></li>
+        {% endfor %}
+      </ol>
+      <div class="notice">{{ ai_notice }}</div>
+    {% else %}
+      <div class="outcome ticket">● Not answered: would become a ticket</div>
+      <p class="answer muted">Instead of guessing, the copilot hands this to a person.</p>
+    {% endif %}
+    {% if reply.triage %}
+      <div class="ticket">
+        <span class="pill {{ reply.triage.priority }}">{{ reply.triage.priority }}</span>
+        <strong>{{ reply.triage.category }}</strong> · {{ reply.triage.summary }}
+        <div class="sub">Why a ticket: {{ d.ticket_reason }}</div>
+        <div class="sub">Priority: {{ reply.triage.reason }} ({{ reply.triage.by }})</div>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <div class="muted" style="font-size:13px">Retrieval confidence (coverage of the question by the best section)</div>
+    {% set cov = d.retrieval.coverage %}
+    <div class="meter {% if cov < min_coverage %}low{% endif %}"><span style="width: {{ (cov * 100) | round | int }}%"></span><i style="left: {{ (min_coverage * 100) | round | int }}%"></i></div>
+    <div style="font-size:13px"><strong>{{ d.retrieval.coverage_label }}</strong> <span class="muted">· threshold {{ '%.2f' % min_coverage }}</span></div>
+    <h2 style="margin-top:20px">BM25 top {{ d.retrieval.hits | length }}</h2>
+    {% if d.retrieval.hits %}
+    <table>
+      <thead><tr><th>Section</th><th class="num">Score</th></tr></thead>
+      <tbody>
+        {% for hit in d.retrieval.hits %}
+        <tr>
+          <td>{{ hit.section.label }}
+            <div class="terms">{% for term in d.retrieval.terms %}<span class="term {% if term in hit.matched %}hit{% endif %}">{{ term }}</span>{% endfor %}</div>
+          </td>
+          <td class="num">{{ '%.1f' % hit.score }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="muted">No section shares a word with the question.</div>
+    {% endif %}
+  </section>
+</div>
+{% else %}
+<h2>Examples</h2>
+<div class="examples">
+  {% for example in [
+    "How do I connect to the VPN from home?",
+    "Mein Druckauftrag hängt in der Warteschlange",
+    "I clicked a link in a fake DHL email and typed my password",
+    "The whole office has no internet!",
+    "Can you order a new office chair for me?",
+  ] %}
+  <a href="/try?q={{ example | urlencode }}">{{ example }}</a>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

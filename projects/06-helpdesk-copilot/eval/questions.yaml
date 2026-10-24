@@ -1,0 +1,183 @@
+# Evaluation set for the Sample Office knowledge base.
+#
+# `questions`: 30 questions an employee might ask, phrased the way people write in a chat
+# (not copied from the documents), with the document that answers them (file name without
+# .md). 22 are in English, 3 in German, 3 in Russian and 2 in Turkish.
+#
+# `out_of_scope`: questions the knowledge base does not answer. A good copilot does not
+# invent an answer for them: they must become tickets.
+#
+# Run: uv run python -m app eval
+
+questions:
+  - q: How do I connect my work laptop to the office wifi?
+    expected: wifi
+    lang: en
+  - q: the internet on my laptop keeps dropping every few minutes in the meeting room
+    expected: wifi
+    lang: en
+  - q: Wie lautet das WLAN-Passwort für Gäste?
+    expected: guest-wifi
+    lang: de
+  - q: We have a workshop with 15 external people next week, can they get internet?
+    expected: guest-wifi
+    lang: en
+  - q: Как подключиться к VPN из дома?
+    expected: vpn
+    lang: ru
+  - q: WireGuard shows no handshake at the hotel
+    expected: vpn
+    lang: en
+  - q: Mein Druckauftrag hängt in der Warteschlange
+    expected: printer
+    lang: de
+  - q: How do I add the colour printer on my new laptop?
+    expected: printer
+    lang: en
+  - q: Where do I find more toner?
+    expected: printer
+    lang: en
+  - q: Ich habe mein Passwort vergessen, was tun?
+    expected: password-reset
+    lang: de
+  - q: My account keeps getting locked even though I type the right password
+    expected: password-reset
+    lang: en
+  - q: Как настроить приложение Authenticator?
+    expected: mfa
+    lang: ru
+  - q: I'm getting a new phone, what happens with my MFA?
+    expected: mfa
+    lang: en
+  - q: I got an approval request on my phone but I wasn't logging in
+    expected: mfa
+    lang: en
+  - q: How can I send an email as bookings@?
+    expected: shared-mailbox
+    lang: en
+  - q: The info mailbox disappeared from my Outlook
+    expected: shared-mailbox
+    lang: en
+  - q: Outlook says working offline and I don't get any emails
+    expected: outlook
+    lang: en
+  - q: How do I set an out of office message?
+    expected: outlook
+    lang: en
+  - q: My mailbox is full, what can I delete?
+    expected: outlook
+    lang: en
+  - q: I just got a new laptop, how do I log in the first time?
+    expected: new-laptop
+    lang: en
+  - q: The second screen stays black when I connect to the dock
+    expected: new-laptop
+    lang: en
+  - q: How can I install Zoom?
+    expected: software
+    lang: en
+  - q: I need a program that is not in the company portal
+    expected: software
+    lang: en
+  - q: Мне пришло подозрительное письмо, похоже на фишинг. Что делать?
+    expected: phishing
+    lang: ru
+  - q: I clicked a link in a fake DHL email and typed my password
+    expected: phishing
+    lang: en
+  - q: OneDrive'da bir dosyayı yanlışlıkla sildim
+    expected: backup-restore
+    lang: tr
+  - q: Someone overwrote the budget Excel on the S drive last week, can we get the old one back?
+    expected: backup-restore
+    lang: en
+  - q: Teams can't find my camera
+    expected: teams
+    lang: en
+  - q: A new colleague starts on Monday, what do I need to do so she has an account?
+    expected: accounts
+    lang: en
+  - q: Şirket laptopumu kaybettim, ne yapmalıyım?
+    expected: lost-device
+    lang: tr
+
+# Held-out questions: written after the first measurement on `questions`, before any tuning,
+# and scored once at the end. `questions` was used to find and fix retrieval misses, so its
+# score is optimistic; this set shows how much of that tuning generalizes.
+holdout:
+  - q: can't connect my iPhone to the staff wifi
+    expected: wifi
+    lang: en
+  - q: what's this week's guest network password?
+    expected: guest-wifi
+    lang: en
+  - q: Do I need the VPN to use Outlook from home?
+    expected: vpn
+    lang: en
+  - q: Papierstau im Drucker, was soll ich tun?
+    expected: printer
+    lang: de
+  - q: How long should my new password be?
+    expected: password-reset
+    lang: en
+  - q: Я потерял телефон с приложением Authenticator
+    expected: mfa
+    lang: ru
+  - q: how do I open the invoices mailbox on my phone?
+    expected: shared-mailbox
+    lang: en
+  - q: Outlook'ta otomatik yanıt nasıl ayarlanır?
+    expected: outlook
+    lang: tr
+  - q: Where do I return my old laptop?
+    expected: new-laptop
+    lang: en
+  - q: Can I get admin rights to install a program?
+    expected: software
+    lang: en
+  - q: Someone called saying he is from Microsoft and asked for my code
+    expected: phishing
+    lang: en
+  - q: How long are deleted files kept in the recycle bin?
+    expected: backup-restore
+    lang: en
+  - q: Wie teile ich meinen Bildschirm in Teams?
+    expected: teams
+    lang: de
+  - q: My colleague leaves the company on Friday, what happens with her mailbox?
+    expected: accounts
+    lang: en
+  - q: Мой ноутбук украли в кафе
+    expected: lost-device
+    lang: ru
+
+out_of_scope:
+  - q: Can you order a new office chair for me?
+    lang: en
+  - q: The coffee machine in the kitchen is leaking
+    lang: en
+  - q: My monitor shows vertical stripes and flickers
+    lang: en
+  - q: The whole office has no internet since 10 minutes!
+    lang: en
+  - q: The air conditioning in the server room is beeping
+    lang: en
+  - q: Please give Anna access to the Finance folder on the S drive
+    lang: en
+  - q: My laptop battery is swollen and the touchpad is lifting
+    lang: en
+  - q: Wann ist die Weihnachtsfeier?
+    lang: de
+
+# Held-out out-of-scope questions, same rules as `holdout`.
+holdout_out_of_scope:
+  - q: The projector in the big meeting room has no signal
+    lang: en
+  - q: Could you buy me a second monitor?
+    lang: en
+  - q: Где взять пропуск на парковку?
+    lang: ru
+  - q: Our website shows an error 500 since this morning
+    lang: en
+  - q: Ofisteki klima çalışmıyor
+    lang: tr
