@@ -1,0 +1,177 @@
+{
+  "meta": {
+    "title": "Daniil Dushin — KI-Entwickler & IT-/Netzwerktechniker",
+    "description": "Ich baue KI-Tools, die Unternehmen Zeit sparen — und richte die Hardware ein, auf der sie laufen. Wohnhaft in Antalya, offen für einen Umzug nach Europa und weltweit.",
+    "projects": "Projekte",
+    "projectsDescription": "Telegram-Bots, KI-Tools und Netzwerk-Monitoring für echte Geschäftsprobleme, jeweils mit Tests und einem Protokoll der behobenen Fehler.",
+    "about": "Über mich",
+    "aboutDescription": "Erfahrung, Sprachen und Arbeitsweise: KI-gestützte Entwicklung plus praktische IT- und Netzwerkarbeit.",
+    "cv": "Lebenslauf",
+    "cvDescription": "Laden Sie meinen Lebenslauf für Rollen in KI-Entwicklung, IT-Support, Vertrieb oder Hotellerie herunter.",
+    "contact": "Kontakt",
+    "contactDescription": "E-Mail, Telegram, LinkedIn und GitHub.",
+    "notFound": "Seite nicht gefunden"
+  },
+  "nav": {
+    "home": "Start",
+    "projects": "Projekte",
+    "about": "Über mich",
+    "cv": "Lebenslauf",
+    "contact": "Kontakt",
+    "primary": "Hauptnavigation",
+    "menu": "Menü",
+    "close": "Schließen",
+    "skip": "Zum Inhalt springen",
+    "language": "Sprache",
+    "themeToDark": "Zum dunklen Design wechseln",
+    "themeToLight": "Zum hellen Design wechseln"
+  },
+  "status": {
+    "label": "Aktuell",
+    "text": "Installation von KI-Monitoring-Systemen bei Steady Control"
+  },
+  "home": {
+    "role": "KI-Entwickler & IT-/Netzwerktechniker",
+    "place": "Antalya, Türkei",
+    "available": "Offen für einen Umzug",
+    "headline": "Ich baue KI-Tools, die Unternehmen Zeit sparen — und richte die Hardware ein, auf der sie laufen.",
+    "intro": "Tagsüber installiere ich KI-Monitoring-Systeme für Hotels, Cafés und Restaurants: Kameras, Rekorder, Sensoren und MikroTik-Netzwerke. In eigenen Projekten baue ich Telegram-Bots und Web-Tools für genau solche Betriebe — mit KI-Coding-Agenten und mit Tests.",
+    "ctaProjects": "Projekte ansehen",
+    "ctaContact": "Kontakt aufnehmen",
+    "selectedWork": "Ausgewählte Projekte",
+    "allProjects": "Alle Projekte",
+    "skillsTitle": "Womit ich arbeite",
+    "skillGroups": {
+      "ai": "KI & Automatisierung",
+      "web": "Bots & Web",
+      "infra": "Infrastruktur"
+    },
+    "relocation": "Offen für einen Umzug · Europa & weltweit",
+    "relocationText": "Ich suche eine Junior-Stelle als KI-Entwickler oder IT-/Netzwerktechniker, vor Ort oder remote."
+  },
+  "projects": {
+    "title": "Projekte",
+    "intro": "Jedes Projekt löst ein Problem, für dessen Lösung Unternehmen bezahlen: Verluste durch defekte Geräte, Personal, das immer wieder dieselben Fragen beantwortet, Ausfälle, die niemand bemerkt. Jedes läuft von Anfang bis Ende und ist durch Tests abgesichert.",
+    "filterLabel": "Nach Kategorie filtern",
+    "all": "Alle",
+    "empty": "In dieser Kategorie gibt es noch keine Projekte.",
+    "readCase": "Fallstudie lesen",
+    "categories": {
+      "AI": "KI",
+      "Bots": "Bots",
+      "Web": "Web",
+      "Infrastructure": "Infrastruktur"
+    }
+  },
+  "case": {
+    "back": "Alle Projekte",
+    "role": "Rolle",
+    "year": "Jahr",
+    "stack": "Technologien",
+    "category": "Kategorie",
+    "sections": {
+      "problem": "Das Problem",
+      "solution": "Die Lösung",
+      "demo": "Demo",
+      "screenshots": "Screenshots",
+      "stack": "Technologien",
+      "code": "Code im Detail",
+      "bug": "Ein Fehler, den ich gefunden und behoben habe",
+      "result": "Ergebnis",
+      "links": "Links"
+    },
+    "bug": {
+      "problem": "Was kaputt war",
+      "cause": "Ursache",
+      "fix": "Die Lösung",
+      "before": "Vorher",
+      "after": "Nachher"
+    },
+    "copy": "Code kopieren",
+    "copied": "Kopiert",
+    "videoCaption": "Promo-Video, mit Remotion gerendert.",
+    "videoFallback": "Ihr Browser kann dieses Video nicht abspielen.",
+    "github": "Quellcode auf GitHub",
+    "liveDemo": "Live-Demo",
+    "next": "Nächstes Projekt",
+    "placeholderLink": "Link folgt bald"
+  },
+  "about": {
+    "title": "Über mich",
+    "lead": "Ich arbeite dort, wo Software auf Hardware trifft. Ich baue Bots und Web-Tools mit KI-Coding-Agenten und installiere und repariere die Kameras, Sensoren und Netzwerke, von denen diese Tools abhängen.",
+    "howTitle": "Wie ich arbeite",
+    "how": "KI schreibt Code schnell; ihn zu prüfen ist meine Aufgabe. Jedes Projekt auf dieser Seite läuft von Anfang bis Ende, hat automatische Tests und ein Protokoll der echten Fehler, die ich beim Bauen gefunden und behoben habe.",
+    "experienceTitle": "Erfahrung",
+    "now": "heute",
+    "jobs": {
+      "steady": {
+        "period": "2026 — heute",
+        "title": "Technischer Spezialist",
+        "org": "Steady Control, Antalya",
+        "text": "Ich installiere und betreue ein KI-System, das in Hotels, Cafés und Restaurants die Küchenabläufe, die Servicequalität und die Kühlschranktemperaturen überwacht. Beim Kunden vor Ort installiere, konfiguriere und repariere ich Kameras, NVR/DVR-Rekorder, Zugangskarten, IoT-Sensoren und MikroTik-Netzwerktechnik."
+      },
+      "freelance": {
+        "period": "2022 — heute",
+        "title": "Freiberuflicher IT-Support & Webentwicklung",
+        "org": "Selbstständig",
+        "text": "Einrichtung und Reparatur von PCs, Heim- und Büronetzwerke, WLAN-Abdeckung und Fernsupport. Telegram-Bots und Websites für kleine Unternehmen."
+      },
+      "family": {
+        "period": "2022 — 2025",
+        "title": "Vertrieb & technische Administration",
+        "org": "Familienunternehmen, Belgorod",
+        "text": "Verkauf und Produktberatung, Arbeit mit Lieferanten und Lager sowie die IT des Unternehmens: Geräte, Software und Netzwerk."
+      }
+    },
+    "languagesTitle": "Sprachen",
+    "languages": {
+      "ru": "Russisch — Muttersprache",
+      "en": "Englisch — A1, lerne aktiv",
+      "tr": "Türkisch — A1"
+    },
+    "relocationTitle": "Offen für einen Umzug",
+    "relocationText": "Für das richtige Team ziehe ich nach Europa oder in ein anderes Land. Führerschein Klasse B."
+  },
+  "cv": {
+    "title": "Lebenslauf",
+    "intro": "Vier Versionen meines Lebenslaufs, jeweils für eine andere Art von Stelle. Alle auf Englisch, als PDF.",
+    "download": "PDF herunterladen",
+    "items": {
+      "aiDeveloper": {
+        "title": "KI-Entwickler",
+        "text": "Telegram-Bots, Websites und KI-Automatisierung."
+      },
+      "itSupport": {
+        "title": "IT-Support & Netzwerke",
+        "text": "MikroTik, CCTV/NVR, Zutrittskontrolle und Vor-Ort-Support."
+      },
+      "sales": {
+        "title": "Vertrieb & Customer Success",
+        "text": "Russischsprachige Märkte, mit technischem Hintergrund."
+      },
+      "hospitality": {
+        "title": "Guest Relations / Rezeption",
+        "text": "Hotels und Tourismus, russischsprachige Gäste."
+      }
+    }
+  },
+  "contact": {
+    "title": "Kontakt",
+    "lead": "Am schnellsten erreichen Sie mich per E-Mail oder Telegram.",
+    "email": "E-Mail",
+    "telegram": "Telegram",
+    "linkedin": "LinkedIn",
+    "github": "GitHub"
+  },
+  "footer": {
+    "built": "Gebaut mit Next.js, TypeScript und MDX.",
+    "source": "Quellcode",
+    "rights": "Daniil Dushin"
+  },
+  "notFound": {
+    "code": "404",
+    "title": "Diese Seite gibt es nicht.",
+    "text": "Der Link ist vielleicht fehlerhaft, oder die Seite ist umgezogen.",
+    "home": "Zur Startseite"
+  }
+}

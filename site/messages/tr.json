@@ -1,0 +1,177 @@
+{
+  "meta": {
+    "title": "Daniil Dushin — Yapay Zekâ Geliştirici ve BT/Ağ Teknisyeni",
+    "description": "İşletmelere zaman kazandıran yapay zekâ araçları geliştiriyorum ve bu araçların çalıştığı donanımı da kendim kuruyorum. Antalya'da yaşıyorum, Avrupa'ya ve dünyanın her yerine taşınmaya açığım.",
+    "projects": "Projeler",
+    "projectsDescription": "Gerçek iş sorunları için geliştirilmiş Telegram botları, yapay zekâ araçları ve ağ izleme; her biri testli ve bulunan hataların kaydıyla.",
+    "about": "Hakkımda",
+    "aboutDescription": "Deneyim, diller ve çalışma şeklim: yapay zekâ destekli geliştirme ve sahada BT ile ağ işleri.",
+    "cv": "Özgeçmiş",
+    "cvDescription": "Yapay zekâ geliştirme, BT desteği, satış veya otelcilik pozisyonları için özgeçmişimi indirin.",
+    "contact": "İletişim",
+    "contactDescription": "E-posta, Telegram, LinkedIn ve GitHub.",
+    "notFound": "Sayfa bulunamadı"
+  },
+  "nav": {
+    "home": "Ana sayfa",
+    "projects": "Projeler",
+    "about": "Hakkımda",
+    "cv": "Özgeçmiş",
+    "contact": "İletişim",
+    "primary": "Ana menü",
+    "menu": "Menü",
+    "close": "Kapat",
+    "skip": "İçeriğe geç",
+    "language": "Dil",
+    "themeToDark": "Koyu temaya geç",
+    "themeToLight": "Açık temaya geç"
+  },
+  "status": {
+    "label": "Şu anda",
+    "text": "Steady Control'de yapay zekâ izleme sistemleri kuruyorum"
+  },
+  "home": {
+    "role": "Yapay Zekâ Geliştirici ve BT/Ağ Teknisyeni",
+    "place": "Antalya, Türkiye",
+    "available": "Taşınmaya açığım",
+    "headline": "İşletmelere zaman kazandıran yapay zekâ araçları geliştiriyorum — ve çalıştıkları donanımı da ben kuruyorum.",
+    "intro": "Gündüzleri oteller, kafeler ve restoranlar için yapay zekâ izleme sistemleri kuruyorum: kameralar, kayıt cihazları, sensörler ve MikroTik ağları. Kendi projelerimde aynı tür işletmeler için Telegram botları ve web araçları geliştiriyorum — yapay zekâ kodlama asistanlarıyla ve testlerle.",
+    "ctaProjects": "Projeleri gör",
+    "ctaContact": "İletişime geç",
+    "selectedWork": "Seçili işler",
+    "allProjects": "Tüm projeler",
+    "skillsTitle": "Kullandığım araçlar",
+    "skillGroups": {
+      "ai": "Yapay zekâ ve otomasyon",
+      "web": "Botlar ve web",
+      "infra": "Altyapı"
+    },
+    "relocation": "Taşınmaya açığım · Avrupa ve dünya",
+    "relocationText": "Yapay zekâ geliştirici veya BT/ağ teknisyeni olarak junior bir pozisyon arıyorum; ofiste ya da uzaktan."
+  },
+  "projects": {
+    "title": "Projeler",
+    "intro": "Her proje, işletmelerin çözmek için para ödediği bir sorunu çözüyor: bozuk ekipman yüzünden kaybedilen para, aynı soruları cevaplayan personel, kimsenin fark etmediği arızalar. Hepsi baştan sona çalışıyor ve testlerle kontrol ediliyor.",
+    "filterLabel": "Kategoriye göre filtrele",
+    "all": "Tümü",
+    "empty": "Bu kategoride henüz proje yok.",
+    "readCase": "Vaka çalışmasını oku",
+    "categories": {
+      "AI": "Yapay zekâ",
+      "Bots": "Botlar",
+      "Web": "Web",
+      "Infrastructure": "Altyapı"
+    }
+  },
+  "case": {
+    "back": "Tüm projeler",
+    "role": "Rol",
+    "year": "Yıl",
+    "stack": "Teknolojiler",
+    "category": "Kategori",
+    "sections": {
+      "problem": "Sorun",
+      "solution": "Çözüm",
+      "demo": "Demo",
+      "screenshots": "Ekran görüntüleri",
+      "stack": "Teknolojiler",
+      "code": "Öne çıkan kod",
+      "bug": "Bulduğum ve düzelttiğim hata",
+      "result": "Sonuç",
+      "links": "Bağlantılar"
+    },
+    "bug": {
+      "problem": "Ne bozuldu",
+      "cause": "Asıl neden",
+      "fix": "Çözüm",
+      "before": "Önce",
+      "after": "Sonra"
+    },
+    "copy": "Kodu kopyala",
+    "copied": "Kopyalandı",
+    "videoCaption": "Remotion ile hazırlanmış tanıtım videosu.",
+    "videoFallback": "Tarayıcınız bu videoyu oynatamıyor.",
+    "github": "GitHub'da kaynak kod",
+    "liveDemo": "Canlı demo",
+    "next": "Sonraki proje",
+    "placeholderLink": "bağlantı yakında"
+  },
+  "about": {
+    "title": "Hakkımda",
+    "lead": "Yazılımla donanımın buluştuğu yerde çalışıyorum. Yapay zekâ kodlama asistanlarıyla botlar ve web araçları geliştiriyorum; bu araçların bağlı olduğu kameraları, sensörleri ve ağları da kurup tamir ediyorum.",
+    "howTitle": "Nasıl çalışıyorum",
+    "how": "Yapay zekâ kodu hızlı yazar; onu kontrol etmek benim işim. Bu sitedeki her proje baştan sona çalışıyor, otomatik testlere sahip ve geliştirirken bulup düzelttiğim gerçek hataların kaydını tutuyor.",
+    "experienceTitle": "Deneyim",
+    "now": "şimdi",
+    "jobs": {
+      "steady": {
+        "period": "2026 — şimdi",
+        "title": "Teknik Uzman",
+        "org": "Steady Control, Antalya",
+        "text": "Otel, kafe ve restoranlarda mutfağı, hizmet kalitesini ve buzdolabı sıcaklıklarını izleyen bir yapay zekâ sistemini kuruyor ve destekliyorum. Müşteri lokasyonlarında kameraları, NVR/DVR kayıt cihazlarını, erişim kartlarını, IoT sensörlerini ve MikroTik ağ ekipmanlarını kuruyor, yapılandırıyor ve onarıyorum."
+      },
+      "freelance": {
+        "period": "2022 — şimdi",
+        "title": "Serbest BT desteği ve web geliştirme",
+        "org": "Serbest çalışan",
+        "text": "Bilgisayar kurulumu ve onarımı, ev ve küçük ofis ağları, Wi-Fi kapsamı ve uzaktan destek. Küçük işletmeler için Telegram botları ve web siteleri."
+      },
+      "family": {
+        "period": "2022 — 2025",
+        "title": "Satış ve teknik yönetim",
+        "org": "Aile şirketi, Belgorod",
+        "text": "Müşterilere satış ve ürün danışmanlığı, tedarikçi ve stok işleri, ayrıca şirketin BT'si: ekipman, yazılım ve ağ."
+      }
+    },
+    "languagesTitle": "Diller",
+    "languages": {
+      "ru": "Rusça — ana dil",
+      "en": "İngilizce — A1, aktif olarak öğreniyorum",
+      "tr": "Türkçe — A1"
+    },
+    "relocationTitle": "Taşınmaya açığım",
+    "relocationText": "Doğru ekip için Avrupa'ya veya dünyanın herhangi bir yerine taşınmaya hazırım. B sınıfı ehliyet."
+  },
+  "cv": {
+    "title": "Özgeçmiş",
+    "intro": "Özgeçmişimin her biri farklı bir pozisyon için hazırlanmış dört versiyonu. Hepsi İngilizce ve PDF formatında.",
+    "download": "PDF indir",
+    "items": {
+      "aiDeveloper": {
+        "title": "Yapay Zekâ Geliştirici",
+        "text": "Telegram botları, web siteleri ve yapay zekâ otomasyonu."
+      },
+      "itSupport": {
+        "title": "BT Desteği ve Ağ",
+        "text": "MikroTik, CCTV/NVR, erişim kontrolü ve sahada destek."
+      },
+      "sales": {
+        "title": "Satış ve Müşteri Başarısı",
+        "text": "Rusça konuşulan pazarlar, teknik altyapıyla birlikte."
+      },
+      "hospitality": {
+        "title": "Misafir İlişkileri / Ön Büro",
+        "text": "Oteller ve turizm, Rusça konuşan misafirler."
+      }
+    }
+  },
+  "contact": {
+    "title": "İletişim",
+    "lead": "Bana en hızlı e-posta veya Telegram ile ulaşabilirsiniz.",
+    "email": "E-posta",
+    "telegram": "Telegram",
+    "linkedin": "LinkedIn",
+    "github": "GitHub"
+  },
+  "footer": {
+    "built": "Next.js, TypeScript ve MDX ile yapıldı.",
+    "source": "Kaynak kod",
+    "rights": "Daniil Dushin"
+  },
+  "notFound": {
+    "code": "404",
+    "title": "Bu sayfa mevcut değil.",
+    "text": "Bağlantı bozuk olabilir veya sayfa taşınmış olabilir.",
+    "home": "Ana sayfaya dön"
+  }
+}

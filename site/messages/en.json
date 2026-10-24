@@ -1,0 +1,177 @@
+{
+  "meta": {
+    "title": "Daniil Dushin — AI Developer & IT/Network Technician",
+    "description": "I build AI tools that save businesses time — and I set up the hardware they run on. Based in Antalya, open to relocation to Europe and worldwide.",
+    "projects": "Projects",
+    "projectsDescription": "Telegram bots, AI tools and network monitoring built for real business problems, each with tests and a log of real bugs fixed.",
+    "about": "About",
+    "aboutDescription": "Experience, languages and how I work: AI-assisted development plus hands-on IT and networking.",
+    "cv": "CV",
+    "cvDescription": "Download my CV for AI development, IT support, sales or hospitality roles.",
+    "contact": "Contact",
+    "contactDescription": "Email, Telegram, LinkedIn and GitHub.",
+    "notFound": "Page not found"
+  },
+  "nav": {
+    "home": "Home",
+    "projects": "Projects",
+    "about": "About",
+    "cv": "CV",
+    "contact": "Contact",
+    "primary": "Main navigation",
+    "menu": "Menu",
+    "close": "Close",
+    "skip": "Skip to content",
+    "language": "Language",
+    "themeToDark": "Switch to dark theme",
+    "themeToLight": "Switch to light theme"
+  },
+  "status": {
+    "label": "Currently",
+    "text": "deploying AI monitoring systems at Steady Control"
+  },
+  "home": {
+    "role": "AI Developer & IT/Network Technician",
+    "place": "Antalya, Türkiye",
+    "available": "Open to relocation",
+    "headline": "I build AI tools that save businesses time — and I set up the hardware they run on.",
+    "intro": "By day I deploy AI monitoring systems for hotels, cafes and restaurants: cameras, recorders, sensors and MikroTik networks. In my own projects I build Telegram bots and web tools for the same kind of businesses, with AI coding agents and with tests.",
+    "ctaProjects": "View projects",
+    "ctaContact": "Get in touch",
+    "selectedWork": "Selected work",
+    "allProjects": "All projects",
+    "skillsTitle": "What I work with",
+    "skillGroups": {
+      "ai": "AI & automation",
+      "web": "Bots & web",
+      "infra": "Infrastructure"
+    },
+    "relocation": "Open to relocation · Europe & worldwide",
+    "relocationText": "I am looking for a junior role as an AI developer or an IT/network technician, on site or remote."
+  },
+  "projects": {
+    "title": "Projects",
+    "intro": "Each project solves a problem businesses pay to fix: money lost to broken equipment, staff answering the same questions, failures nobody notices. Each one runs end to end and is covered by tests.",
+    "filterLabel": "Filter by category",
+    "all": "All",
+    "empty": "No projects in this category yet.",
+    "readCase": "Read the case study",
+    "categories": {
+      "AI": "AI",
+      "Bots": "Bots",
+      "Web": "Web",
+      "Infrastructure": "Infrastructure"
+    }
+  },
+  "case": {
+    "back": "All projects",
+    "role": "Role",
+    "year": "Year",
+    "stack": "Stack",
+    "category": "Category",
+    "sections": {
+      "problem": "The problem",
+      "solution": "The solution",
+      "demo": "Demo",
+      "screenshots": "Screenshots",
+      "stack": "Tech stack",
+      "code": "Code highlight",
+      "bug": "Bug I found and fixed",
+      "result": "Result",
+      "links": "Links"
+    },
+    "bug": {
+      "problem": "What broke",
+      "cause": "Root cause",
+      "fix": "The fix",
+      "before": "Before",
+      "after": "After"
+    },
+    "copy": "Copy code",
+    "copied": "Copied",
+    "videoCaption": "Promo video, rendered with Remotion.",
+    "videoFallback": "Your browser cannot play this video.",
+    "github": "Source code on GitHub",
+    "liveDemo": "Live demo",
+    "next": "Next project",
+    "placeholderLink": "link coming soon"
+  },
+  "about": {
+    "title": "About",
+    "lead": "I work where software meets hardware. I build bots and web tools with AI coding agents, and I install and repair the cameras, sensors and networks those tools depend on.",
+    "howTitle": "How I work",
+    "how": "AI writes code fast; checking it is my job. Every project on this site runs end to end, has automated tests, and keeps a log of the real bugs I found and fixed while building it.",
+    "experienceTitle": "Experience",
+    "now": "now",
+    "jobs": {
+      "steady": {
+        "period": "2026 — now",
+        "title": "Technical Specialist",
+        "org": "Steady Control, Antalya",
+        "text": "I deploy and support an AI system that monitors kitchens, service quality and fridge temperatures in hotels, cafes and restaurants. On client sites I install, configure and repair cameras, NVR/DVR recorders, access badges, IoT sensors and MikroTik network equipment."
+      },
+      "freelance": {
+        "period": "2022 — now",
+        "title": "Freelance IT support & web development",
+        "org": "Self-employed",
+        "text": "PC setup and repair, home and small-office networks, Wi-Fi coverage and remote support. Telegram bots and websites for small businesses."
+      },
+      "family": {
+        "period": "2022 — 2025",
+        "title": "Sales & technical administration",
+        "org": "Family business, Belgorod",
+        "text": "Customer sales and product consultations, supplier and stock work, and the company's IT: equipment, software and the network."
+      }
+    },
+    "languagesTitle": "Languages",
+    "languages": {
+      "ru": "Russian — native",
+      "en": "English — A1, learning actively",
+      "tr": "Turkish — A1"
+    },
+    "relocationTitle": "Open to relocation",
+    "relocationText": "Ready to move to Europe or worldwide for the right team. Driving licence: category B."
+  },
+  "cv": {
+    "title": "CV",
+    "intro": "Four versions of my CV, each for a different kind of role. All of them are in English, as PDF.",
+    "download": "Download PDF",
+    "items": {
+      "aiDeveloper": {
+        "title": "AI Developer",
+        "text": "Telegram bots, websites and AI automation."
+      },
+      "itSupport": {
+        "title": "IT Support & Networking",
+        "text": "MikroTik, CCTV/NVR, access control and on-site support."
+      },
+      "sales": {
+        "title": "Sales & Customer Success",
+        "text": "Russian-speaking markets, with a technical background."
+      },
+      "hospitality": {
+        "title": "Guest Relations / Front Office",
+        "text": "Hotels and tourism, Russian-speaking guests."
+      }
+    }
+  },
+  "contact": {
+    "title": "Contact",
+    "lead": "The quickest way to reach me is email or Telegram.",
+    "email": "Email",
+    "telegram": "Telegram",
+    "linkedin": "LinkedIn",
+    "github": "GitHub"
+  },
+  "footer": {
+    "built": "Built with Next.js, TypeScript and MDX.",
+    "source": "Source code",
+    "rights": "Daniil Dushin"
+  },
+  "notFound": {
+    "code": "404",
+    "title": "This page does not exist.",
+    "text": "The link may be broken, or the page has moved.",
+    "home": "Back to the home page"
+  }
+}

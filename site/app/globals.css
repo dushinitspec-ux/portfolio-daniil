@@ -1,0 +1,198 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens. RGB triplets so Tailwind can add opacity: bg-fg/10, border-fg/20 ... */
+:root {
+  --bg: 245 243 238; /* #F5F3EE warm off-white */
+  --fg: 17 17 17; /* #111 near-black */
+  --muted: 94 90 82; /* 6:1 on --bg, passes WCAG AA for body text */
+  --surface: 236 233 226;
+  --accent: 255 79 31; /* #FF4F1F: shapes and lines only, too light for small text */
+  --accent-text: 194 51 10; /* darker accent for text, 5:1 on --bg */
+  --header-h: 4rem;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: 17 17 16;
+  --fg: 237 234 227;
+  --muted: 163 158 148;
+  --surface: 27 26 24;
+  --accent: 255 99 56;
+  --accent-text: 255 120 82;
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-bg font-sans text-fg antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  ::selection {
+    background: rgb(var(--accent) / 0.25);
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--fg));
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .page-x {
+    @apply mx-auto w-full max-w-page px-4 sm:px-6 lg:px-10;
+  }
+
+  .grid-12 {
+    @apply grid grid-cols-4 gap-x-4 md:grid-cols-12 md:gap-x-6;
+  }
+
+  .label {
+    @apply font-mono text-label uppercase text-muted;
+  }
+
+  /* Underline that grows from the left on hover; transform only, so it stays at 60 fps. */
+  .link-line {
+    position: relative;
+    display: inline-block;
+  }
+  .link-line::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.15em;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.1, 1);
+  }
+  .link-line:hover::after,
+  .link-line:focus-visible::after,
+  .link-line[aria-current="page"]::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  /* Split-text headline: every word slides up from behind its own mask. Pure CSS, so it plays
+     on first paint without waiting for JavaScript. Kept short: the headline is the page's
+     largest element, and it only counts as painted once every word is in view. */
+  .split-mask {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+    padding-bottom: 0.08em;
+    margin-bottom: -0.08em;
+  }
+  .split-word {
+    display: inline-block;
+    animation: rise 0.55s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+    animation-delay: calc(var(--i, 0) * 20ms);
+  }
+
+  .prose-case {
+    @apply max-w-[37em] text-[1.0625rem] leading-relaxed text-fg;
+  }
+  .prose-case p + p {
+    @apply mt-4;
+  }
+  .prose-case a {
+    @apply underline decoration-1 underline-offset-4 hover:decoration-2;
+  }
+  .prose-case strong {
+    @apply font-semibold;
+  }
+  /* Only lists written in Markdown (no class); component lists style themselves. */
+  .prose-case ul:not([class]) {
+    @apply mt-4 space-y-2;
+  }
+  .prose-case ul:not([class]) > li {
+    @apply relative pl-5;
+  }
+  .prose-case ul:not([class]) > li::before {
+    content: "";
+    @apply absolute left-0 top-[0.7em] h-px w-2.5 bg-fg;
+  }
+  .prose-case :not(pre) > code {
+    @apply rounded-sm bg-surface px-1.5 py-0.5 font-mono text-[0.88em];
+  }
+  .prose-case h3 {
+    @apply mb-4 text-2xl font-semibold tracking-tight;
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translate3d(0, 105%, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Shiki emits both themes as CSS variables; choose one per colour scheme. */
+.shiki,
+.shiki span {
+  color: var(--shiki-light);
+}
+.dark .shiki,
+.dark .shiki span {
+  color: var(--shiki-dark);
+}
+.shiki {
+  @apply overflow-x-auto bg-transparent py-4 font-mono text-[0.8125rem] leading-[1.7];
+  counter-reset: line;
+}
+.shiki code {
+  /* Grid makes every line a full-width row, so diff highlights span the whole width. */
+  display: grid;
+  min-width: 100%;
+  width: max-content;
+}
+.shiki .line {
+  @apply min-h-[1.7em] pl-4 pr-6;
+}
+.shiki .line::before {
+  counter-increment: line;
+  content: counter(line);
+  @apply mr-5 inline-block w-6 select-none text-right text-muted/60;
+}
+.shiki .line.diff-remove {
+  background: rgb(var(--accent) / 0.13);
+}
+.shiki .line.diff-add {
+  background: rgb(34 160 90 / 0.14);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .split-word {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Lenis smooth scrolling */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
