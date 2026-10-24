@@ -1,0 +1,182 @@
+---
+title: Network Inventory
+summary: Bir ofis veya otel ağındaki cihazları bulur, kayıtlarını tutar; yeni cihazları ve riskli açık servisleri işaretler.
+categories: [Infrastructure]
+order: 7
+featured: false
+year: 2026
+role: Kişisel proje — tasarım, kod, testler
+stack: [Python 3.12, asyncio, FastAPI, Jinja2, SQLite, aiogram 3, pytest]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+cover:
+  src: /projects/network-inventory/cover.png
+  alt: Network Inventory kapak görseli — biri turuncuyla işaretlenmiş bir ağ cihazları ızgarası
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/network-inventory/inventory.png
+    alt: Demo modunda envanter sayfası; özet sayılar, son taramadaki değişiklikler ve cihaz tablosunun başı
+    width: 1280
+    height: 800
+    caption: Demo modunda envanter sayfası — bir yeni cihaz, iki kaybolan, dördü yüksek riskli.
+  - src: /projects/network-inventory/device.png
+    alt: Üç riskli bir kameranın cihaz sayfası — Telnet açık, HTTPS'siz web arayüzü, erişilebilir kamera yayını — her biri açıklamalı
+    width: 1280
+    height: 800
+    caption: Fabrika ayarlarına döndürülmüş bir kamera; her risk açıklanmış.
+  - src: /projects/network-inventory/risky-devices.png
+    alt: En az bir riski olan cihazlara göre filtrelenmiş cihaz tablosu; risk etiketleri, üreticiler, sorumlular ve konumlar
+    width: 1280
+    height: 1600
+    caption: En az bir riski olan tüm cihazlar.
+---
+
+<Section id="problem">
+
+Küçük bir otele veya ofise ağına neyin bağlı olduğunu sorun; dürüst cevap çoğu zaman
+"bilmiyoruz" olur. Kameralar, kayıt cihazları, yazıcılar, erişim noktaları ve yıllar önce uzaktan
+destek için kurulmuş bilgisayar aynı düz ağda durur. Yeni bir cihazı kimse fark etmez; fabrika
+ayarlarına dönen bir kameranın Telnet'e cevap verdiğini de kimse bilmez.
+
+AB'nin NIS2 Direktifi varlık yönetimini asgari siber güvenlik önlemleri arasında sayar
+(Madde 21(2)(i)). Direktif belirli sektörlerdeki orta ve büyük ölçekli şirketlere uygulanır;
+bu yüzden birçok küçük işletme kapsamı dışında kalır. Yine de ağda ne olduğunun listesi her
+güvenlik çalışmasının ilk adımıdır. Bu araç o listeyi tutmaya yardım eder; kimseyi tek başına
+NIS2 uyumlu yapmaz.
+
+</Section>
+
+<Section id="solution">
+
+- Taranacak ağlar açıkça yazılmalıdır. Yalnızca özel IP aralıklarına izin verilir, /22'den büyüğüne izin verilmez; araç hiçbir yere giriş yapmaz ve hiçbir açığı kullanmaz.
+- Bir tarama asyncio ile tüm adreslere **paralel** ping atar, ardından MAC adresleri için işletim sisteminin ARP tablosunu okur; böylece ping'e cevap vermeyen bir bilgisayar da bulunur.
+- Her canlı cihaza kısa bir port listesiyle (Telnet, FTP, RDP, SMB, RTSP, Winbox…) TCP bağlantısı denenir ve adı için ters DNS sorgusu yapılır.
+- MAC adresinden üretici bulunur; kaynak, IEEE listesinden alınmış küçük, gömülü bir alt kümedir. Telefonların ve sanal makinelerin rastgele MAC'leri yanlış üretici almak yerine öyle işaretlenir.
+- Cihazlar SQLite kaydında MAC ile izlenir; DHCP'den gelen yeni bir adres yeni bir cihaz sayılmaz. Her tarama bir öncekiyle karşılaştırılır: yeni cihaz, kayboldu, IP değişti, port açıldı.
+- Yeni bir cihaz ya da yeni açılan riskli bir port, tarama başına tek bir Telegram mesajı gönderir. Web sayfası kaydı filtrelerle, riskleri sade açıklamalarla gösterir; CSV ve JSON dışa aktarır.
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Cihaz keşfi ham soketler yerine sistemin `ping`, `arp -a` ve `ip neigh` komutlarını kullanır;
+bu yüzden yönetici yetkisi gerekmez. Çıktıları ASCII olarak çözülür: Rusça Windows'ta kelimeler
+okunamaz hale gelir ama `TTL=`, IP ve MAC adresleri her dilde kalır — Uptime Monitor projesinden
+kalan bir ders. Cihazları eşleştirme ve taramaları karşılaştırma saf fonksiyonlardır; her tarama
+tek bir işlemle (transaction) kaydedilir.
+
+</Section>
+
+<Section id="code">
+
+Taramalar arasındaki fark saf bir fonksiyondur. Portlar, haftalar önce de olsa cihazın son
+görüldüğü taramayla karşılaştırılır; bir cihaz ancak bu tarama onun ağını kapsadıysa kaybolmuş
+sayılır:
+
+```python
+def diff(*, last_known, previous_scan, current, in_scope):
+    changes = []
+    for key, now in current.items():
+        before = last_known.get(key)
+        if before is None:
+            changes.append(Change(ChangeKind.NEW, key, tuple(sorted(now.ports)), new_ip=now.ip))
+            continue
+        if key not in previous_scan:
+            changes.append(Change(ChangeKind.RETURNED, key, new_ip=now.ip))
+        if before.ip != now.ip:
+            changes.append(Change(ChangeKind.IP_CHANGED, key, old_ip=before.ip, new_ip=now.ip))
+        if opened := now.ports - before.ports:
+            changes.append(Change(ChangeKind.PORT_OPENED, key, tuple(sorted(opened))))
+        if closed := before.ports - now.ports:
+            changes.append(Change(ChangeKind.PORT_CLOSED, key, tuple(sorted(closed))))
+
+    for key in previous_scan:
+        before = last_known.get(key)
+        if key not in current and before is not None and in_scope(before.ip):
+            changes.append(Change(ChangeKind.GONE, key, old_ip=before.ip))
+    return changes
+```
+
+</Section>
+
+<Section id="bug">
+
+### Birçok adresin adı olmadığında host adları kayboluyordu
+
+<BugPart id="problem">
+
+Ters DNS'e bütün bir alt ağı emanet etmeden önce onu Windows bilgisayarımda ölçtüm. Tek başına
+`127.0.0.1` 3 ms'de bilgisayarın adına çözülüyordu. Diğer 60'ının adı olmayan 61 adreslik bir
+grupta aynı sorgu boş döndü. Gerçek bir ağda bu, birçok adresin DNS kaydı olmadığında — ki olağan
+durum budur — cihazların adlarını kaybetmesi demek.
+
+</BugPart>
+
+<BugPart id="cause">
+
+Windows'ta adı olmayan bir adres için sorgu ancak 4,98 saniye sonra hatayla biter. 2 saniyelik
+zaman aşımı yalnızca beklemeyi durduruyordu: `getnameinfo` içinde takılan iş parçacığı iptal
+edilemez ve meşgul kalır. Eşzamanlılık yuvası zaman aşımında serbest bırakılıyordu; bu yüzden
+yeni sorgular ortak havuzda meşgul iş parçacıklarının arkasında sıraya giriyor ve 2 saniyeleri
+daha başlamadan doluyordu.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Ters DNS'e kendi iş parçacığı havuzu verildi ve bir yuva ancak iş parçacığı gerçekten bittiğinde
+serbest kalıyor. `asyncio.shield`, zaman aşımının future'ı iptal etmesini engelliyor; aksi halde
+yuva yine erken boşalırdı. Düzeltmeden sonra aynı grup adı döndürüyor. Bir regresyon testi
+sorunu ağ olmadan, sahte ve yavaş bir çözümleyiciyle yeniden üretiyor.
+
+</BugPart>
+
+<Diff>
+
+```python
+try:
+    name, _ = await asyncio.wait_for(
+        loop.getnameinfo((ip, 0), socket.NI_NAMEREQD), timeout_s
+    )
+except (TimeoutError, OSError):
+    return None
+```
+
+```python
+await self._slots.acquire()
+future = loop.run_in_executor(self._pool, self._resolve, ip)
+future.add_done_callback(self._release)  # free the slot only when the thread is done
+try:
+    name = await asyncio.wait_for(asyncio.shield(future), self._timeout)
+except (TimeoutError, OSError, UnicodeError):
+    return None
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **107 otomatik test**; aralarında Rusça Windows'tan gerçek `ping` ve `arp -a` çıktıları var.
+- Gerçek bir ağda, ama yalnızca bu bilgisayar ve ev router'ı üzerinde denendi: router üreticisi, adı ve açık portlarıyla 2–3 saniyede bulundu.
+- Loopback aralığı 127.0.0.0/22'nin taranması (1022 adres, hepsi bu bilgisayarda) 22 saniye sürdü.
+- Demo modu 21 cihazlık bir ofisi simüle eder ve iki kez tarar: altı değişiklik ve bir Telegram uyarısı.
+- [Gerçek bir yerdeki sonuç, örn. "bir otelde N cihazın envanteri"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

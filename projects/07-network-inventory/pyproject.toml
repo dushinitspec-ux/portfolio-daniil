@@ -1,0 +1,39 @@
+[project]
+name = "network-inventory"
+version = "0.1.0"
+description = "Finds the devices on an office or hotel network, keeps a register of them and flags risky open services."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "aiogram>=3.31.0",
+    "aiosqlite>=0.22.1",
+    "fastapi>=0.162.0",
+    "jinja2>=3.1.6",
+    "pydantic-settings>=2.16.1",
+    "python-multipart>=0.0.20",
+    "tzdata>=2026.5",
+    "uvicorn>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.17.2",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "ASYNC", "RUF"]
+# Ping and arp output is parsed in any language, so Cyrillic letters are intentional.
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

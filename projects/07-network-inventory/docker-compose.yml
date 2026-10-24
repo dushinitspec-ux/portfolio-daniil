@@ -1,0 +1,19 @@
+services:
+  inventory:
+    build: .
+    env_file: .env
+    # Discovery needs the host network: in Docker's default bridge network the container
+    # only sees Docker's own gateway in its ARP table, so no MAC addresses and no vendors.
+    # Host networking works on a Linux host only (not Docker Desktop on Windows/macOS).
+    network_mode: host
+    environment:
+      # With the host network, 127.0.0.1 means "only from the host itself". Change it
+      # only if the page is behind a reverse proxy with authentication.
+      HOST: 127.0.0.1
+      PORT: 8107
+    volumes:
+      - inventory-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  inventory-data:

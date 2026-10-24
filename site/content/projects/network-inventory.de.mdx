@@ -1,0 +1,183 @@
+---
+title: Network Inventory
+summary: Findet die Geräte im Netzwerk eines Büros oder Hotels, führt ein Verzeichnis darüber und markiert neue Geräte und riskante offene Dienste.
+categories: [Infrastructure]
+order: 7
+featured: false
+year: 2026
+role: Eigenes Projekt — Konzept, Code, Tests
+stack: [Python 3.12, asyncio, FastAPI, Jinja2, SQLite, aiogram 3, pytest]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+cover:
+  src: /projects/network-inventory/cover.png
+  alt: Titelbild von Network Inventory — ein Raster aus Netzwerkgeräten, eines orange markiert
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/network-inventory/inventory.png
+    alt: Inventarseite im Demo-Modus mit Kennzahlen, den Änderungen des letzten Scans und dem Anfang der Gerätetabelle
+    width: 1280
+    height: 800
+    caption: Die Inventarseite im Demo-Modus — ein neues Gerät, zwei verschwunden, vier mit hohem Risiko.
+  - src: /projects/network-inventory/device.png
+    alt: Geräteseite einer Kamera mit drei Risiken — Telnet offen, Weboberfläche ohne HTTPS, Kamerastream erreichbar — jeweils mit Erklärung
+    width: 1280
+    height: 800
+    caption: Eine Kamera nach dem Zurücksetzen auf Werkseinstellungen, jedes Risiko erklärt.
+  - src: /projects/network-inventory/risky-devices.png
+    alt: Gerätetabelle, gefiltert auf Geräte mit mindestens einem Risiko, mit Risiko-Markierungen, Herstellern, Verantwortlichen und Standorten
+    width: 1280
+    height: 1600
+    caption: Alle Geräte mit mindestens einem Risiko.
+---
+
+<Section id="problem">
+
+Fragt man ein kleines Hotel oder Büro, was an seinem Netzwerk hängt, lautet die ehrliche Antwort
+meist: „Wissen wir nicht." Kameras, Rekorder, Drucker, Access Points und der PC, den jemand vor
+Jahren für den Fernsupport eingerichtet hat, hängen alle im selben flachen Netz. Ein neues Gerät
+bemerkt niemand, und niemand weiß, dass eine Kamera nach dem Zurücksetzen auf Telnet antwortet.
+
+Die NIS2-Richtlinie der EU nennt das Management von Assets unter den Mindestmaßnahmen der
+Cybersicherheit (Artikel 21 Absatz 2 Buchstabe i). Sie gilt für mittlere und große Unternehmen
+bestimmter Sektoren, viele kleine Betriebe fallen also nicht darunter. Eine Liste dessen, was im
+Netz ist, bleibt trotzdem der erste Schritt jeder Sicherheitsarbeit. Dieses Werkzeug hilft, sie zu
+führen; NIS2-konform macht es allein niemanden.
+
+</Section>
+
+<Section id="solution">
+
+- Die zu scannenden Netze müssen ausdrücklich angegeben werden. Erlaubt sind nur private Adressbereiche, nichts größer als /22, und das Werkzeug meldet sich nirgends an und nutzt keine Lücken aus.
+- Ein Scan pingt alle Adressen mit asyncio **parallel** an und liest dann die ARP-Tabelle des Betriebssystems für die MAC-Adressen. So taucht auch ein PC auf, der Pings verwirft.
+- Jedes erreichbare Gerät bekommt eine TCP-Verbindung zu einer kurzen Portliste (Telnet, FTP, RDP, SMB, RTSP, Winbox…) und eine Reverse-DNS-Abfrage für seinen Namen.
+- Aus der MAC-Adresse ergibt sich der Hersteller, aus einem kleinen mitgelieferten Auszug der IEEE-Liste. Zufällige MACs von Smartphones und virtuellen Maschinen werden als solche markiert, statt einen falschen Hersteller zu bekommen.
+- Geräte werden im SQLite-Verzeichnis über ihre MAC verfolgt, eine neue DHCP-Adresse ist also kein neues Gerät. Jeder Scan wird mit dem vorherigen verglichen: neues Gerät, verschwunden, IP geändert, Port geöffnet.
+- Ein neues Gerät oder ein neu geöffneter riskanter Port löst eine Telegram-Nachricht pro Scan aus. Die Webseite zeigt das Verzeichnis mit Filtern und die Risiken mit verständlichen Erklärungen und exportiert CSV und JSON.
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Die Erkennung nutzt die Systembefehle `ping`, `arp -a` und `ip neigh` statt Raw Sockets und
+läuft deshalb ohne Administratorrechte. Ihre Ausgabe wird als ASCII dekodiert: Auf einem
+russischen Windows werden die Wörter unlesbar, aber `TTL=`, IP- und MAC-Adressen bleiben in jeder
+Sprache erhalten — eine Lehre aus dem Uptime Monitor. Geräte zuordnen und Scans vergleichen sind
+reine Funktionen, und jeder Scan wird in einer Transaktion gespeichert.
+
+</Section>
+
+<Section id="code">
+
+Der Vergleich zwischen Scans ist eine reine Funktion. Ports werden mit der letzten Sichtung des
+Geräts verglichen, auch wenn sie Wochen zurückliegt, und ein Gerät gilt nur als verschwunden,
+wenn dieser Scan sein Netz abgedeckt hat:
+
+```python
+def diff(*, last_known, previous_scan, current, in_scope):
+    changes = []
+    for key, now in current.items():
+        before = last_known.get(key)
+        if before is None:
+            changes.append(Change(ChangeKind.NEW, key, tuple(sorted(now.ports)), new_ip=now.ip))
+            continue
+        if key not in previous_scan:
+            changes.append(Change(ChangeKind.RETURNED, key, new_ip=now.ip))
+        if before.ip != now.ip:
+            changes.append(Change(ChangeKind.IP_CHANGED, key, old_ip=before.ip, new_ip=now.ip))
+        if opened := now.ports - before.ports:
+            changes.append(Change(ChangeKind.PORT_OPENED, key, tuple(sorted(opened))))
+        if closed := before.ports - now.ports:
+            changes.append(Change(ChangeKind.PORT_CLOSED, key, tuple(sorted(closed))))
+
+    for key in previous_scan:
+        before = last_known.get(key)
+        if key not in current and before is not None and in_scope(before.ip):
+            changes.append(Change(ChangeKind.GONE, key, old_ip=before.ip))
+    return changes
+```
+
+</Section>
+
+<Section id="bug">
+
+### Hostnamen fehlten, wenn viele Adressen keinen Namen hatten
+
+<BugPart id="problem">
+
+Bevor ich Reverse DNS ein ganzes Subnetz anvertraute, habe ich es auf meinem Windows-Rechner
+gemessen. Allein wurde `127.0.0.1` in 3 ms zum Rechnernamen aufgelöst. In einem Stapel von 61
+Adressen, von denen die anderen 60 keinen Namen haben, kam dieselbe Abfrage leer zurück. In einem
+echten Netz heißt das: Geräte verlieren ihre Namen, sobald viele Adressen keinen DNS-Eintrag
+haben — und das ist der Normalfall.
+
+</BugPart>
+
+<BugPart id="cause">
+
+Unter Windows schlägt eine Abfrage für eine Adresse ohne Namen erst nach 4,98 Sekunden fehl. Das
+Timeout von 2 Sekunden beendete nur das Warten: Ein Thread, der in `getnameinfo` hängt, lässt sich
+nicht abbrechen und blieb belegt. Der Platz für parallele Abfragen wurde beim Timeout frei, also
+reihten sich neue Abfragen im gemeinsamen Pool hinter belegten Threads ein, und ihre 2 Sekunden
+liefen ab, bevor sie überhaupt anfingen.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Reverse DNS hat jetzt einen eigenen Thread-Pool, und ein Platz wird erst frei, wenn der Thread
+wirklich fertig ist. `asyncio.shield` verhindert, dass das Timeout das Future abbricht, sonst
+würde der Platz wieder zu früh frei. Nach der Korrektur liefert derselbe Stapel den Namen. Ein
+Regressionstest stellt das Problem mit einem langsamen Fake-Resolver nach, ganz ohne Netzwerk.
+
+</BugPart>
+
+<Diff>
+
+```python
+try:
+    name, _ = await asyncio.wait_for(
+        loop.getnameinfo((ip, 0), socket.NI_NAMEREQD), timeout_s
+    )
+except (TimeoutError, OSError):
+    return None
+```
+
+```python
+await self._slots.acquire()
+future = loop.run_in_executor(self._pool, self._resolve, ip)
+future.add_done_callback(self._release)  # free the slot only when the thread is done
+try:
+    name = await asyncio.wait_for(asyncio.shield(future), self._timeout)
+except (TimeoutError, OSError, UnicodeError):
+    return None
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **107 automatische Tests**, darunter echte `ping`- und `arp -a`-Ausgaben von russischem Windows.
+- In einem echten Netz getestet, aber nur gegen diesen Rechner und den Router zu Hause: Der Router wurde mit Hersteller, Namen und offenen Ports in 2–3 Sekunden gefunden.
+- Ein Scan des Loopback-Bereichs 127.0.0.0/22 (1022 Adressen, alle auf diesem Rechner) dauerte 22 Sekunden.
+- Der Demo-Modus simuliert ein Büro mit 21 Geräten und scannt es zweimal: sechs Änderungen und ein Telegram-Alarm.
+- [Ergebnis an einem echten Standort, z. B. „Inventar von N Geräten in einem Hotel"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

@@ -1,0 +1,2 @@
+# Real command output captured on Windows (cp866): keep the bytes exactly as they are.
+tests/fixtures/*.txt -text

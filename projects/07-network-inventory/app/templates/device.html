@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}{{ device.label }} · Network inventory{% endblock %}
+{% block content %}
+<style>
+  .facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 24px; margin-top: 24px; }
+  .facts > div { border-top: 1px solid var(--line); padding: 10px 0 14px; }
+  .facts .value { margin-top: 6px; overflow-wrap: anywhere; }
+  .risk { display: grid; grid-template-columns: 110px 1fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+  .risk h3 { margin: 0 0 6px; font-size: 17px; font-weight: 600; }
+  .risk p { margin: 0 0 6px; max-width: 760px; }
+  .risk .fix { margin-top: 10px; }
+  form.edit input[type=checkbox] { accent-color: var(--fg); width: 16px; height: 16px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 48px; }
+  form.edit { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; margin-top: 18px; }
+  form.edit label { display: grid; gap: 6px; }
+  form.edit .wide { grid-column: 1 / -1; }
+  form.edit input[type=text], form.edit textarea { font: 15px var(--sans); color: var(--fg); background: transparent;
+    border: 0; border-bottom: 1px solid var(--strong); padding: 6px 0; border-radius: 0; }
+  form.edit textarea { min-height: 72px; resize: vertical; }
+  .check { display: flex !important; align-items: center; gap: 10px; }
+  .saved { color: var(--accent-text); }
+  @media (max-width: 900px) { .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } .two, form.edit { grid-template-columns: 1fr; } }
+</style>
+
+<header class="top">
+  <div>
+    <div class="label"><a href="/">← Network inventory</a> · device #{{ device.id }}</div>
+    <h1>{{ device.label }}</h1>
+  </div>
+  <div class="actions">
+    {% if demo %}<span class="demo">Demo · simulated office</span>{% endif %}
+    {% if not row.present %}<span class="badge">not seen in last scan</span>{% endif %}
+    {% if not device.known %}<span class="badge">not confirmed</span>{% endif %}
+  </div>
+</header>
+
+<section class="facts">
+  <div><div class="label">IP address</div><div class="value mono">{{ device.ip }}</div></div>
+  <div><div class="label">MAC address</div><div class="value mono">{{ device.mac or "not visible from the scanner" }}</div></div>
+  <div><div class="label">Vendor</div><div class="value">
+    {% if device.mac_kind == MacKind.RANDOMISED %}Randomised (locally administered) MAC: a phone or laptop with a private Wi-Fi address, or a virtual machine. The vendor cannot be known.
+    {% else %}{{ device.vendor or "not in the bundled vendor list" }}{% endif %}</div></div>
+  <div><div class="label">Host name (reverse DNS)</div><div class="value mono">{{ device.hostname or "—" }}</div></div>
+  <div><div class="label">Open ports</div><div class="value mono">{% for p in device.open_ports | sort %}{{ p }} {{ service_name(p) }}{{ ", " if not loop.last }}{% else %}none of the probed ports{% endfor %}</div></div>
+  <div><div class="label">First seen</div><div class="value">{{ fmt(device.first_seen, "%d %b %Y, %H:%M") }}</div></div>
+  <div><div class="label">Last seen</div><div class="value">{{ fmt(device.last_seen, "%d %b %Y, %H:%M") }}</div></div>
+  <div><div class="label">Register key</div><div class="value mono">{{ device.key }}</div></div>
+</section>
+
+<h2><span>Risks</span><span class="muted">{{ row.risks | length }}</span></h2>
+{% for r in row.risks %}
+<div class="risk">
+  <div><span class="badge {{ r.severity.label }}">{{ r.severity.label }}</span><div class="mono muted">port {{ r.ports | join(", ") }}</div></div>
+  <div>
+    <h3>{{ r.title }}</h3>
+    <p>{{ r.why }}</p>
+    <p class="fix"><span class="label">What to do</span><br>{{ r.fix }}</p>
+  </div>
+</div>
+{% else %}
+<div class="empty">No risky service among the probed ports.</div>
+{% endfor %}
+
+<h2><span>Register details</span>{% if saved %}<span class="saved">Saved</span>{% endif %}</h2>
+<form class="edit" method="post" action="/devices/{{ device.id }}">
+  <label><span class="label">Name</span><input type="text" name="name" value="{{ device.name }}" maxlength="{{ max_short }}" placeholder="Reception camera"></label>
+  <label><span class="label">Owner</span><input type="text" name="owner" value="{{ device.owner }}" maxlength="{{ max_short }}" placeholder="Who is responsible"></label>
+  <label><span class="label">Location</span><input type="text" name="location" value="{{ device.location }}" maxlength="{{ max_short }}" placeholder="Room, rack, ceiling"></label>
+  <label class="check"><input type="checkbox" name="known" value="true" {% if device.known %}checked{% endif %}><span>Confirmed: this device belongs here</span></label>
+  <label class="wide"><span class="label">Notes</span><textarea name="notes" maxlength="{{ max_notes }}">{{ device.notes }}</textarea></label>
+  <div><button class="button primary">Save</button></div>
+</form>
+
+<div class="two">
+  <div>
+    <h2><span>IP history</span></h2>
+    <table>
+      <thead><tr><th>IP</th><th>First seen</th><th>Last seen</th></tr></thead>
+      <tbody>
+        {% for rec in ip_history %}
+        <tr><td class="mono">{{ rec.ip }}</td><td>{{ fmt(rec.first_seen) }}</td><td>{{ fmt(rec.last_seen) }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <h2><span>Changes</span></h2>
+    {% if history %}
+    <table>
+      <tbody>
+        {% for c in history %}
+        <tr><td class="label">{% if c.flagged %}<span class="flag"></span>{% endif %}{{ c.kind.value | replace("_", " ") }}</td><td>{{ c.text }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty">No changes recorded.</div>{% endif %}
+  </div>
+</div>
+{% endblock %}
