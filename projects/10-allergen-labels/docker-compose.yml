@@ -1,0 +1,16 @@
+services:
+  allergens:
+    build: .
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8110
+    ports:
+      - "8110:8110"
+    volumes:
+      # Dishes, the confirmation log and cached AI suggestions live in SQLite here.
+      - allergen-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  allergen-data:

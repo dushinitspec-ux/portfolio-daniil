@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Dishes · Allergen Labels{% endblock %}
+{% block head %}
+<style>
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--fg); margin: 0 0 36px; }
+  .stat { padding: 14px 16px 16px 0; border-right: 1px solid var(--line); }
+  .stat:last-child { border-right: 0; }
+  .stat .n { font-size: 44px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .stat.alert .n { color: var(--accent-text); }
+  .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  .head .actions { display: flex; gap: 10px; margin-bottom: 28px; }
+  .dish a { font-weight: 600; text-decoration: none; font-size: 16px; }
+  .dish a:hover { text-decoration: underline; }
+  .dish .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .dish .recipe { font: 12px/1.45 var(--mono); color: var(--muted); margin-top: 6px; max-width: 48em; }
+  tr.archived td { opacity: .55; }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 14px 0 0; align-items: center; }
+  .legend .chip { margin: 0 4px 0 0; }
+  @media (max-width: 860px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+</style>
+{% endblock %}
+{% block content %}
+<div class="head">
+  <div>
+    <h1>Dishes</h1>
+    <p class="lead">A dish appears on the printed menu and in the JSON export only after a person confirms its allergens. Changing the ingredients takes it off until someone confirms again.</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="/dishes/new">+ New dish</a>
+    <a class="btn ghost" href="/menu?lang=en">Printable menu</a>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="label">Dishes</div><div class="n">{{ counts.total }}</div></div>
+  <div class="stat"><div class="label">On the menu</div><div class="n">{{ counts.published }}</div></div>
+  <div class="stat {{ 'alert' if counts.waiting }}"><div class="label">Waiting for confirmation</div><div class="n">{{ counts.waiting }}</div></div>
+  <div class="stat {{ 'alert' if counts.review }}"><div class="label">To review</div><div class="n">{{ counts.review }}</div></div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:44%">Dish</th>
+      <th class="hide-sm">Section</th>
+      <th>Allergens</th>
+      <th class="hide-sm">To check</th>
+      <th>State</th>
+      <th class="hide-sm">Last change</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for d in dishes %}
+    <tr class="{{ 'archived' if d.row.archived }}">
+      <td class="dish">
+        <a href="/dishes/{{ d.id }}">{{ d.name() }}</a>
+        <div class="sub">{% for lang in languages[1:] %}{{ d.row.names[lang] or '— no ' ~ lang.english_name ~ ' name' }}{{ ' · ' if not loop.last }}{% endfor %}</div>
+        <div class="recipe">{{ d.row.recipe | truncate(110) }}</div>
+      </td>
+      <td class="hide-sm">{{ d.section.label(EN) }}</td>
+      <td>
+        {% if d.confirmed %}
+          {% for n in d.confirmed_allergens | sort %}<span class="chip solid" title="{{ by_number[n].label(EN) }}">{{ n }}</span>{% else %}<span class="muted">none</span>{% endfor %}
+        {% else %}
+          {% for n in d.suggested | sort %}{% set cls = '' if n in d.analysis.certain else ('maybe' if n in d.analysis.allergens else 'ai') %}<span class="chip {{ cls }}" title="{{ by_number[n].label(EN) }} (suggested)">{{ n }}</span>{% else %}<span class="muted">none found</span>{% endfor %}
+        {% endif %}
+      </td>
+      <td class="hide-sm num">{% if d.to_check and not d.confirmed %}<span class="accent">{{ d.to_check | length }}</span>{% elif d.to_check %}<span class="muted" title="checked by a person at confirmation">{{ d.to_check | length }}</span>{% else %}<span class="muted">0</span>{% endif %}</td>
+      <td><span class="state {{ d.state }}">{{ state_labels[d.state] }}</span></td>
+      <td class="hide-sm muted" style="font-size:13px">{{ when(d.row.updated_at) }}<br>{{ d.row.updated_by }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<div class="legend">
+  <span><span class="chip solid">7</span>confirmed by a person</span>
+  <span><span class="chip">7</span>found by the dictionary</span>
+  <span><span class="chip maybe">7</span>possible, needs a check</span>
+  <span><span class="chip ai">7</span>AI suggestion</span>
+</div>
+{% endblock %}

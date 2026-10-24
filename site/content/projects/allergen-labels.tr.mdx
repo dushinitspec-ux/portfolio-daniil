@@ -1,0 +1,180 @@
+---
+title: Allergen Labels
+summary: Her yemekteki 14 AB alerjenini dört dilde işaretler ve bir şef onaylamadan hiçbir şeyi menüye basmaz.
+categories: [AI, Web]
+order: 10
+featured: false
+year: 2026
+role: Kişisel proje — tasarım, kod, testler
+stack: [Python 3.12, FastAPI, Jinja2, SQLite, Anthropic API, pytest, Docker]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+cover:
+  src: /projects/allergen-labels/cover.png
+  alt: Allergen Labels kapak görseli — 14 AB alerjeni, üçü işaretli
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/allergen-labels/dishes.png
+    alt: Alerjen numaralarıyla on altı örnek yemeğin listesi; onay bekleyen yemekler en üstte
+    width: 1280
+    height: 800
+    caption: Demo modunda yemek listesi. Bir kişinin bakması gereken yemekler önce gelir.
+  - src: /projects/allergen-labels/dish-satay.png
+    alt: Sosu parantez içinde yazılmış bir tavuk satay analizi; olası alerjenler, hindistan cevizi sütü notu ve onay formu
+    width: 1280
+    height: 1500
+    caption: Onaylandıktan sonra tarifi değişen bir yemek. Her bulgu, geldiği kelimeyi gösterir.
+  - src: /projects/allergen-labels/menu-de.png
+    alt: Her yemeğin yanında alerjen numaraları ve 14 alerjenin açıklaması olan Almanca basılı menü
+    width: 1280
+    height: 1500
+    caption: Almanca basılı menü. Üzerinde yalnızca onaylanmış yemekler var.
+---
+
+<Section id="problem">
+
+AB gıda mevzuatı (1169/2011 sayılı Tüzük, madde 9(1)(c) ve Ek II) 14 alerjen grubunun
+bildirilmesini ister; madde 44 ise bunu ambalajsız sunulan gıdalar için, yani restoranlar ve
+otel mutfakları için zorunlu kılar. Bilginin nasıl gösterileceğine her ülke kendisi karar
+verir. Türkiye'de de Türk Gıda Kodeksi aynı 14 grubu listeler.
+
+Zor olan liste değil. Mutfaklar tarifleri sürekli değiştirir: yeni bir tedarikçinin bulyon
+tableti, pestoda çam fıstığı yerine kaju, eskiden sıvı yağla yapılan bir sosa tereyağı.
+Menüdeki alerjen numaraları bir kez yazılır ve eskir. Antalya'da aynı menüyü farklı dillerde
+turistler okur ve fındık alerjisi olan bir misafir, yemeğin adının yanındaki bir rakama
+güvenmek zorunda kalır.
+
+</Section>
+
+<Section id="solution">
+
+- Şef malzemeleri mutfakta yazıldığı gibi girer: İngilizce, Rusça, Türkçe veya Almanca. 2.429 ifadelik, elle hazırlanmış bir sözlük alerjenleri bulur ve her bulgu için hangi kelimeden geldiğini gösterir.
+- Çoğul ekleri, Rusça hâl eklerini («сметаной»), Türkçe ekleri («fındığı», «peynirli») ve Almanca birleşik kelimeleri («Haselnusskrokant») tanır; Türkçe karakterlerle de, onlarsız da çalışır.
+- Bileşik ürünlerin tipik alerjenleri vardır: «soya sosu» soya ve *muhtemelen* gluten, «pesto» *muhtemelen* süt ve sert kabuklu meyve. `pesto (basil, cashews, parmesan)` yazınca tahminin yerini gerçek malzemeler alır.
+- Alerjene benzeyen ama Ek II'de olmayanlar işaretlenmez, açıklanır: hindistan cevizi, çam fıstığı, muskat, karabuğday, glikoz şurubu. «Laktozsuz süt» yine süttür.
+- Bilinmeyen ya da iki anlamlı kelimeler («fıstık» yer fıstığı da olabilir antep fıstığı da, «масло» tereyağı da olabilir sıvı yağ da) bir kişi için işaretlenir. API anahtarı varsa Claude kısa bir gerekçeyle grup önerir ve «onay gerekli» diye işaretler; anahtar yoksa bu kelimeler sadece işaretlenir.
+- **Bir kişi yemeği kendi adıyla onaylamadan hiçbir şey yayınlanmaz.** Her onay kayda geçer; malzemeleri değiştirmek onayı sıfırlar; başka biri tarifi değiştirmeden önce açılmış bir sayfa onu onaylayamaz.
+- Alerjen numaraları ve açıklamalarıyla dört dilde basılabilir menü ve JSON dışa aktarımı.
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+Asıl işi sözlük yapar ve internetsiz çalışır. LLM yalnızca sözlüğün çözemediği malzemeleri
+görür; cevabı, alerjen alanı 14 grup kimliğinden oluşan bir enum olan bir JSON şemasına
+uyar ve sadece onay formundaki kutuları önceden işaretler. SQLite tetikleyicileri onay
+kaydını yalnızca eklemeye açık hâle getirir: kayıtlar değiştirilemez, silinemez. Web arayüzü
+düz HTML formlarıdır, JavaScript gerekmez.
+
+</Section>
+
+<Section id="code">
+
+Sözlükteki her ifade, «katlanmış» bir metin (küçük harf, aksansız, Türkçe «İ/ı» tek biçimde)
+üzerinde çalışan bir düzenli ifadeye dönüşür. Her dilin kendi kelime biçimleri vardır:
+
+```python
+def _word(word: str, language: Language, last: bool, exact: bool) -> str:
+    escaped = re.escape(word)
+    if exact:
+        return escaped
+    if language is Language.EN:
+        if not last:
+            return escaped
+        if len(word) > 2 and word.endswith("y") and word[-2] not in _VOWELS:
+            return re.escape(word[:-1]) + "(?:y|ies)"
+        return escaped + "(?:s|es)?"
+    if language is Language.DE:
+        return escaped + _DE_ENDINGS
+    if language is Language.RU:
+        return escaped + "[а-я]{0,6}"
+    # Turkish
+    stem = escaped
+    vowels = sum(ch in _VOWELS for ch in word)
+    if word[-1] in _TR_SOFTEN and vowels >= 2:
+        stem = f"(?:{escaped}|{re.escape(word[:-1] + _TR_SOFTEN[word[-1]])})"
+    suffix = "[a-z]{0,10}" if len(word) >= 4 else _TR_SHORT_SUFFIXES
+    return stem + (f"(?P<sfx>{suffix})" if last else suffix)
+```
+
+Ardından eşleştirici, çakışmayan en uzun eşleşmeleri tutar; böylece «peanut butter»
+«butter»a, «Buchweizen» (karabuğday) da «Weizen»e (buğday) üstün gelir. «-sız» ile başlayan
+bir Türkçe ek («yumurtasız») «içermez» anlamında raporlanır, asla alerjen olarak sayılmaz.
+
+</Section>
+
+<Section id="bug">
+
+### Almanca sıfatlar bilinmeyen kelime sayılıyordu
+
+<BugPart id="problem">
+
+Etiketlediğim örnek üzerindeki ilk çalıştırma beklenen bütün alerjenleri buldu, ama 116
+satırın 42'sini bir kişinin kontrolüne gönderdi. «gehackt» ve «gerieben» sözlükte olduğu
+hâlde «gehackte Walnüsse» ve «geriebener Parmesan» işaretleniyordu; «frische Kräuter» bile.
+Hiçbir şey kaçmadı, ama boş yere alarm veren bir araca kimse kulak asmaz.
+
+</BugPart>
+
+<BugPart id="cause">
+
+Almanca kelimeler birleşik kelimelerin içinde de aranıyor, bu yüzden kalıplarında kelime
+sınırı yok; çekim eklerini de eklememiştim: «gehackt», «gehackte»nin yalnızca bir kısmını
+kaplıyordu. Sadece *bilinen* bir kelimeyle kısmen kaplanan bir kelime bilerek bilinmeyen
+sayılır (yoksa «Salat», «Waldorfsalat»ı zararsız gösterirdi). Ekleri ekledikten sonra
+«geriebener» yine geçmedi: `(?:e|en|er…)` içinde düzenli ifade işe yarayan ilk seçeneği alır
+ve arkasında sınır olmadığı için «e» her zaman yeter.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Birleşik kelime kalıpları artık ekleri en uzundan başlayarak alıyor. Örnekte kontrole giden
+satır sayısı 42'den 40'a indi, bulunan alerjenler yine 104'te 104; bir regresyon testi
+sıfatların yeniden bilinmeyen sayılmasını önlüyor.
+
+</BugPart>
+
+<Diff>
+
+```python
+_DE_ENDINGS = "(?:e|en|er|ern|n|s|es)?"
+
+    if compound:
+        return re.escape(words[0])
+```
+
+```python
+_DE_ENDINGS = "(?:ern|en|er|es|e|n|s)?"
+
+    if compound:
+        return re.escape(words[0]) + _DE_ENDINGS
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **207 otomatik test**: 14 grubun her biri dört dilin her birinde bir kelimeyle, morfoloji, yanıltıcı benzer kelimeler, Ek II'nin bütün istisnaları, onay kuralları ve sahte bir HTTP sunucusuna karşı Claude istemcisi.
+- Kendi etiketlediğim, dört dilde 116 malzeme satırlık bir örnekte: **104 alerjenin 104'ü şef için önceden işaretlendi, sessiz kaçırma 0**; 40 satır bir kişinin kontrolüne gitti, çoğunlukla sözlükte olmayan «tinned» ya da «Bio» gibi kelimeler yüzünden.
+- Demo modu internetsiz çalışır: aralarında menemen, mercimek çorbası ve baklavanın da olduğu, adları dört dilde 16 örnek yemek.
+- [Gerçek bir mutfakta sonuç, ör. "bir otel restoranında N yemek onaylandı"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

@@ -1,0 +1,117 @@
+language,ingredient,expected
+en,whole milk,7
+en,unsalted butter,7
+en,free-range eggs,3
+en,strong white bread flour,1
+en,smoked salmon,4
+en,king prawns,2
+en,toasted sesame seeds,11
+en,roasted cashew nuts,8
+en,Dijon mustard,10
+en,celery sticks,9
+en,crushed walnuts,8
+en,greek yogurt,7
+en,mozzarella cheese,7
+en,tinned tuna,4
+en,squid rings,14
+en,soy sauce,6 1
+en,salted peanuts,5
+en,hazelnut praline,8
+en,lupin flour,13
+en,dried apricots,12
+en,double cream,7
+en,puff pastry,1
+en,coconut milk,
+en,pine nuts,
+en,olive oil,
+en,red wine vinegar,12
+en,rice noodles,
+en,oat milk,1
+en,egg noodles,1 3
+en,anchovy fillets,4
+ru,сливочное масло,7
+ru,куриные яйца,3
+ru,пшеничная мука высшего сорта,1
+ru,копчёный лосось,4
+ru,тигровые креветки,2
+ru,кунжутные семечки,11
+ru,жареный арахис,5
+ru,грецкие орехи,8
+ru,горчица дижонская,10
+ru,стебли сельдерея,9
+ru,сметана 20%,7
+ru,твёрдый сыр,7
+ru,консервированный тунец,4
+ru,кальмары,14
+ru,соевый соус,6 1
+ru,миндальные лепестки,8
+ru,овсяные хлопья,1
+ru,ржаной хлеб,1
+ru,майонез,3
+ru,сухое белое вино,12
+ru,рисовая мука,
+ru,кокосовая стружка,
+ru,кедровые орешки,
+ru,подсолнечное масло,
+ru,гречневая крупа,
+ru,мидии в раковинах,14
+ru,творог 5%,7
+ru,фисташки,8
+tr,tam yağlı süt,7
+tr,tereyağı,7
+tr,köy yumurtası,3
+tr,buğday unu,1
+tr,füme somon,4
+tr,jumbo karides,2
+tr,susam,11
+tr,kavrulmuş yer fıstığı,5
+tr,iç ceviz,8
+tr,dijon hardal,10
+tr,sap kereviz,9
+tr,süzme yoğurt,7
+tr,kaşar peyniri,7
+tr,ton balığı konservesi,4
+tr,kalamar,14
+tr,soya sosu,6 1
+tr,kaju fıstığı,8
+tr,fındık içi,8
+tr,irmik,1
+tr,kuru kayısı,12
+tr,krema,7
+tr,hindistan cevizi sütü,
+tr,çam fıstığı,
+tr,zeytinyağı,
+tr,karabuğday,
+tr,midye,14
+tr,lor peyniri,7
+tr,tahin,11
+tr,bulgur,1
+de,Vollmilch,7
+de,Süßrahmbutter,7
+de,Bio-Eier,3
+de,Weizenmehl Type 405,1
+de,Räucherlachs,4
+de,Garnelen,2
+de,Sesamöl,11
+de,gesalzene Erdnüsse,5
+de,gehackte Walnüsse,8
+de,mittelscharfer Senf,10
+de,Staudensellerie,9
+de,griechischer Joghurt,7
+de,geriebener Parmesan,7
+de,Thunfisch in Öl,4
+de,Tintenfischringe,14
+de,Sojasoße,6 1
+de,Haselnusskrokant,8
+de,Dinkelmehl,1
+de,Lupinenmehl,13
+de,getrocknete Aprikosen,12
+de,Schlagsahne,7
+de,Kokosmilch,
+de,Pinienkerne,
+de,Rapsöl,
+de,Buchweizenmehl,
+de,Miesmuscheln,14
+de,Frischkäse,7
+de,Pistazien,8
+de,Hartweizengrieß,1

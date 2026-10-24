@@ -1,0 +1,180 @@
+---
+title: Allergen Labels
+summary: Marks the 14 EU allergens on every dish in four languages, and prints nothing until a chef has confirmed it.
+categories: [AI, Web]
+order: 10
+featured: false
+year: 2026
+role: Solo project — design, code, tests
+stack: [Python 3.12, FastAPI, Jinja2, SQLite, Anthropic API, pytest, Docker]
+github: "[GitHub link]"
+demo: "[Live demo link]"
+cover:
+  src: /projects/allergen-labels/cover.png
+  alt: Allergen Labels cover — the 14 EU allergens, three of them marked
+  width: 1920
+  height: 1200
+screenshots:
+  - src: /projects/allergen-labels/dishes.png
+    alt: Dish list with sixteen sample dishes, allergen numbers, and the dishes waiting for confirmation at the top
+    width: 1280
+    height: 800
+    caption: The dish list in demo mode. Dishes that need a person come first.
+  - src: /projects/allergen-labels/dish-satay.png
+    alt: Analysis of a chicken satay whose sauce is listed in brackets, with possible allergens, a coconut-milk note and the confirmation form
+    width: 1280
+    height: 1500
+    caption: A dish whose recipe changed after it was confirmed. Every hit shows the word it came from.
+  - src: /projects/allergen-labels/menu-de.png
+    alt: Printable German menu with allergen numbers next to each dish and the legend of the 14 allergens
+    width: 1280
+    height: 1500
+    caption: The printed menu in German. Only confirmed dishes are on it.
+---
+
+<Section id="problem">
+
+EU food law (Regulation 1169/2011, Article 9(1)(c) and Annex II) requires 14 groups of
+allergens to be declared, and Article 44 makes this mandatory for food served without
+packaging, which covers restaurants and hotel kitchens. How it is shown is left to each
+country.
+
+The hard part is not the list. Kitchens change recipes all the time: a new supplier's stock
+cube, cashews instead of pine nuts in the pesto, butter in a sauce that used oil. The
+allergen numbers on the menu are written once and go stale. In Antalya the same menu is read
+by tourists in several languages, and a guest with a nut allergy has to trust a number next
+to a dish name.
+
+</Section>
+
+<Section id="solution">
+
+- The chef types the ingredients the way the kitchen writes them, in English, Russian, Turkish or German. A curated dictionary of 2,429 phrases finds the allergens and shows, for every hit, the word it came from.
+- It handles plurals, Russian case endings ("сметаной"), Turkish suffixes ("fındığı", "peynirli") and German compounds ("Haselnusskrokant"), with or without diacritics.
+- Composite products have typical allergens: "soy sauce" is soy and *possibly* gluten, "pesto" is *possibly* milk and nuts. Writing `pesto (basil, cashews, parmesan)` replaces the guess with the real parts.
+- Look-alikes that Annex II does not cover are explained, not flagged: coconut, pine nuts, nutmeg, buckwheat, glucose syrup. "Lactose-free milk" is still milk.
+- Unknown or ambiguous words ("fıstık" is peanut or pistachio, "масло" is butter or oil) are marked for a person. With an API key, Claude suggests groups with a short reason, marked "needs confirmation"; without one, they are simply flagged.
+- **Nothing is published until a person confirms the dish with their name.** Every confirmation is logged; changing the ingredients resets it; a page opened before someone else changed the recipe cannot confirm it.
+- Printable menu in four languages with allergen numbers and the legend, plus a JSON export.
+
+</Section>
+
+<Section id="screenshots">
+
+<Screenshots />
+
+</Section>
+
+<Section id="stack">
+
+<Stack />
+
+The dictionary does the main work and works offline. The LLM only sees the ingredients the
+dictionary could not settle; its output is a JSON schema whose allergen field is an enum of
+the 14 group ids, and its answer only pre-ticks boxes in the confirmation form. SQLite
+triggers make the confirmation log append-only. The web UI is plain HTML forms, no
+JavaScript needed.
+
+</Section>
+
+<Section id="code">
+
+Every dictionary phrase becomes a regex over a folded text (lower case, no diacritics,
+Turkish "İ/ı" unified). Each language gets its own word forms:
+
+```python
+def _word(word: str, language: Language, last: bool, exact: bool) -> str:
+    escaped = re.escape(word)
+    if exact:
+        return escaped
+    if language is Language.EN:
+        if not last:
+            return escaped
+        if len(word) > 2 and word.endswith("y") and word[-2] not in _VOWELS:
+            return re.escape(word[:-1]) + "(?:y|ies)"
+        return escaped + "(?:s|es)?"
+    if language is Language.DE:
+        return escaped + _DE_ENDINGS
+    if language is Language.RU:
+        return escaped + "[а-я]{0,6}"
+    # Turkish
+    stem = escaped
+    vowels = sum(ch in _VOWELS for ch in word)
+    if word[-1] in _TR_SOFTEN and vowels >= 2:
+        stem = f"(?:{escaped}|{re.escape(word[:-1] + _TR_SOFTEN[word[-1]])})"
+    suffix = "[a-z]{0,10}" if len(word) >= 4 else _TR_SHORT_SUFFIXES
+    return stem + (f"(?P<sfx>{suffix})" if last else suffix)
+```
+
+The matcher then keeps the longest matches that do not overlap, so "peanut butter" wins over
+"butter" and "Buchweizen" over "Weizen". A Turkish suffix starting with "-sız" ("without")
+is reported as a free-from word and never counted as the allergen.
+
+</Section>
+
+<Section id="bug">
+
+### German adjectives were reported as unknown words
+
+<BugPart id="problem">
+
+The first run on my labelled sample found every expected allergen, but flagged 42 of 116
+lines for a person. "gehackte Walnüsse" and "geriebener Parmesan" were flagged although
+"gehackt" and "gerieben" are in the dictionary; even "frische Kräuter" was. Nothing was
+missed, but a tool that cries wolf gets ignored.
+
+</BugPart>
+
+<BugPart id="cause">
+
+German words are also matched inside compound words, so their pattern has no word
+boundaries, and I had left out the endings: "gehackt" covered only part of "gehackte". A
+word that is only partly covered by a *known* word is reported as unknown on purpose
+(otherwise "Salat" would make "Waldorfsalat" look harmless). After adding the endings,
+"geriebener" still failed: in `(?:e|en|er…)` the regex takes the first alternative that
+works, and with no boundary after it, "e" is always enough.
+
+</BugPart>
+
+<BugPart id="fix">
+
+Compound patterns now take the endings, ordered longest first. Flagged lines on the sample
+went from 42 to 40, still with 104 of 104 allergens found, and a regression test keeps the
+adjectives known.
+
+</BugPart>
+
+<Diff>
+
+```python
+_DE_ENDINGS = "(?:e|en|er|ern|n|s|es)?"
+
+    if compound:
+        return re.escape(words[0])
+```
+
+```python
+_DE_ENDINGS = "(?:ern|en|er|es|e|n|s)?"
+
+    if compound:
+        return re.escape(words[0]) + _DE_ENDINGS
+```
+
+</Diff>
+
+</Section>
+
+<Section id="result">
+
+- **207 automated tests**: each of the 14 groups with a word in each of the four languages, morphology, false friends, every Annex II exclusion, the confirmation rules, and the Claude client against a fake HTTP server.
+- On a sample of 116 ingredient lines in four languages that I labelled myself: **104 of 104 allergens pre-selected for the chef, 0 silent misses**, 40 lines flagged for a person, mostly because of words like "tinned" or "Bio" that the dictionary does not know.
+- Demo mode works offline: 16 sample dishes, including menemen, mercimek çorbası and baklava, with names in four languages.
+- [Result in a real kitchen, e.g. "N dishes confirmed at a hotel restaurant"]
+
+</Section>
+
+<Section id="links">
+
+<Links />
+
+</Section>

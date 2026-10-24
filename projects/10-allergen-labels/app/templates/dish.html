@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}{{ view.name() if view else "New dish" }} · Allergen Labels{% endblock %}
+{% block head %}
+<style>
+  .crumbs { margin-top: 28px; font-size: 13px; }
+  .crumbs a { text-decoration: none; }
+  .title-row { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  .title-row h1 { margin-top: 10px; }
+  .cols { display: grid; grid-template-columns: 5fr 7fr; gap: 0 40px; border-top: 1px solid var(--fg); padding-top: 22px; }
+  .names { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+  .help { font-size: 12px; color: var(--muted); margin-top: 5px; }
+  .ing td { font-size: 14px; }
+  .ing .label-cell { width: 34%; font-weight: 600; }
+  .ing .label-cell .parent { font-weight: 400; color: var(--muted); }
+  .ing .match { color: var(--muted); font-size: 12px; font-family: var(--mono); margin-top: 3px; }
+  .ing .note { font-size: 12px; color: var(--muted); margin-top: 4px; max-width: 40em; }
+  .ing .unknown { color: var(--accent-text); font-size: 13px; margin-top: 2px; }
+  .ing .ai { border-left: 2px dotted var(--accent); padding: 4px 0 4px 10px; margin-top: 6px; font-size: 13px; }
+  .tag { font: 10px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; padding: 4px 5px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .tag.check { border-color: var(--accent); color: var(--accent-text); }
+  .tag.found { border-color: var(--fg); color: var(--fg); }
+  .confirm { margin-top: 30px; border: 1px solid var(--fg); padding: 20px 22px 22px; background: var(--surface); }
+  .boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 0 22px; margin: 6px 0 18px; }
+  .box { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; cursor: pointer; }
+  .box input { width: 17px; height: 17px; accent-color: var(--fg); margin: 0; }
+  .box .why { margin-left: auto; font: 10px/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .box .why.check { color: var(--accent-text); }
+  .confirm-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; }
+  .history { margin-top: 44px; }
+  .history td { font-size: 13px; }
+  .current { border-left: 3px solid var(--fg); padding: 10px 14px; margin: 0 0 18px; background: var(--surface); }
+  @media (max-width: 860px) {
+    .cols, .names, .boxes, .confirm-row { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+{% block content %}
+{% set f_names = form.names if form.names else (view.row.names if view else {}) %}
+{% set f_recipe = form.recipe if form.recipe is defined else (view.row.recipe if view else "") %}
+{% set f_section = form.section if form.section else (view.row.section if view else "mains") %}
+
+<div class="crumbs label"><a href="/">Dishes</a> / {{ "Dish " ~ view.id if view else "New" }}</div>
+<div class="title-row">
+  <h1>{{ view.name() if view else "New dish" }}</h1>
+  {% if view %}<span class="state {{ view.state }}">{{ state_labels[view.state] }}</span>{% endif %}
+</div>
+
+{% if saved == "created" %}<div class="flash">Dish saved. Check the analysis on the right and confirm the allergens to put it on the menu.</div>{% endif %}
+{% if saved == "saved" %}<div class="flash">Saved.</div>{% endif %}
+{% if saved == "reset" %}<div class="flash warn"><strong>The ingredients changed, so the confirmation was reset.</strong> The dish is off the menu until someone confirms its allergens again.</div>{% endif %}
+{% if saved == "confirmed" %}<div class="flash">Allergens confirmed and logged. The dish is on the menu.</div>{% endif %}
+{% if error %}<div class="flash warn" role="alert">{{ error }}</div>{% endif %}
+{% if view and view.drift %}
+<div class="flash warn">The dictionary now finds
+  {% for n in view.drift | sort %}<strong>{{ n }} {{ by_number[n].label(EN) }}</strong>{{ ", " if not loop.last }}{% endfor %},
+  which the last confirmation does not list. Review and confirm again.</div>
+{% endif %}
+
+<div class="cols">
+  <section>
+    <h2>Recipe</h2>
+    <form method="post" action="{{ '/dishes/' ~ view.id if view else '/dishes' }}">
+      <div class="names">
+        {% for lang in languages %}
+        <div class="field">
+          <label class="label" for="name_{{ lang.value }}">Name · {{ lang.native_name }}{{ " (required)" if lang.value == "en" }}</label>
+          <input type="text" id="name_{{ lang.value }}" name="name_{{ lang.value }}" value="{{ f_names.get(lang, '') }}">
+        </div>
+        {% endfor %}
+      </div>
+      <div class="field">
+        <label class="label" for="section">Section</label>
+        <select id="section" name="section">
+          {% for s in sections %}<option value="{{ s.value }}" {{ "selected" if s.value == f_section }}>{{ s.label(EN) }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label class="label" for="recipe">Ingredients</label>
+        <textarea id="recipe" name="recipe" spellcheck="false">{{ f_recipe }}</textarea>
+        <div class="help">Separate with commas or new lines, in English, Russian, Turkish or German. Put what a product is made of in brackets: <span class="mono">pesto (basil, cashews, parmesan)</span>. Changing ingredients resets the confirmation.</div>
+      </div>
+      <div class="confirm-row" style="grid-template-columns: 1fr auto">
+        <div class="field" style="margin:0">
+          <label class="label" for="actor">Your name</label>
+          <input type="text" id="actor" name="actor" value="{{ chef_name }}" autocomplete="name">
+        </div>
+        <button class="btn" type="submit">{{ "Save recipe" if view else "Create dish" }}</button>
+      </div>
+    </form>
+    {% if view %}
+    <form method="post" action="/dishes/{{ view.id }}/archive" style="margin-top:22px">
+      <input type="hidden" name="actor" value="{{ chef_name }}">
+      {% if view.row.archived %}<input type="hidden" name="restore" value="1">{% endif %}
+      <button class="btn ghost small" type="submit">{{ "Put back on the menu" if view.row.archived else "Remove from the menu" }}</button>
+    </form>
+    {% endif %}
+  </section>
+
+  <section>
+    <h2>Allergens</h2>
+    {% if not view %}
+      <p class="muted">Save the dish to see which of the 14 allergens the dictionary finds in its ingredients.</p>
+    {% else %}
+      {% if view.confirmation %}
+      <div class="current">
+        <span class="label">Confirmed</span><br>
+        {% for n in view.confirmed_allergens | sort %}<span class="chip solid">{{ n }}</span>{% else %}<span>None of the 14 allergens</span>{% endfor %}
+        <div class="muted" style="font-size:13px">by <strong>{{ view.confirmation.confirmed_by }}</strong>, {{ when(view.confirmation.confirmed_at) }}</div>
+      </div>
+      {% endif %}
+
+      <table class="ing">
+        <thead><tr><th>Ingredient</th><th>Dictionary</th><th style="width:70px"></th></tr></thead>
+        <tbody>
+        {% for item in view.analysis.items %}
+          {% set ai = view.suggestions.get(item.label) %}
+          <tr>
+            <td class="label-cell">{% if item.parent %}<span class="parent">{{ item.parent }} ›</span> {% endif %}{{ item.text }}</td>
+            <td>
+              {% for n in item.allergens | sort %}<span class="chip {{ '' if n in item.certain else 'maybe' }}">{{ n }}</span>{% endfor %}
+              {% for hit in item.hits %}<div class="match">“{{ hit.found }}” → {{ hit.term }} · {{ hit.language.value }} · {{ by_number[hit.allergen].label(EN) }}{{ "" if hit.certain else " (possible)" }}</div>{% endfor %}
+              {% if item.unknown %}<div class="unknown">Not in the dictionary: {{ item.unknown | join(", ") }}</div>{% endif %}
+              {% for note in item.all_notes %}<div class="note">{{ note }}</div>{% endfor %}
+              {% if ai %}
+                <div class="ai"><span class="label accent">AI suggestion · needs confirmation</span><br>
+                  {% for a in ai.allergens %}<span class="chip ai" title="{{ by_id[a].label(EN) }}">{{ by_id[a].number }}</span>{% else %}<span class="muted">none of the 14 · </span>{% endfor %}
+                  {{ ai.reason }}</div>
+              {% elif item.status.value == "check" and not ai_enabled %}
+                <div class="note accent">AI suggestions are off: check the recipe or the supplier's label.</div>
+              {% endif %}
+            </td>
+            <td><span class="tag {{ item.status.value }}">{{ {"found": "found", "none": "none", "check": "check"}[item.status.value] }}</span></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+
+      <form class="confirm" method="post" action="/dishes/{{ view.id }}/confirm">
+        <h2 style="margin-bottom:4px">Confirm the allergens</h2>
+        <p class="muted" style="margin:0 0 6px;font-size:13px">Pre-selected: {{ "the last confirmation" if view.confirmed else "what the dictionary found or suspects" ~ (" and the AI suggests" if view.ai_allergens else "") }}. Tick exactly what this dish contains, as you make it.</p>
+        <input type="hidden" name="recipe_hash" value="{{ view.row.recipe_hash }}">
+        <div class="boxes">
+          {% for a in allergens %}
+          {% set why = "found" if a.number in view.analysis.certain else ("check" if a.number in view.analysis.allergens else ("ai" if a.number in view.ai_allergens else "")) %}
+          <label class="box">
+            <input type="checkbox" name="allergen" value="{{ a.number }}" {{ "checked" if a.number in view.preselected }}>
+            <span class="mono">{{ a.number }}</span> {{ a.label(EN) }}
+            {% if why %}<span class="why {{ 'check' if why != 'found' }}">{{ why }}</span>{% endif %}
+          </label>
+          {% endfor %}
+        </div>
+        <div class="confirm-row">
+          <div class="field" style="margin:0">
+            <label class="label" for="c_actor">Confirmed by</label>
+            <input type="text" id="c_actor" name="actor" value="{{ chef_name }}" required>
+          </div>
+          <div class="field" style="margin:0">
+            <label class="label" for="note">Note (optional)</label>
+            <input type="text" id="note" name="note" placeholder="e.g. checked soy sauce label">
+          </div>
+          <button class="btn" type="submit">Confirm allergens</button>
+        </div>
+      </form>
+    {% endif %}
+  </section>
+</div>
+
+{% if view %}
+<section class="history">
+  <h2>Confirmation log</h2>
+  <table>
+    <thead><tr><th>When</th><th>Who</th><th>Allergens</th><th class="hide-sm">Recipe at that time</th><th>Valid now</th></tr></thead>
+    <tbody>
+    {% for c in confirmations %}
+      <tr>
+        <td class="num">{{ when(c.confirmed_at) }}</td>
+        <td>{{ c.confirmed_by }}{% if c.note %}<div class="muted">{{ c.note }}</div>{% endif %}</td>
+        <td>{% for n in c.allergens %}<span class="chip">{{ n }}</span>{% else %}<span class="muted">none</span>{% endfor %}</td>
+        <td class="hide-sm mono muted" style="font-size:12px">{{ c.recipe | truncate(90) }}</td>
+        <td>{{ "yes" if view.confirmation and view.confirmation.id == c.id else "no" }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="muted">Not confirmed yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h2 style="margin-top:32px">Changes</h2>
+  <table>
+    <thead><tr><th>When</th><th>Who</th><th>What</th><th class="hide-sm">Detail</th></tr></thead>
+    <tbody>
+    {% for e in events %}
+      <tr>
+        <td class="num">{{ when(e.at) }}</td>
+        <td>{{ e.actor }}</td>
+        <td>{{ e.action }}</td>
+        <td class="hide-sm mono muted" style="font-size:12px">{{ e.detail | truncate(100) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}
