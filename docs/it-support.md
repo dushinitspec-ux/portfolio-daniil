@@ -2,7 +2,7 @@
 
 **IT Support & Network Technician** | MikroTik · CCTV/NVR · Access control | Russian native
 
-Antalya, Türkiye · dushin.itspec@gmail.com · [LinkedIn link] · [Portfolio link]
+Antalya, Türkiye · dushin.itspec@gmail.com · [LinkedIn link] · [site-production-898c.up.railway.app](https://site-production-898c.up.railway.app)
 
 ## Summary
 
@@ -34,7 +34,7 @@ Russian-speaking clients.
 
 ## Projects
 
-Personal projects, code and demos on GitHub: [GitHub link]
+Personal projects, code and demos on GitHub: [github.com/dushinitspec-ux](https://github.com/dushinitspec-ux)
 
 - **Network and device uptime monitor** — Python service that checks routers, cameras and
   Wi-Fi access points every minute (ping + TCP ports), sends Telegram alerts with the

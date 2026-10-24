@@ -4,10 +4,10 @@ export const site = {
   name: "Daniil Dushin",
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://daniildushin.dev").replace(/\/$/, ""),
   email: "dushin.itspec@gmail.com",
-  telegram: "[Telegram link]", // e.g. https://t.me/your_username
+  telegram: "https://t.me/daniil_dushin",
   linkedin: "[LinkedIn link]", // e.g. https://www.linkedin.com/in/your-profile
-  github: "[GitHub link]", // e.g. https://github.com/your-username
-  sourceCode: "[GitHub link]/portfolio-daniil",
+  github: "https://github.com/dushinitspec-ux",
+  sourceCode: "[GitHub link]/portfolio-daniil", // e.g. https://github.com/dushinitspec-ux/portfolio-daniil
 } as const;
 
 export function isPlaceholder(value: string): boolean {

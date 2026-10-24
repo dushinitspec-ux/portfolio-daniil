@@ -62,12 +62,26 @@ npm start
 | `npm run cv` | Turns `../docs/*.md` into the PDFs on the `/cv` page. Run it after editing a CV |
 | `npm run lint` / `npm run typecheck` | ESLint and TypeScript checks |
 
+## Deployment (Railway)
+
+The live site runs on Railway: <https://site-production-898c.up.railway.app>.
+Railway detects Next.js and runs `npm ci`, `npm run build` and `npm start`
+(Node 22, from `engines` in package.json). To deploy a new version from this folder:
+
+```bash
+railway up
+```
+
+The service needs one variable, `NEXT_PUBLIC_SITE_URL` (the public address, used at build
+time). For a custom domain: `railway domain example.com`, add the DNS records it prints, then
+update `NEXT_PUBLIC_SITE_URL` and redeploy. The site also deploys to Vercel unchanged.
+
 ## Before publishing
 
-- Replace the placeholders in [`lib/site.ts`](lib/site.ts) (Telegram, LinkedIn, GitHub) and the
+- Replace the remaining placeholders in [`lib/site.ts`](lib/site.ts) (LinkedIn, source code) and the
   `[GitHub link]` / `[Live demo link]` values in the MDX frontmatter. Links that still contain
   a `[placeholder]` are shown as plain text, never as broken links.
-- On Vercel set `NEXT_PUBLIC_SITE_URL` to the real domain (used for canonical URLs, `hreflang`,
+- Set `NEXT_PUBLIC_SITE_URL` to the real domain (used for canonical URLs, `hreflang`,
   the sitemap and Open Graph links). Default: `https://daniildushin.dev`.
 
 ## Design and engineering decisions

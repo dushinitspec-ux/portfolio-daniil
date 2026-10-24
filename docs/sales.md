@@ -2,7 +2,7 @@
 
 **Sales & Customer Success** | Russian-speaking markets | Technical background
 
-Antalya, Türkiye · dushin.itspec@gmail.com · [LinkedIn link] · [Portfolio link]
+Antalya, Türkiye · dushin.itspec@gmail.com · [LinkedIn link] · [site-production-898c.up.railway.app](https://site-production-898c.up.railway.app)
 
 ## Summary
 

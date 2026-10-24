@@ -1,11 +1,11 @@
 # Daniil Dushin — Portfolio
 
-[![CI](https://github.com/[github-username]/portfolio-daniil/actions/workflows/ci.yml/badge.svg)](https://github.com/[github-username]/portfolio-daniil/actions/workflows/ci.yml)
+[![CI](https://github.com/dushinitspec-ux/portfolio-daniil/actions/workflows/ci.yml/badge.svg)](https://github.com/dushinitspec-ux/portfolio-daniil/actions/workflows/ci.yml)
 
 AI Developer & IT/Network Technician based in Antalya, open to relocation.
 I build AI tools that save businesses time — and I set up the hardware they run on.
 
-**Website:** [Portfolio link] · **Email:** dushin.itspec@gmail.com · [LinkedIn link]
+**Website:** [site-production-898c.up.railway.app](https://site-production-898c.up.railway.app) · **Email:** dushin.itspec@gmail.com · [LinkedIn link]
 
 This repository holds everything an employer needs in one place: CVs, the portfolio website,
 three production-style projects and the promo videos for them.
@@ -69,4 +69,4 @@ appeared on a real network or a non-English Windows.
 
 ## Contact
 
-dushin.itspec@gmail.com · [Telegram link] · [LinkedIn link] · [GitHub link]
+dushin.itspec@gmail.com · [Telegram](https://t.me/daniil_dushin) · [LinkedIn link] · [GitHub](https://github.com/dushinitspec-ux)
