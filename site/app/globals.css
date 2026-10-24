@@ -150,11 +150,14 @@
 html.intro .intro {
   display: block;
 }
+/* Hidden as soon as the last panel is gone, so nothing off-screen is left for assistive
+   tools (or contrast checkers) to find. */
 .intro {
   position: fixed;
   inset: 0;
   z-index: 200;
   pointer-events: none;
+  animation: intro-gone 0s linear 1.92s forwards;
 }
 .intro-panel,
 .intro-accent {
@@ -241,6 +244,12 @@ html.intro .hero-rise {
 @keyframes intro-lift {
   to {
     transform: translate3d(0, -100%, 0);
+  }
+}
+
+@keyframes intro-gone {
+  to {
+    visibility: hidden;
   }
 }
 
