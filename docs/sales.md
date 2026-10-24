@@ -12,19 +12,16 @@ solve the client's problem, not just close the deal. Native Russian.
 
 ## Experience
 
-**Sales Manager & Technical Administrator — family business**, Belgorod
-*Mar 2022 – Oct 2025*
+**Sales Manager & Technical Administrator — family business**, Belgorod · *Mar 2022 – Oct 2025*
 
 - Direct customer sales, product consultations, supplier and stock work.
 - [Add numbers if possible: clients/day, revenue growth]
 
-**Freelance IT Support**
-*Feb 2022 – present*
+**Freelance IT Support** · *Feb 2022 – present*
 
 - Client-facing support and problem solving.
 
-**Veterinary Assistant**
-*Jan 2023 – May 2026*
+**Veterinary Assistant** · *Jan 2023 – May 2026*
 
 - Worked daily with clients, 1C and FGIS "Mercury" record keeping.
 

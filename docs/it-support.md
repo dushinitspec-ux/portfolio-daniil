@@ -14,8 +14,7 @@ Russian-speaking clients.
 
 ## Experience
 
-**Technical Specialist — Steady Control** (AI-powered business monitoring), Antalya
-*Oct 2026 – present*
+**Technical Specialist — Steady Control** (AI-powered business monitoring), Antalya · *Oct 2026 – present*
 
 - Deploy and support an AI system that monitors staff and operations for hotels, cafes and
   restaurants: kitchen workflow, customer service quality and refrigerator temperature sensors.
@@ -24,14 +23,12 @@ Russian-speaking clients.
 - Completed the company's internal training.
 - [Add 1–2 concrete results: e.g. "deployed the system at N client sites"]
 
-**Freelance IT Support & Network Setup**
-*Feb 2022 – present*
+**Freelance IT Support & Network Setup** · *Feb 2022 – present*
 
 - PC setup and repair, home and small-office networks, Wi-Fi coverage, remote support.
 - [Add 1 result: e.g. "set up network for an office of N people"]
 
-**Technical Administrator & Sales — family business (IP Dushin N. P.)**, part-time
-*Mar 2022 – Oct 2025*
+**Technical Administrator & Sales — family business (IP Dushin N. P.)**, part-time · *Mar 2022 – Oct 2025*
 
 - Maintained IT infrastructure, handled equipment and software, sales to customers.
 
