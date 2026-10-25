@@ -1,5 +1,6 @@
 import { Composition, Still } from "remotion";
 
+import { LinkedInBanner } from "./Banner";
 import { Cover, coverIds } from "./Cover";
 import { Promo, PROMO_FRAMES } from "./Promo";
 import type { ProjectId } from "./projects";
@@ -32,6 +33,7 @@ export function RemotionRoot() {
           height={1200}
         />
       ))}
+      <Still id="linkedin-banner" component={LinkedInBanner} width={1584} height={396} />
     </>
   );
 }
