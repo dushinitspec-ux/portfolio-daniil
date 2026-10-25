@@ -1,0 +1,28 @@
+{
+  "project": "05-e-invoice",
+  "entry": "app.web_demo",
+  "packages": [
+    "lxml",
+    "pydantic"
+  ],
+  "micropip": [],
+  "files": [
+    "app/__init__.py",
+    "app/model.py",
+    "app/money.py",
+    "app/iban.py",
+    "app/pdf_text.py",
+    "app/ubl.py",
+    "app/validation.py",
+    "app/web_demo.py",
+    "app/extract/__init__.py",
+    "app/extract/parsing.py",
+    "app/extract/rules.py",
+    "app/extract/complete.py",
+    "samples/text-layer/de-beispiel-it-service.json",
+    "samples/text-layer/de-muster-gmbh-with-errors.json",
+    "samples/text-layer/de-muster-gmbh.json",
+    "samples/text-layer/en-beispiel-software-reverse-charge.json",
+    "samples/text-layer/en-sample-studio.json"
+  ]
+}

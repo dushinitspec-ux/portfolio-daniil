@@ -8,10 +8,6 @@ gap wider than half the font size between two words starts a new cell.
 import io
 from dataclasses import dataclass, field
 
-import pdfplumber
-from pdfminer.pdfparser import PDFSyntaxError
-from pdfplumber.utils.exceptions import PdfminerException
-
 LINE_TOLERANCE = 2.5  # points: words whose tops differ less than this share a line
 CELL_GAP_FACTOR = 0.5  # a gap > font size x this factor separates two cells
 CELL_SEPARATOR = "    "  # how cells are joined in the plain text given to the LLM
@@ -88,18 +84,32 @@ def _cell(words: list[dict[str, object]]) -> Cell:
     )
 
 
-def read_pdf(data: bytes, max_pages: int = 20) -> PdfText:
+def read_words(data: bytes, max_pages: int = 20) -> list[list[dict[str, object]]]:
+    """The words of every page as pdfplumber finds them (text, x0, x1, top, size, ...)."""
+    # pdfplumber is imported here, not at the top, so the line rebuilding below also works
+    # where pdfplumber is not installed (the in-browser demo gets the words as JSON).
+    import pdfplumber
+    from pdfminer.pdfparser import PDFSyntaxError
+    from pdfplumber.utils.exceptions import PdfminerException
+
     try:
         with pdfplumber.open(io.BytesIO(data)) as pdf:
             if len(pdf.pages) > max_pages:
                 raise PdfError(f"the PDF has {len(pdf.pages)} pages, the limit is {max_pages}")
-            lines: list[TextLine] = []
-            for number, page in enumerate(pdf.pages, start=1):
-                words = page.extract_words(x_tolerance=1.5, extra_attrs=["size"])
-                lines.extend(_group_lines(words, number))
-            pages = len(pdf.pages)
+            return [page.extract_words(x_tolerance=1.5, extra_attrs=["size"]) for page in pdf.pages]
     except (PdfminerException, PDFSyntaxError) as exc:
         raise PdfError("the file is not a readable PDF") from exc
+
+
+def from_words(pages: list[list[dict[str, object]]]) -> PdfText:
+    """Rebuild lines and cells from the words of each page (as returned by read_words)."""
+    lines: list[TextLine] = []
+    for number, words in enumerate(pages, start=1):
+        lines.extend(_group_lines(words, number))
     if not any(line.text.strip() for line in lines):
         raise PdfError("the PDF has no text layer (a scanned image?); OCR is not supported")
-    return PdfText(lines=lines, pages=pages)
+    return PdfText(lines=lines, pages=len(pages))
+
+
+def read_pdf(data: bytes, max_pages: int = 20) -> PdfText:
+    return from_words(read_words(data, max_pages=max_pages))

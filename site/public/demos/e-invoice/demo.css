@@ -1,0 +1,87 @@
+/* E-invoice demo: only the shared tokens (demo.css in _shared) are used for colours. */
+
+/* The shared .d-btn sets display, which beats the [hidden] attribute (Skip / Replay). */
+.d-btn[hidden] { display: none; }
+/* The shared stage is a one-column grid with an auto track: a wide <pre> would widen it. */
+.d-stage, .d-cols { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 760px) { .d-cols.wide-left { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
+.ei-side > * { min-width: 0; }
+
+.ei-caption { border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; min-height: 1.6em; font-size: 15px; }
+
+/* Sample picker and the page preview */
+.ei-head { display: grid; gap: 16px; }
+.ei-pick { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+.ei-pick .d-field { flex: 1 1 260px; }
+.ei-source { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 14px; align-items: start; }
+.ei-thumb { display: block; border: 1px solid var(--line); background: #fff; }
+.ei-thumb img { display: block; width: 100%; height: auto; }
+.ei-thumb:hover { border-color: var(--strong); }
+.ei-file { font-size: 13px; overflow-wrap: anywhere; }
+@media (min-width: 760px) { .ei-source { grid-template-columns: 150px minmax(0, 1fr); } }
+
+/* The editable fields */
+.ei-form fieldset { border: 0; margin: 0 0 18px; padding: 0; min-width: 0; }
+.ei-form legend { padding: 0; margin-bottom: 8px; }
+.ei-grid { display: grid; gap: 10px 14px; }
+@media (min-width: 560px) { .ei-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ei-field { display: grid; gap: 4px; min-width: 0; }
+.ei-field label { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; font-size: 13px; line-height: 1.3; }
+.ei-term { font: 500 11px/1.3 var(--mono); color: var(--muted); letter-spacing: 0.02em; }
+.ei-flags { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.ei-flag { padding: 0 4px; border: 1px solid currentColor; color: var(--accent-text); font: 500 10px/1.5 var(--mono); }
+.ei-flag.warn { color: var(--warn); }
+.ei-form .d-input { padding: 7px 9px; font-size: 14px; }
+.ei-form .d-input[readonly] { cursor: default; }
+.ei-address { margin-top: 6px; }
+.ei-lines { font-size: 13px; }
+.ei-lines td { vertical-align: middle; }
+.ei-desc { min-width: 150px; }
+.ei-num { width: 92px; text-align: right; font-variant-numeric: tabular-nums; }
+.is-edited .d-input { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 9%, var(--card)); }
+.is-warn .d-input { border-color: var(--warn); box-shadow: inset 3px 0 0 var(--warn); }
+.is-bad .d-input { border-color: var(--accent-text); box-shadow: inset 3px 0 0 var(--accent); }
+.ei-errors { margin: 0 0 12px; padding: 8px 12px 8px 28px; border: 1px solid var(--accent-text); color: var(--accent-text); font-size: 13px; }
+.ei-submit { margin-bottom: 14px; }
+.ei-notes-box { border-top: 1px solid var(--line); padding-top: 12px; }
+.ei-notes { margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: var(--muted); display: grid; gap: 2px; }
+
+/* Rules */
+.ei-side { align-content: start; gap: 20px; }
+.ei-panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 12px; margin-bottom: 12px; }
+.ei-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+@media (min-width: 560px) { .ei-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 760px) and (max-width: 1040px) { .ei-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ei-stat { background: var(--card); padding: 10px 12px; min-width: 0; }
+.ei-stat b { display: block; font-size: 26px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.ei-stat span { display: block; font: 500 11px/1.3 var(--mono); letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted); overflow-wrap: anywhere; }
+.ei-stat[data-tone="fail"] b { color: var(--accent-text); }
+.ei-stat[data-tone="warn"] b { color: var(--warn); }
+.ei-stat[data-tone="ok"] b { color: var(--ok); }
+.ei-stat[data-tone="zero"] b, .ei-stat[data-tone="na"] b { color: var(--muted); }
+.ei-verdict { margin: 12px 0; padding: 8px 12px; border-left: 3px solid var(--muted); font-weight: 600; }
+.ei-verdict[data-tone="fail"] { border-color: var(--accent); color: var(--accent-text); }
+.ei-verdict[data-tone="warn"] { border-color: var(--warn); color: var(--warn); }
+.ei-verdict[data-tone="ok"] { border-color: var(--ok); color: var(--ok); }
+.ei-fails { display: grid; gap: 10px; margin-bottom: 14px; }
+.ei-rule { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--accent); background: var(--card); }
+.ei-rule.is-warning { border-left-color: var(--warn); }
+.ei-msg { font-size: 15px; line-height: 1.4; overflow-wrap: anywhere; }
+.ei-official { font-size: 12px; line-height: 1.4; color: var(--muted); }
+.ei-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+.ei-chip { padding: 1px 5px; border: 1px solid currentColor; font: 500 10.5px/1.45 var(--mono); white-space: nowrap; }
+.ei-chip[data-status="passed"] { color: var(--ok); }
+.ei-chip[data-status="failed"] { color: var(--accent-text); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.ei-chip[data-status="warning"] { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+.ei-chip[data-status="na"] { color: var(--muted); border-style: dashed; }
+.ei-all { margin-bottom: 10px; font-size: 13px; }
+.ei-all summary, .ei-xml-box summary { cursor: pointer; font: 500 12px/1.4 var(--mono); letter-spacing: 0.03em; text-transform: uppercase; padding: 6px 0; }
+.ei-all .d-table { font-size: 12px; }
+.ei-rule-text { min-width: 220px; }
+
+/* XML */
+.ei-xml { margin: 10px 0 0; max-height: 440px; overflow: auto; padding: 12px; background: var(--surface); border: 1px solid var(--line); font: 12px/1.5 var(--mono); white-space: pre; tab-size: 2; }
+.x-tag { color: var(--muted); }
+.x-text { color: var(--fg); font-weight: 600; }
+.ei-vat { white-space: nowrap; }
+.ei-form .d-input[aria-invalid="true"] { border-color: var(--accent-text); border-style: dashed; }

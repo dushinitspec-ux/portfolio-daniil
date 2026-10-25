@@ -1,11 +1,13 @@
 """Extractors turn the text of a PDF into the typed invoice. The pipeline only depends on the
 Extractor protocol, so the offline rules and Claude are interchangeable."""
 
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
-from app.config import ExtractorChoice, Settings
 from app.model import Extraction
 from app.pdf_text import PdfText
+
+if TYPE_CHECKING:
+    from app.config import Settings
 
 
 class ExtractionError(Exception):
@@ -18,8 +20,12 @@ class Extractor(Protocol):
     async def extract(self, pdf: PdfText) -> Extraction: ...
 
 
-def create_extractor(settings: Settings) -> Extractor:
-    # Imports are local so the offline demo does not need the Anthropic SDK configured.
+def create_extractor(settings: "Settings") -> Extractor:
+    # Imports are local so the offline demo does not need the Anthropic SDK configured, and
+    # the rule-based extractor also runs where pydantic-settings is not installed (the
+    # in-browser demo).
+    from app.config import ExtractorChoice
+
     if settings.effective_extractor is ExtractorChoice.CLAUDE:
         import anthropic
 
