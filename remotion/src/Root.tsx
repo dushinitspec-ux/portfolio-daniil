@@ -1,6 +1,6 @@
 import { Composition, Still } from "remotion";
 
-import { LinkedInBanner } from "./Banner";
+import { GitHubBanner, LinkedInBanner } from "./Banner";
 import { Cover, coverIds } from "./Cover";
 import { Promo, PROMO_FRAMES } from "./Promo";
 import type { ProjectId } from "./projects";
@@ -34,6 +34,8 @@ export function RemotionRoot() {
         />
       ))}
       <Still id="linkedin-banner" component={LinkedInBanner} width={1584} height={396} />
+      <Still id="github-banner-light" component={GitHubBanner} defaultProps={{ theme: "light" }} width={1600} height={420} />
+      <Still id="github-banner-dark" component={GitHubBanner} defaultProps={{ theme: "dark" }} width={1600} height={420} />
     </>
   );
 }
