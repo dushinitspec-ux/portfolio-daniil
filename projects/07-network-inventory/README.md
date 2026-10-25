@@ -253,7 +253,7 @@ uv run pytest
 uv run ruff check . && uv run ruff format --check .
 ```
 
-107 tests. They cover ping and neighbour-table parsing with **real output from a Russian
+117 tests. They cover ping and neighbour-table parsing with **real output from a Russian
 Windows 11** (`ping` of 127.0.0.1 and the router, `arp -a`, stored as raw cp866 bytes; only
 the last three bytes of the MAC addresses were replaced) next to English Windows, Linux and
 macOS samples; the scope rules and size caps; MAC normalising, vendor lookup and randomised

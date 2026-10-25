@@ -221,7 +221,7 @@ uv run pytest
 uv run ruff check . && uv run ruff format --check .
 ```
 
-207 tests: each of the 14 groups with a word in each of the four languages, Russian,
+220 tests: each of the 14 groups with a word in each of the four languages, Russian,
 Turkish and German morphology, false friends ("сырой" is not cheese, "Schweinefleisch" is
 not wine, "biraz" is not beer), every Annex II exclusion, free-from words, composite and
 bracketed products, ambiguous words, lines where nothing is recognised ("XO", garbled

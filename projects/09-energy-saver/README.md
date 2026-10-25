@@ -259,7 +259,7 @@ uv run pytest
 uv run ruff check . && uv run ruff format --check .
 ```
 
-100 tests: DST days (23 and 25 hours, hourly and 15-minute, real data), the switch from hourly
+108 tests: DST days (23 and 25 hours, hourly and 15-minute, real data), the switch from hourly
 to 15-minute prices, windows across midnight, one block vs split, the min-block dynamic
 program against brute force, the power cap, baseline costs, API parsing and rate limits with
 `httpx.MockTransport`, ENTSO-E XML, the Telegram message, the daily send and retry, Shelly

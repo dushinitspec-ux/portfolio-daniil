@@ -201,7 +201,7 @@ uv run pytest
 uv run ruff check . && uv run ruff format --check .
 ```
 
-180 tests. They cover extraction on every sample layout (with the expected values written out,
+192 tests. They cover extraction on every sample layout (with the expected values written out,
 not imported from the generator), every one of the 67 rules (it passes on a correct invoice and
 fails on a broken one, and a test fails if a new rule has no failing case), Decimal rounding
 against float rounding, the XML parsed back element by element (including element order and

@@ -276,7 +276,7 @@ uv run pytest
 uv run ruff check . && uv run ruff format --check .
 ```
 
-200 tests (103 test functions, many parametrised) run in about 7 seconds, offline. They cover
+208 tests (110 test functions, many parametrised) run in about 7 seconds, offline. They cover
 every rule with passing and failing HTML, the contrast maths against known values, the robots.txt
 parser, the crawler against fake sites on `httpx.MockTransport` (same origin, robots.txt, page
 limit, status codes, redirects, concurrency and delay, Crawl-delay, duplicates, size limit,

@@ -143,10 +143,9 @@ for value in masked_values:  # from the detector, before masking
 
 <Section id="result">
 
-- **152 automated tests**, including a round-trip property test on 500 random texts: no masked value, and no piece of one four characters or longer, ever reaches the model's input.
+- **163 automated tests**, including a round-trip property test on 500 random texts: no masked value, and no piece of one four characters or longer, ever reaches the model's input.
 - That property test found four of the six bugs I fixed; the tests with hand-picked examples had all passed with those bugs still in the code.
 - Masking the sample customer message takes 0.4 ms (median of 200 runs); a 16,700-character text takes 22 ms.
-- [Result in a real company, e.g. "N prompts a day masked for a support team"]
 
 </Section>
 

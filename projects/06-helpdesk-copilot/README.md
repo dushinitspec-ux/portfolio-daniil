@@ -288,7 +288,7 @@ uv run pytest
 uv run ruff check . && uv run ruff format --check .
 ```
 
-95 tests cover text normalization in four alphabets, section parsing, BM25 ranking (IDF,
+110 tests cover text normalization in four alphabets, section parsing, BM25 ranking (IDF,
 saturation, length normalization), retrieval on real questions, citation parsing and
 checking, every routing path (low confidence, the model declining, invalid citations, LLM
 failure, security incidents, outages, action requests), the triage rules and the P1 floor,
