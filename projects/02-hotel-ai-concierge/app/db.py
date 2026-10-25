@@ -4,10 +4,12 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
-
-import aiosqlite
+from typing import TYPE_CHECKING
 
 from app.language import Language
+
+if TYPE_CHECKING:
+    import aiosqlite
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS guests (
@@ -83,11 +85,15 @@ def _now() -> str:
 
 
 class Repository:
-    def __init__(self, conn: aiosqlite.Connection) -> None:
+    def __init__(self, conn: "aiosqlite.Connection") -> None:
         self._db = conn
 
     @classmethod
     async def connect(cls, path: Path | str) -> "Repository":
+        # Imported here, not at the top: aiosqlite runs SQLite in a thread, and the in-browser
+        # demo (WebAssembly, no threads) passes its own connection to __init__ instead.
+        import aiosqlite
+
         if str(path) != ":memory:":
             Path(path).parent.mkdir(parents=True, exist_ok=True)
         conn = await aiosqlite.connect(path)
