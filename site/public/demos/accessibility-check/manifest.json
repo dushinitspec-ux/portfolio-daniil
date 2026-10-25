@@ -1,0 +1,35 @@
+{
+  "project": "08-accessibility-check",
+  "entry": "app.web_demo",
+  "packages": [
+    "beautifulsoup4",
+    "lxml",
+    "pydantic"
+  ],
+  "micropip": [],
+  "files": [
+    "app/__init__.py",
+    "app/models.py",
+    "app/contrast.py",
+    "app/report.py",
+    "app/robots.py",
+    "app/urls.py",
+    "app/links.py",
+    "app/web_demo.py",
+    "app/rules/__init__.py",
+    "app/rules/base.py",
+    "app/rules/content.py",
+    "app/rules/document.py",
+    "app/rules/forms.py",
+    "app/sample_site/robots.txt",
+    "app/sample_site/broken/about.html",
+    "app/sample_site/broken/contact.html",
+    "app/sample_site/broken/index.html",
+    "app/sample_site/broken/products.html",
+    "app/sample_site/fixed/about.html",
+    "app/sample_site/fixed/cart.html",
+    "app/sample_site/fixed/contact.html",
+    "app/sample_site/fixed/index.html",
+    "app/sample_site/fixed/products.html"
+  ]
+}

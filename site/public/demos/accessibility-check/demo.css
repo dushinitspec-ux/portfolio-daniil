@@ -1,0 +1,87 @@
+/* Accessibility-check demo: only the shared tokens (demo.css in _shared) are used for colours. */
+
+/* The shared .d-btn sets display, which beats the [hidden] attribute (Skip / Replay). */
+.d-btn[hidden] { display: none; }
+/* The shared stage is a one-column grid with an auto track: wide content would widen it. */
+.d-stage, .d-cols { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 760px) {
+  .d-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .d-cols.wide-left { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+}
+.ac-side { align-content: start; gap: 20px; }
+.ac-side > * { min-width: 0; }
+
+.ac-caption { border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; min-height: 1.6em; font-size: 15px; }
+.ac-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 12px; margin-bottom: 12px; }
+.ac-summary:empty, .d-panel:empty { display: none; }
+
+/* Summary numbers */
+.ac-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+@media (min-width: 560px) { .ac-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.ac-stat { background: var(--card); padding: 10px 12px; min-width: 0; }
+.ac-stat b { display: block; font-size: 28px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.ac-stat span { display: block; font: 500 11px/1.3 var(--mono); letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted); overflow-wrap: anywhere; }
+.ac-stat[data-tone="fail"] b { color: var(--accent-text); }
+.ac-stat[data-tone="warn"] b { color: var(--warn); }
+.ac-stat[data-tone="ok"] b { color: var(--ok); }
+.ac-stat[data-tone="zero"] b, .ac-stat[data-tone="na"] b { color: var(--muted); }
+.ac-severity { margin-top: 12px; gap: 6px 8px; }
+
+/* Pages */
+.ac-pages { margin: 10px 0 0; padding: 0; list-style: none; font-size: 13px; }
+.ac-pages li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 2px 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.ac-pages .ac-what { grid-column: 2; color: var(--muted); }
+.ac-pages li[data-tone="fail"] .ac-what { color: var(--accent-text); }
+.ac-pages li[data-tone="ok"] .ac-what { color: var(--ok); }
+.ac-code { color: var(--muted); }
+.ac-path { overflow-wrap: anywhere; font-size: 12.5px; }
+
+/* Criteria */
+.ac-criteria { font-size: 13px; }
+.ac-criteria a { color: inherit; }
+.ac-criteria tr[data-status="pass"] td:first-child a, .ac-criteria tr[data-status="n/a"] td { color: var(--muted); }
+
+/* Rules: what to fix */
+.ac-rules { display: grid; gap: 8px; margin: 4px 0 14px; }
+.ac-rule { border: 1px solid var(--line); border-left: 3px solid var(--accent); background: var(--card); }
+.ac-rule[data-status="warning"] { border-left-color: var(--warn); }
+.ac-rule > summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 10px; align-items: baseline; padding: 10px 12px; cursor: pointer; list-style: none; }
+.ac-rule > summary::-webkit-details-marker { display: none; }
+.ac-rule > summary > .d-badge { grid-column: 1; grid-row: 1; justify-self: start; }
+.ac-rule-title { grid-column: 2; grid-row: 1; font-weight: 600; }
+.ac-rule > summary::after { content: "+"; grid-column: 3; grid-row: 1; font: 500 14px/1 var(--mono); color: var(--muted); }
+.ac-rule[open] > summary::after { content: "–"; }
+.ac-rule-meta { grid-column: 2 / 4; grid-row: 2; font-size: 11.5px; color: var(--muted); }
+.ac-rule-body { display: grid; gap: 8px; padding: 0 12px 12px; font-size: 14px; }
+.ac-advisory { font-size: 11.5px; }
+.ac-page-findings ul { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.ac-page-findings li { display: grid; gap: 4px; padding-left: 10px; border-left: 1px solid var(--line); }
+.ac-msg { font-size: 13.5px; line-height: 1.45; overflow-wrap: anywhere; }
+.ac-snippet { display: block; padding: 6px 8px; background: var(--surface); font-size: 12px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.ac-swatches { display: inline-flex; vertical-align: -2px; margin-right: 6px; border: 1px solid var(--strong); }
+.ac-swatch { display: block; width: 14px; height: 14px; }
+.ac-chips { display: grid; gap: 6px; margin-bottom: 12px; }
+.ac-chip { padding: 2px 6px; border: 1px dashed var(--line); font-size: 12px; color: var(--muted); }
+.ac-chip.ok { border: 1px solid currentColor; color: var(--ok); }
+
+/* Contrast checker */
+.ac-two { display: grid; gap: 10px 14px; }
+@media (min-width: 440px) { .ac-two { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; } }
+.ac-color { display: flex; gap: 6px; }
+.ac-color .d-input { padding: 8px 10px; }
+.ac-pick { flex: none; width: 44px; height: 42px; padding: 2px; border: 1px solid var(--line); background: var(--card); cursor: pointer; }
+.ac-pick:disabled { cursor: not-allowed; }
+.ac-check { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; font-size: 14px; }
+.ac-check input { width: 18px; height: 18px; accent-color: var(--fg); }
+.ac-contrast-out { display: grid; gap: 8px; margin-top: 14px; }
+.ac-contrast-out:empty { display: none; }
+.ac-preview { padding: 14px; border: 1px solid var(--line); line-height: 1.3; overflow-wrap: anywhere; }
+.ac-ratio { margin-top: 4px; }
+.ac-levels { font-size: 13px; }
+.ac-levels th, .ac-levels td { white-space: nowrap; }
+.ac-yours { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.ac-you { text-transform: none; letter-spacing: 0; }
+.ac-error { color: var(--accent-text); font-size: 13px; }
+.ac-paste { min-height: 220px; font-size: 12.5px; white-space: pre; overflow-wrap: normal; overflow-x: auto; }
+/* The shared .d-input / .d-textarea reset the font after .mono, so set it again here. */
+.ac-paste, .ac-color .d-input { font-family: var(--mono); }

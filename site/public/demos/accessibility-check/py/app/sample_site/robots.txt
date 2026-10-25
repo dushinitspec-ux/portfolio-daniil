@@ -1,0 +1,5 @@
+# robots.txt of the Accessibility Check app. The demo crawl obeys it like any other site.
+User-agent: *
+Disallow: /reports/
+Disallow: /samples/broken/private/
+Disallow: /samples/fixed/private/

@@ -1,0 +1,20 @@
+{
+  "slug": "accessibility-check",
+  "entry": "app.web_demo",
+  "packages": ["beautifulsoup4", "lxml", "pydantic"],
+  "micropip": [],
+  "files": [
+    "app/__init__.py",
+    "app/models.py",
+    "app/contrast.py",
+    "app/report.py",
+    "app/robots.py",
+    "app/urls.py",
+    "app/links.py",
+    "app/web_demo.py",
+    "app/rules/*.py",
+    "app/sample_site/robots.txt",
+    "app/sample_site/broken/*.html",
+    "app/sample_site/fixed/*.html"
+  ]
+}

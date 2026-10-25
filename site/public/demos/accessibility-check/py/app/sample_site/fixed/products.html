@@ -1,0 +1,50 @@
+<!doctype html>
+<!-- SAMPLE PAGE, fixed version of ../broken/products.html, for the Accessibility Check demo. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Products – Sample Shop</title>
+<link rel="stylesheet" href="../shop.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="banner">Demo page, fixed version. Not a real shop.</div>
+<header>
+  <a href="index.html"><img src="../img/logo.svg" alt="Sample Shop, home page" width="160" height="40"></a>
+  <nav aria-label="Main">
+    <a href="index.html">Home</a>
+    <a href="products.html">Products</a>
+    <a href="about.html">About us</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+</header>
+<main id="main">
+  <h1>Products</h1>
+  <div class="products">
+    <article id="product-tote">
+      <img src="../img/bag-1.svg" alt="Brown leather tote, front view" width="200" height="160">
+      <h2>Leather tote</h2>
+      <p style="color:#595959;background-color:#ffffff">89 EUR, incl. VAT</p>
+      <button class="add" aria-label="Add leather tote to cart"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h12M8 2v12" stroke="#111"/></svg></button>
+      <a href="about.html">How the leather tote is made</a>
+    </article>
+    <article id="product-backpack">
+      <img src="../img/bag-2.svg" alt="Dark green canvas backpack" width="200" height="160">
+      <h2>Canvas backpack</h2>
+      <p style="color:#595959;background-color:#ffffff">64 EUR, incl. VAT</p>
+      <button class="add" aria-label="Add canvas backpack to cart"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h12M8 2v12" stroke="#111"/></svg></button>
+      <a href="about.html">How the canvas backpack is made</a>
+    </article>
+    <article id="product-clutch">
+      <img src="../img/bag-3.svg" alt="Small mustard-yellow clutch" width="200" height="160">
+      <h2>Mustard clutch</h2>
+      <p style="color:#595959;background-color:#ffffff">39 EUR, incl. VAT</p>
+      <button class="add" aria-label="Add mustard clutch to cart"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h12M8 2v12" stroke="#111"/></svg></button>
+      <a href="about.html">How the mustard clutch is made</a>
+    </article>
+  </div>
+  <p><a href="private/">Staff area</a></p>
+</main>
+</body>
+</html>
