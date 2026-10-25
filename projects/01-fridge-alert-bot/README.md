@@ -1,5 +1,9 @@
 # Fridge Alert Bot
 
+[![CI](https://github.com/dushinitspec-ux/fridge-alert-bot/actions/workflows/ci.yml/badge.svg)](https://github.com/dushinitspec-ux/fridge-alert-bot/actions/workflows/ci.yml)
+
+**[▶ Live demo in your browser](https://site-production-898c.up.railway.app/en/projects/fridge-alert-bot/demo)** · [Case study](https://site-production-898c.up.railway.app/en/projects/fridge-alert-bot) · Part of [Daniil Dushin's portfolio](https://github.com/dushinitspec-ux/portfolio-daniil)
+
 Telegram alerts when a restaurant or hotel fridge stays too warm.
 
 ## Problem

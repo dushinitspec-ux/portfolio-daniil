@@ -1,5 +1,9 @@
 # Accessibility Check
 
+[![CI](https://github.com/dushinitspec-ux/accessibility-check/actions/workflows/ci.yml/badge.svg)](https://github.com/dushinitspec-ux/accessibility-check/actions/workflows/ci.yml)
+
+**[▶ Live demo in your browser](https://site-production-898c.up.railway.app/en/projects/accessibility-check/demo)** · [Case study](https://site-production-898c.up.railway.app/en/projects/accessibility-check) · Part of [Daniil Dushin's portfolio](https://github.com/dushinitspec-ux/portfolio-daniil)
+
 Crawls a small website, runs 17 automated checks on the HTML of every page, maps each finding
 to a WCAG 2.2 success criterion, and says in plain language what to fix. Reports are stored in
 SQLite and can be downloaded as a standalone HTML file or as JSON. An optional Claude summary

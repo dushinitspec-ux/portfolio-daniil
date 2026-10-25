@@ -1,5 +1,9 @@
 # PII Guard
 
+[![CI](https://github.com/dushinitspec-ux/pii-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/dushinitspec-ux/pii-guard/actions/workflows/ci.yml)
+
+**[▶ Live demo in your browser](https://site-production-898c.up.railway.app/en/projects/pii-guard/demo)** · [Case study](https://site-production-898c.up.railway.app/en/projects/pii-guard) · Part of [Daniil Dushin's portfolio](https://github.com/dushinitspec-ux/portfolio-daniil)
+
 A small gateway between a company's staff (or internal apps) and an LLM. It finds personal
 data in a prompt, replaces it with placeholders such as `<EMAIL_1>` and `<IBAN_1>`, sends only
 the masked text to the model, and puts the real values back into the answer before the user

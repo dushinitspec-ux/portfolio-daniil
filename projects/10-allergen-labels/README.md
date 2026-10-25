@@ -1,5 +1,9 @@
 # Allergen Labels
 
+[![CI](https://github.com/dushinitspec-ux/allergen-labels/actions/workflows/ci.yml/badge.svg)](https://github.com/dushinitspec-ux/allergen-labels/actions/workflows/ci.yml)
+
+**[▶ Live demo in your browser](https://site-production-898c.up.railway.app/en/projects/allergen-labels/demo)** · [Case study](https://site-production-898c.up.railway.app/en/projects/allergen-labels) · Part of [Daniil Dushin's portfolio](https://github.com/dushinitspec-ux/portfolio-daniil)
+
 Marks the 14 allergens that EU food law requires to be declared on every dish of a
 restaurant or hotel kitchen, and prints the menu with allergen numbers in English,
 Russian, Turkish and German. It reads the ingredient lists with a curated multilingual

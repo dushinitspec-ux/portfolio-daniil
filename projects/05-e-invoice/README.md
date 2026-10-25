@@ -1,5 +1,9 @@
 # E-Invoice
 
+[![CI](https://github.com/dushinitspec-ux/e-invoice/actions/workflows/ci.yml/badge.svg)](https://github.com/dushinitspec-ux/e-invoice/actions/workflows/ci.yml)
+
+**[▶ Live demo in your browser](https://site-production-898c.up.railway.app/en/projects/e-invoice/demo)** · [Case study](https://site-production-898c.up.railway.app/en/projects/e-invoice) · Part of [Daniil Dushin's portfolio](https://github.com/dushinitspec-ux/portfolio-daniil)
+
 Turns a PDF invoice into an XRechnung e-invoice (UBL 2.1 XML) and checks it against
 EN 16931 and XRechnung business rules. Every failed rule is shown with its official ID and a
 plain explanation, for example `BR-CO-10: the lines add up to 882.30, the invoice says 882.80`.

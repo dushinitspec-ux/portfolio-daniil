@@ -1,5 +1,9 @@
 # Hotel AI Concierge
 
+[![CI](https://github.com/dushinitspec-ux/hotel-ai-concierge/actions/workflows/ci.yml/badge.svg)](https://github.com/dushinitspec-ux/hotel-ai-concierge/actions/workflows/ci.yml)
+
+**[▶ Live demo in your browser](https://site-production-898c.up.railway.app/en/projects/hotel-ai-concierge/demo)** · [Case study](https://site-production-898c.up.railway.app/en/projects/hotel-ai-concierge) · Part of [Daniil Dushin's portfolio](https://github.com/dushinitspec-ux/portfolio-daniil)
+
 A Telegram bot that answers hotel guests in English, Russian, Turkish and German, using only
 the hotel's own knowledge base. If the answer isn't there, it doesn't guess. It passes the
 question to the reception team and delivers their reply back to the guest.

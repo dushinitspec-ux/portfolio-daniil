@@ -29,3 +29,7 @@ Thumbs.db
 .vscode/
 .idea/
 .impeccable/
+
+# Private notes and Russian copies for Daniil (kept locally, not published)
+*.ru.md
+docs/profiles/

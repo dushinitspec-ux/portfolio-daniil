@@ -1,5 +1,9 @@
 # Energy Saver
 
+[![CI](https://github.com/dushinitspec-ux/energy-saver/actions/workflows/ci.yml/badge.svg)](https://github.com/dushinitspec-ux/energy-saver/actions/workflows/ci.yml)
+
+**[▶ Live demo in your browser](https://site-production-898c.up.railway.app/en/projects/energy-saver/demo)** · [Case study](https://site-production-898c.up.railway.app/en/projects/energy-saver) · Part of [Daniil Dushin's portfolio](https://github.com/dushinitspec-ux/portfolio-daniil)
+
 Plans when a hotel or café runs its flexible electrical loads (water boiler, EV charger,
 laundry dryer, dishwasher pre-heat, pool pump) using the real day-ahead electricity prices
 of its bidding zone. Every afternoon it sends tomorrow's plan to Telegram with the expected

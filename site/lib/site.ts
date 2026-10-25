@@ -7,7 +7,7 @@ export const site = {
   telegram: "https://t.me/daniil_dushin",
   linkedin: "[LinkedIn link]", // e.g. https://www.linkedin.com/in/your-profile
   github: "https://github.com/dushinitspec-ux",
-  sourceCode: "[GitHub link]/portfolio-daniil", // e.g. https://github.com/dushinitspec-ux/portfolio-daniil
+  sourceCode: "https://github.com/dushinitspec-ux/portfolio-daniil", // e.g. https://github.com/dushinitspec-ux/portfolio-daniil
 } as const;
 
 export function isPlaceholder(value: string): boolean {

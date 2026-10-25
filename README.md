@@ -25,6 +25,8 @@ ten production-style projects and promo videos for the first three.
 | 09 | [Energy Saver](projects/09-energy-saver) | Boilers and EV chargers run in the most expensive hours of the day-ahead market | asyncio, FastAPI, aiogram 3, SQLite | 108 | [Run](https://site-production-898c.up.railway.app/en/projects/energy-saver/demo) |
 | 10 | [Allergen Labels](projects/10-allergen-labels) | Menus must declare the 14 EU allergens, in the guests' languages | FastAPI, Jinja2, Claude API, SQLite | 220 | [Run](https://site-production-898c.up.railway.app/en/projects/allergen-labels/demo) |
 
+Every project is also published as its own repository: [fridge-alert-bot](https://github.com/dushinitspec-ux/fridge-alert-bot) · [hotel-ai-concierge](https://github.com/dushinitspec-ux/hotel-ai-concierge) · [uptime-monitor](https://github.com/dushinitspec-ux/uptime-monitor) · [pii-guard](https://github.com/dushinitspec-ux/pii-guard) · [e-invoice](https://github.com/dushinitspec-ux/e-invoice) · [helpdesk-copilot](https://github.com/dushinitspec-ux/helpdesk-copilot) · [network-inventory](https://github.com/dushinitspec-ux/network-inventory) · [accessibility-check](https://github.com/dushinitspec-ux/accessibility-check) · [energy-saver](https://github.com/dushinitspec-ux/energy-saver) · [allergen-labels](https://github.com/dushinitspec-ux/allergen-labels).
+
 Every project:
 
 - runs in **demo mode** with simulated or bundled sample data — no hardware and no paid API keys needed;
@@ -39,7 +41,7 @@ Every project:
 
 ```
 portfolio-daniil/
-├── docs/        CVs for four kinds of roles (+ Russian copies) and the project list
+├── docs/        CVs for four kinds of roles and the project list
 ├── site/        Portfolio website: Next.js 14, TypeScript, Tailwind, MDX, EN/RU/TR/DE
 ├── remotion/    Cover images for every project and promo videos for 01–03 (Remotion, React)
 └── projects/

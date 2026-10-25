@@ -1,5 +1,9 @@
 # Network Inventory
 
+[![CI](https://github.com/dushinitspec-ux/network-inventory/actions/workflows/ci.yml/badge.svg)](https://github.com/dushinitspec-ux/network-inventory/actions/workflows/ci.yml)
+
+**[▶ Live demo in your browser](https://site-production-898c.up.railway.app/en/projects/network-inventory/demo)** · [Case study](https://site-production-898c.up.railway.app/en/projects/network-inventory) · Part of [Daniil Dushin's portfolio](https://github.com/dushinitspec-ux/portfolio-daniil)
+
 Finds the devices on an office or hotel network, keeps a register of them over time, and tells
 you what changed: a new device, a device that disappeared, a port that opened. Each device gets
 risk notes based on its open services (Telnet, FTP, RDP, SMB, plain-HTTP admin pages, camera

@@ -1,5 +1,9 @@
 # Helpdesk Copilot
 
+[![CI](https://github.com/dushinitspec-ux/helpdesk-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/dushinitspec-ux/helpdesk-copilot/actions/workflows/ci.yml)
+
+**[▶ Live demo in your browser](https://site-production-898c.up.railway.app/en/projects/helpdesk-copilot/demo)** · [Case study](https://site-production-898c.up.railway.app/en/projects/helpdesk-copilot) · Part of [Daniil Dushin's portfolio](https://github.com/dushinitspec-ux/portfolio-daniil)
+
 An IT assistant for a small company. Employees ask IT questions in Telegram and get answers
 from the company's own IT knowledge base, with numbered sources. A question it cannot answer
 from that knowledge base becomes a ticket, sorted into a category and a priority (P1–P4) for

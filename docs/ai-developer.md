@@ -2,7 +2,7 @@
 
 **AI Developer** | AI-assisted coding · Telegram bots · Websites · Automation | Russian native
 
-Antalya, Türkiye · dushin.itspec@gmail.com · [LinkedIn link] · [site-production-898c.up.railway.app](https://site-production-898c.up.railway.app) · [github.com/dushinitspec-ux](https://github.com/dushinitspec-ux)
+Antalya, Türkiye · dushin.itspec@gmail.com · [Telegram @daniil_dushin](https://t.me/daniil_dushin) · [LinkedIn link] · [site-production-898c.up.railway.app](https://site-production-898c.up.railway.app) · [github.com/dushinitspec-ux](https://github.com/dushinitspec-ux)
 
 ## Summary
 
