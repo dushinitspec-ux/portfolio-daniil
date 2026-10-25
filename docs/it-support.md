@@ -2,7 +2,7 @@
 
 **IT Support & Network Technician** | MikroTik · CCTV/NVR · Access control | Russian native
 
-Antalya, Türkiye · dushin.itspec@gmail.com · [Telegram @daniil_dushin](https://t.me/daniil_dushin) · [LinkedIn link] · [site-production-898c.up.railway.app](https://site-production-898c.up.railway.app)
+Antalya, Türkiye · dushin.itspec@gmail.com · [Telegram @daniil_dushin](https://t.me/daniil_dushin) · [linkedin.com/in/daniil-dushin](https://www.linkedin.com/in/daniil-dushin) · [site-production-898c.up.railway.app](https://site-production-898c.up.railway.app)
 
 ## Summary
 

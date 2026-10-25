@@ -5,7 +5,7 @@
 AI Developer & IT/Network Technician based in Antalya, open to relocation.
 I build AI tools that save businesses time — and I set up the hardware they run on.
 
-**Website:** [site-production-898c.up.railway.app](https://site-production-898c.up.railway.app) · **Email:** dushin.itspec@gmail.com · [LinkedIn link]
+**Website:** [site-production-898c.up.railway.app](https://site-production-898c.up.railway.app) · **Email:** dushin.itspec@gmail.com · **LinkedIn:** [linkedin.com/in/daniil-dushin](https://www.linkedin.com/in/daniil-dushin)
 
 This repository holds everything an employer needs in one place: CVs, the portfolio website,
 ten production-style projects and promo videos for the first three.
@@ -86,4 +86,4 @@ appeared on a real network or a non-English Windows.
 
 ## Contact
 
-dushin.itspec@gmail.com · [Telegram](https://t.me/daniil_dushin) · [LinkedIn link] · [GitHub](https://github.com/dushinitspec-ux)
+dushin.itspec@gmail.com · [Telegram](https://t.me/daniil_dushin) · [LinkedIn](https://www.linkedin.com/in/daniil-dushin) · [GitHub](https://github.com/dushinitspec-ux)

@@ -57,6 +57,7 @@ h1 { font-size: 26pt; font-weight: 600; letter-spacing: -0.03em; margin: 0 0 2mm
 h1 + p { font-size: 11.5pt; margin: 0; }
 h1 + p + p { color: #5E5A52; font-size: 9.2pt; margin: 1.5mm 0 0; padding-bottom: 4mm;
   border-bottom: 1.5pt solid #FF4F1F; }
+h1 + p + p a { white-space: nowrap; }
 h2 { font-size: 8.4pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
   color: #5E5A52; margin: 6mm 0 2mm; padding-top: 2mm; border-top: 0.5pt solid #ccc; }
 p { margin: 0 0 2mm; }

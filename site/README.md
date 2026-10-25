@@ -78,9 +78,9 @@ update `NEXT_PUBLIC_SITE_URL` and redeploy. The site also deploys to Vercel unch
 
 ## Before publishing
 
-- Replace the remaining placeholders in [`lib/site.ts`](lib/site.ts) (LinkedIn, source code) and the
-  `[GitHub link]` / `[Live demo link]` values in the MDX frontmatter. Links that still contain
-  a `[placeholder]` are shown as plain text, never as broken links.
+- Personal links live in [`lib/site.ts`](lib/site.ts); project links in the MDX frontmatter.
+  All of them are filled in. A value in `[brackets]` is a placeholder: links that still contain
+  one are shown as plain text, never as broken links.
 - Set `NEXT_PUBLIC_SITE_URL` to the real domain (used for canonical URLs, `hreflang`,
   the sitemap and Open Graph links). Default: `https://daniildushin.dev`.
 
