@@ -2,6 +2,7 @@ import Image, { getImageProps } from "next/image";
 import { getTranslations } from "next-intl/server";
 
 import { ExternalLink } from "@/components/ui/ExternalLink";
+import { Link } from "@/i18n/routing";
 import type { Project } from "@/lib/projects";
 import { isPlaceholder } from "@/lib/site";
 
@@ -70,20 +71,27 @@ export function Stack({ project }: { project: Project }) {
   );
 }
 
-export async function Links({ project }: { project: Project }) {
+export async function Links({ project, demoHref }: { project: Project; demoHref?: string }) {
   const t = await getTranslations("case");
   const links = [
     { label: t("github"), href: project.github },
-    { label: t("liveDemo"), href: project.demo },
+    // A project with an in-browser demo links to its demo page instead of the frontmatter value.
+    { label: t("liveDemo"), href: demoHref ?? project.demo },
   ];
   return (
     <ul className="border-t border-line">
       {links.map((link) => (
         <li key={link.label} className="border-b border-line">
           <div className="flex items-baseline justify-between gap-4 py-4 text-lg">
-            <ExternalLink href={link.href}>{link.label}</ExternalLink>
+            {link.href.startsWith("/") ? (
+              <Link href={link.href} className="link-line">
+                {link.label}
+              </Link>
+            ) : (
+              <ExternalLink href={link.href}>{link.label}</ExternalLink>
+            )}
             <span className="font-mono text-label text-muted">
-              {isPlaceholder(link.href) ? t("placeholderLink") : "↗"}
+              {isPlaceholder(link.href) ? t("placeholderLink") : link.href.startsWith("/") ? "→" : "↗"}
             </span>
           </div>
         </li>

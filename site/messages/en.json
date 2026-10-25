@@ -96,7 +96,8 @@
     "github": "Source code on GitHub",
     "liveDemo": "Live demo",
     "next": "Next project",
-    "placeholderLink": "link coming soon"
+    "placeholderLink": "link coming soon",
+    "runDemo": "Run the live demo"
   },
   "about": {
     "title": "About",
@@ -175,5 +176,11 @@
     "title": "This page does not exist.",
     "text": "The link may be broken, or the page has moved.",
     "home": "Back to the home page"
+  },
+  "demo": {
+    "label": "Live demo",
+    "back": "Back to the case study",
+    "lead": "This is the project's real Python code, running in your browser (Pyodide, WebAssembly). It plays a short run by itself, then it is your turn. Nothing is sent to a server.",
+    "frameTitle": "Live demo of {title}"
   }
 }

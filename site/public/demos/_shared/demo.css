@@ -1,0 +1,176 @@
+/* Shared look of the in-browser demos: the website's palette, type and 1px-rule style, so a
+   demo inside its iframe reads as part of the site. Demo-specific styles go in the demo's own
+   folder; only reuse these classes and tokens. */
+
+@font-face { font-family: "Inter Tight"; font-weight: 400; font-display: swap; src: url("fonts/inter-tight-latin-400-normal.woff") format("woff"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Inter Tight"; font-weight: 400; font-display: swap; src: url("fonts/inter-tight-latin-ext-400-normal.woff") format("woff"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Inter Tight"; font-weight: 400; font-display: swap; src: url("fonts/inter-tight-cyrillic-400-normal.woff") format("woff"); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "Inter Tight"; font-weight: 600; font-display: swap; src: url("fonts/inter-tight-latin-600-normal.woff") format("woff"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Inter Tight"; font-weight: 600; font-display: swap; src: url("fonts/inter-tight-latin-ext-600-normal.woff") format("woff"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Inter Tight"; font-weight: 600; font-display: swap; src: url("fonts/inter-tight-cyrillic-600-normal.woff") format("woff"); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+
+:root {
+  --bg: #f5f3ee;
+  --fg: #111111;
+  --muted: #5e5a52;
+  --surface: #ece9e2;
+  --card: #ffffff;
+  --line: rgba(17, 17, 17, 0.14);
+  --strong: rgba(17, 17, 17, 0.9);
+  --accent: #ff4f1f;      /* shapes and lines only */
+  --accent-text: #c2330a; /* accent for text, 5:1 on --bg */
+  --ok: #1e7f4a;
+  --warn: #8a5a00;
+  --sans: "Inter Tight", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "JetBrains Mono", SFMono-Regular, Consolas, Menlo, monospace;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: #111110;
+  --fg: #edeae3;
+  --muted: #a39e94;
+  --surface: #1b1a18;
+  --card: #1b1a18;
+  --line: rgba(237, 234, 227, 0.14);
+  --strong: rgba(237, 234, 227, 0.9);
+  --accent: #ff6338;
+  --accent-text: #ff7852;
+  --ok: #4cc283;
+  --warn: #e0a83a;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+/* Components set their own display; the hidden attribute must still win (Skip / Replay). */
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 15px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: color-mix(in srgb, var(--accent) 25%, transparent); }
+:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+h1, h2, h3, p { margin: 0; }
+code, pre, .mono { font-family: var(--mono); }
+
+/* Layout */
+.d-root { padding: 0 0 32px; }
+/* minmax(0, 1fr): a wide table or <pre> scrolls inside its panel instead of widening the page. */
+.d-stage { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; padding-top: 20px; }
+.d-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+.d-stage > *, .d-cols > * { min-width: 0; }
+@media (min-width: 760px) {
+  .d-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .d-cols.wide-left { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+}
+.d-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.d-stack { display: grid; gap: 10px; }
+
+/* Status bar: what the demo is doing, plus Skip / Replay */
+.d-bar {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 12px 0; background: var(--bg); border-bottom: 1px solid var(--line);
+}
+.d-status { display: flex; align-items: center; gap: 10px; font: 500 12px/1.3 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.d-dot { width: 8px; height: 8px; background: var(--muted); flex: none; }
+.d-status[data-state="auto"] .d-dot { background: var(--accent); animation: d-blink 1s steps(2) infinite; }
+.d-status[data-state="ready"] .d-dot { background: var(--ok); }
+.d-status[data-state="error"] .d-dot { background: var(--accent); }
+
+/* Text */
+.d-label { font: 500 12px/1.3 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.d-title { font-size: 20px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.2; }
+.d-note { font-size: 13px; color: var(--muted); }
+.d-big { font-size: clamp(28px, 5vw, 44px); font-weight: 600; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+
+/* Surfaces */
+.d-panel { border: 1px solid var(--line); background: var(--card); padding: 16px; min-width: 0; }
+.d-panel > .d-label:first-child { display: block; margin-bottom: 10px; }
+.d-rule { border: 0; border-top: 1px solid var(--line); margin: 0; }
+
+/* Controls */
+.d-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 14px; border: 1px solid var(--strong); background: transparent; color: var(--fg);
+  font: 500 12px/1.2 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+.d-btn:hover:not(:disabled) { background: var(--fg); color: var(--bg); }
+.d-btn.solid { background: var(--fg); color: var(--bg); }
+.d-btn.solid:hover:not(:disabled) { background: var(--accent); color: #111; border-color: var(--accent); }
+.d-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.d-input, .d-textarea, .d-select {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--line); background: var(--card); color: var(--fg);
+  font: inherit; border-radius: 0;
+}
+.d-textarea { min-height: 110px; resize: vertical; line-height: 1.45; }
+.d-input:focus, .d-textarea:focus, .d-select:focus { outline: none; border-color: var(--strong); }
+.d-input.mono, .d-textarea.mono { font-family: var(--mono); font-size: 13px; }
+.d-field { display: grid; gap: 6px; }
+
+/* Tables */
+.d-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.d-table th { text-align: left; font: 500 11px/1.3 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); padding: 8px 10px 8px 0; border-bottom: 1px solid var(--strong); }
+.d-table td { padding: 9px 10px 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.d-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.d-scroll { overflow-x: auto; }
+
+/* Badges */
+.d-badge { display: inline-block; padding: 2px 6px; border: 1px solid currentColor; font: 500 11px/1.4 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+.d-badge.ok { color: var(--ok); }
+.d-badge.warn { color: var(--warn); }
+.d-badge.fail { color: var(--accent-text); }
+.d-badge.solid { background: var(--accent); border-color: var(--accent); color: #111; }
+.d-badge.sim { color: var(--muted); border-style: dashed; }
+
+/* Loader shown while Python starts */
+.d-loader { display: grid; gap: 14px; padding: 28px 0; }
+.d-steps { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; font: 13px/1.4 var(--mono); }
+.d-steps li { display: flex; gap: 10px; color: var(--muted); }
+.d-steps li::before { content: "○"; width: 1em; }
+.d-steps li[data-state="active"] { color: var(--fg); }
+.d-steps li[data-state="active"]::before { content: "◐"; animation: d-spin 1s linear infinite; display: inline-block; }
+.d-steps li[data-state="done"]::before { content: "●"; color: var(--ok); }
+.d-progress { height: 2px; background: var(--line); overflow: hidden; }
+.d-progress > span { display: block; height: 100%; width: 30%; background: var(--accent); animation: d-slide 1.2s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+
+/* Telegram-like chat for the bot projects */
+.d-phone { width: 100%; max-width: 400px; border: 1px solid var(--line); background: var(--surface); display: flex; flex-direction: column; min-height: 420px; }
+.d-phone-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--card); }
+.d-avatar { width: 30px; height: 30px; background: var(--fg); color: var(--bg); display: grid; place-items: center; font: 600 13px/1 var(--sans); flex: none; }
+.d-phone-head .name { font-weight: 600; font-size: 14px; line-height: 1.2; }
+.d-phone-head .sub { font-size: 12px; color: var(--muted); }
+.d-chat { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 14px; overflow-y: auto; max-height: 520px; }
+.d-msg { max-width: 86%; padding: 8px 11px; font-size: 14px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
+.d-msg.in { align-self: flex-start; background: var(--card); border: 1px solid var(--line); }
+.d-msg.out { align-self: flex-end; background: var(--fg); color: var(--bg); }
+.d-msg .meta { display: block; margin-top: 4px; font: 11px/1.2 var(--mono); opacity: 0.6; }
+.d-keys { display: flex; flex-wrap: wrap; gap: 6px; align-self: flex-start; max-width: 86%; }
+.d-keys .d-btn { padding: 6px 10px; font-size: 11px; }
+.d-composer { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--line); background: var(--card); }
+.d-composer .d-input { padding: 8px 10px; }
+
+/* Event log */
+.d-log { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; font-size: 14px; }
+.d-log li { display: grid; grid-template-columns: 84px 1fr; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.d-log time { font: 12px/1.6 var(--mono); color: var(--muted); }
+
+/* Typing caret and entrances */
+.d-caret::after { content: ""; display: inline-block; width: 0.5em; height: 1.05em; margin-left: 1px; vertical-align: text-bottom; background: var(--accent); animation: d-blink 1s steps(2) infinite; }
+.d-enter { animation: d-enter 0.35s cubic-bezier(0.2, 0.7, 0.1, 1) both; }
+.d-flash { animation: d-flash 1.2s ease-out; }
+
+@keyframes d-blink { 50% { opacity: 0; } }
+@keyframes d-spin { to { transform: rotate(360deg); } }
+@keyframes d-slide { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+@keyframes d-enter { from { opacity: 0; transform: translateY(6px); } }
+@keyframes d-flash { from { background: color-mix(in srgb, var(--accent) 22%, transparent); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}

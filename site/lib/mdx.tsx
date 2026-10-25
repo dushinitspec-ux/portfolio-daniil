@@ -9,6 +9,7 @@ import { CodeBlock } from "@/components/case/CodeBlock";
 import { Diff } from "@/components/case/Diff";
 import { Demo, Links, Screenshots, Stack } from "@/components/case/ProjectBlocks";
 import { BugPart, Section } from "@/components/case/Section";
+import { demoPath, hasDemo } from "@/lib/demos";
 import type { Project } from "@/lib/projects";
 
 /**
@@ -31,7 +32,7 @@ export async function CaseStudyBody({ project }: { project: Project }) {
     Demo: () => <Demo project={project} />,
     Screenshots: () => <Screenshots project={project} />,
     Stack: () => <Stack project={project} />,
-    Links: () => <Links project={project} />,
+    Links: () => <Links project={project} demoHref={hasDemo(project.slug) ? demoPath(project.slug) : undefined} />,
   };
 
   return <Content components={components} />;

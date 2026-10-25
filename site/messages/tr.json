@@ -96,7 +96,8 @@
     "github": "GitHub'da kaynak kod",
     "liveDemo": "Canlı demo",
     "next": "Sonraki proje",
-    "placeholderLink": "bağlantı yakında"
+    "placeholderLink": "bağlantı yakında",
+    "runDemo": "Canlı demoyu başlat"
   },
   "about": {
     "title": "Hakkımda",
@@ -175,5 +176,11 @@
     "title": "Bu sayfa mevcut değil.",
     "text": "Bağlantı bozuk olabilir veya sayfa taşınmış olabilir.",
     "home": "Ana sayfaya dön"
+  },
+  "demo": {
+    "label": "Canlı demo",
+    "back": "Vaka çalışmasına dön",
+    "lead": "Bu, projenin gerçek Python kodu ve doğrudan tarayıcınızda çalışıyor (Pyodide, WebAssembly). Önce kısa bir senaryoyu kendisi oynatır, sonra sıra sizde. Sunucuya hiçbir şey gönderilmez.",
+    "frameTitle": "{title} canlı demosu"
   }
 }

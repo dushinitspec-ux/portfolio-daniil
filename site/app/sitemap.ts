@@ -1,12 +1,21 @@
 import type { MetadataRoute } from "next";
 
 import { routing } from "@/i18n/routing";
+import { demoPath, hasDemo } from "@/lib/demos";
 import { getProjectSlugs } from "@/lib/projects";
 import { site } from "@/lib/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const slugs = await getProjectSlugs();
-  const paths = ["", "/projects", "/about", "/cv", "/contact", ...slugs.map((s) => `/projects/${s}`)];
+  const paths = [
+    "",
+    "/projects",
+    "/about",
+    "/cv",
+    "/contact",
+    ...slugs.map((s) => `/projects/${s}`),
+    ...slugs.filter(hasDemo).map(demoPath),
+  ];
 
   return paths.flatMap((path) =>
     routing.locales.map((locale) => ({

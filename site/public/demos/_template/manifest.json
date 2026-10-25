@@ -1,0 +1,6 @@
+{
+  "entry": "demo_stub",
+  "packages": [],
+  "micropip": [],
+  "files": ["demo_stub.py"]
+}

@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { ProjectCover } from "@/components/projects/ProjectCover";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 import { SplitHeadline } from "@/components/ui/SplitHeadline";
 import { Link, routing, type Locale } from "@/i18n/routing";
+import { demoPath, hasDemo } from "@/lib/demos";
 import { CaseStudyBody } from "@/lib/mdx";
 import { pageMetadata } from "@/lib/metadata";
 import { getProject, getProjects, getProjectSlugs } from "@/lib/projects";
@@ -67,6 +69,11 @@ export default async function CaseStudyPage({ params: { locale, slug } }: Props)
         <p className="mt-8 max-w-2xl text-lg leading-relaxed text-muted md:text-xl">
           {project.summary}
         </p>
+        {hasDemo(slug) && (
+          <div className="mt-8">
+            <ButtonLink href={demoPath(slug)}>{t("runDemo")}</ButtonLink>
+          </div>
+        )}
         <dl className="mt-12 grid grid-cols-2 border-l border-t border-line md:grid-cols-4">
           {meta.map((item) => (
             <div key={item.label} className="border-b border-r border-line p-4 md:p-5">
