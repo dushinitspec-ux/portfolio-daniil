@@ -6,31 +6,36 @@ Antalya, Türkiye · dushin.itspec@gmail.com · [Telegram @daniil_dushin](https:
 
 ## Summary
 
-Hands-on IT and network technician with 4+ years of freelance and in-house experience.
-I install, configure and troubleshoot network equipment, video surveillance systems and
-access-control badges. Comfortable working directly with clients and explaining technical
-issues in simple words. Native Russian speaker — a strong fit for teams serving
+IT support and network technician with 4+ years of hands-on experience, freelance and in-house.
+Today I install and support an AI video-analytics system on client sites — hotels, cafés and
+restaurants — together with the network, cameras, recorders and sensors it runs on. I set up
+and troubleshoot MikroTik networks, IP cameras and NVR/DVR recorders, access control and IoT
+sensors, and I support users on site and remotely. I also write Python tools for IT work:
+network inventory, uptime monitoring and an IT helpdesk assistant. Calm with users, I explain
+technical problems in simple words. Native Russian speaker — a strong fit for teams serving
 Russian-speaking clients.
 
 ## Experience
 
 **Technical Specialist — Steady Control** (AI-powered business monitoring), Antalya · *Oct 2026 – present*
 
-- Deploy and support an AI system that monitors staff and operations for hotels, cafes and
+- Deploy and support an AI system that monitors staff and operations for hotels, cafés and
   restaurants: kitchen workflow, customer service quality and refrigerator temperature sensors.
-- Install, configure, diagnose, maintain and repair cameras, NVR/DVR recorders, badges,
-  IoT sensors and MikroTik network equipment on client sites.
+- Install, configure, diagnose, maintain and repair IP cameras, NVR/DVR recorders, access
+  badges, IoT sensors and MikroTik network equipment on many client sites.
+- Work on site with the client's staff: from a new installation to repairs and service visits.
 - Completed the company's internal training.
-- [Add 1–2 concrete results: e.g. "deployed the system at N client sites"]
 
 **Freelance IT Support & Network Setup** · *Feb 2022 – present*
 
-- PC setup and repair, home and small-office networks, Wi-Fi coverage, remote support.
-- [Add 1 result: e.g. "set up network for an office of N people"]
+- PC setup and repair; home and small-office networks; Wi-Fi coverage; remote support — for
+  many private and small-business clients.
+- Python tools and Telegram bots for small businesses.
 
-**Technical Administrator & Sales — family business (IP Dushin N. P.)**, part-time · *Mar 2022 – Oct 2025*
+**Technical Administrator & Sales — family business (IP Dushin N. P.)**, Belgorod, part-time · *Mar 2022 – Oct 2025*
 
-- Maintained IT infrastructure, handled equipment and software, sales to customers.
+- Maintained the IT infrastructure, equipment and software of a retail business; 1C.
+- Direct customer sales and product consultations.
 
 ## Projects
 
@@ -51,10 +56,14 @@ Personal projects, code and demos on GitHub: [github.com/dushinitspec-ux](https:
 
 ## Skills
 
-MikroTik (RouterOS), LAN/Wi-Fi, CCTV/NVR, access control, Windows, hardware diagnostics,
-remote support, 1C, customer communication.
+- **Networks:** MikroTik RouterOS, LAN and Wi-Fi setup and coverage, network diagnostics
+  (ping, ARP, port checks).
+- **Security systems:** IP cameras, NVR/DVR recorders, access control badges, IoT sensors.
+- **Support:** Windows, PC hardware diagnostics and repair, remote support, user support on
+  site, 1C.
+- **Automation:** Python (asyncio, FastAPI, Telegram bots), Git.
 
-**Next certification:** MikroTik MTCNA [planned].
+**Next certification:** MikroTik MTCNA (planned).
 
 ## Languages
 
@@ -65,10 +74,12 @@ after relocation · Turkish — basic
 
 ## Education
 
-[Degree, university, years]
+**Belgorod State Agrarian University** — Veterinary Medicine (specialist degree), studying on
+an individual study plan.
+IT and networks: learned in practice since 2022, plus the internal training at Steady Control.
 
 ## Beyond the role
 
 Fast learner who picks up new tools and fields quickly. Builds Telegram bots and websites,
-uses AI tools for automation and content, has sales and client-service experience, drives
-(licence B). Open to new directions, relocation and contracts abroad.
+uses AI tools for automation, has sales and client-service experience. Open to new
+directions, relocation and contracts abroad.
