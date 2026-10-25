@@ -18,11 +18,14 @@ import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any
-
-import httpx
+from typing import TYPE_CHECKING, Any
 
 from app.prices import PricePoint, infer_minutes
+
+if TYPE_CHECKING:
+    # Only types here; main.py creates the client. The parser then also runs in the browser
+    # demo (Pyodide), which has no httpx.
+    import httpx
 
 BASE_URL = "https://api.energy-charts.info"
 SOURCE_NAME = "Energy-Charts API (Fraunhofer ISE)"
@@ -88,7 +91,7 @@ def parse_price_payload(payload: object) -> PriceResponse:
     return PriceResponse(points, str(payload.get("license_info", "")), SOURCE_NAME)
 
 
-def retry_after_seconds(response: httpx.Response, default: float = 60.0) -> float:
+def retry_after_seconds(response: "httpx.Response", default: float = 60.0) -> float:
     value = response.headers.get("Retry-After", "")
     try:
         return max(float(value), 1.0)
@@ -97,11 +100,11 @@ def retry_after_seconds(response: httpx.Response, default: float = 60.0) -> floa
 
 
 class EnergyChartsClient:
-    def __init__(self, http: httpx.AsyncClient, base_url: str = BASE_URL) -> None:
+    def __init__(self, http: "httpx.AsyncClient", base_url: str = BASE_URL) -> None:
         self._http = http
         self._base_url = base_url.rstrip("/")
 
-    async def get(self, bzn: str, start: datetime, end: datetime) -> httpx.Response:
+    async def get(self, bzn: str, start: datetime, end: datetime) -> "httpx.Response":
         """The raw answer for prices that start in [start, end), sent as unix seconds."""
         params = {
             "bzn": bzn,

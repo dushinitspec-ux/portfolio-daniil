@@ -1,0 +1,19 @@
+{
+  "slug": "energy-saver",
+  "entry": "app.web_demo",
+  "packages": ["pyyaml", "pydantic", "tzdata"],
+  "micropip": [],
+  "files": [
+    "app/__init__.py",
+    "app/backtest.py",
+    "app/devices.py",
+    "app/energy_charts.py",
+    "app/fixtures.py",
+    "app/messages.py",
+    "app/planner.py",
+    "app/prices.py",
+    "app/web_demo.py",
+    "devices.yaml",
+    "fixtures/energy-charts-de-lu.json"
+  ]
+}
