@@ -8,8 +8,10 @@ import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-import aiosqlite
+if TYPE_CHECKING:  # imported in connect(): the in-browser demo uses this module without it
+    import aiosqlite
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS audit (
@@ -43,11 +45,13 @@ class AuditEntry:
 
 
 class AuditLog:
-    def __init__(self, conn: aiosqlite.Connection) -> None:
+    def __init__(self, conn: "aiosqlite.Connection") -> None:
         self._db = conn
 
     @classmethod
     async def connect(cls, path: Path | str) -> "AuditLog":
+        import aiosqlite
+
         if str(path) != ":memory:":
             Path(path).parent.mkdir(parents=True, exist_ok=True)
         conn = await aiosqlite.connect(path)

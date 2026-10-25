@@ -1,0 +1,29 @@
+{
+  "project": "04-pii-guard",
+  "entry": "app.web_demo",
+  "packages": [
+    "pyyaml",
+    "sqlite3"
+  ],
+  "micropip": [
+    "phonenumbers==9.0.41"
+  ],
+  "files": [
+    "app/__init__.py",
+    "app/audit.py",
+    "app/detectors.py",
+    "app/entities.py",
+    "app/gateway.py",
+    "app/guard.py",
+    "app/masking.py",
+    "app/policy.py",
+    "app/samples.py",
+    "app/validators.py",
+    "app/web_demo.py",
+    "app/llm/__init__.py",
+    "app/llm/base.py",
+    "app/llm/demo.py",
+    "names.demo.txt",
+    "policy.yaml"
+  ]
+}

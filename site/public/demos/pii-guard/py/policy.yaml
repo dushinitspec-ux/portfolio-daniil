@@ -1,0 +1,24 @@
+# What PII Guard does with each kind of personal data it finds in a prompt.
+#
+#   mask   replace it with a placeholder such as <EMAIL_1> before the model sees it,
+#          and put the real value back into the answer
+#   block  refuse the whole request: nothing is sent to the model
+#   allow  send it as it is
+#
+# Types: EMAIL, PHONE, IBAN, CARD, VAT_ID, IPV4, DATE_OF_BIRTH, NAME.
+# Types not listed here get the default.
+
+default: mask
+
+entities:
+  EMAIL: mask
+  PHONE: mask
+  IBAN: mask
+  # Card numbers have no business in a chat with an LLM, masked or not.
+  CARD: block
+  # A company's VAT ID is printed on every invoice it sends. Set this to mask if you
+  # work with sole traders, whose VAT ID can identify a person.
+  VAT_ID: allow
+  IPV4: mask
+  DATE_OF_BIRTH: mask
+  NAME: mask
