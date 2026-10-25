@@ -9,6 +9,7 @@ in: confirmed by the (sample) chef, never confirmed because of an unknown ingred
 "recipe changed, confirmation reset".
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
@@ -203,8 +204,11 @@ SAMPLE_DISHES: tuple[SampleDish, ...] = (
 )
 
 
-async def seed(kitchen: Kitchen, now: datetime) -> int:
-    """Fill an empty database with the sample menu. Returns the number of dishes."""
+async def seed(
+    kitchen: Kitchen, now: datetime, dishes: Sequence[SampleDish] = SAMPLE_DISHES
+) -> int:
+    """Fill an empty database with the sample menu (or a part of it, for the in-browser
+    demo). Returns the number of dishes."""
     if await kitchen.repo.count_dishes():
         return 0
     real_clock = kitchen.clock
@@ -219,7 +223,7 @@ async def seed(kitchen: Kitchen, now: datetime) -> int:
     kitchen.clock = tick
     try:
         changed: list[tuple[int, SampleDish]] = []
-        for dish in SAMPLE_DISHES:
+        for dish in dishes:
             dish_id = await kitchen.create(dish.names, dish.section, dish.recipe, DEMO_CHEF)
             if dish.confirmed is not None:
                 view = await kitchen.get(dish_id)
@@ -237,4 +241,4 @@ async def seed(kitchen: Kitchen, now: datetime) -> int:
             await kitchen.update(dish_id, dish.names, dish.section, dish.changed_recipe, DEMO_CHEF)
     finally:
         kitchen.clock = real_clock
-    return len(SAMPLE_DISHES)
+    return len(dishes)

@@ -1,0 +1,21 @@
+{
+  "slug": "allergen-labels",
+  "entry": "app.web_demo",
+  "packages": ["pydantic", "sqlite3"],
+  "micropip": [],
+  "files": [
+    "app/__init__.py",
+    "app/allergens.py",
+    "app/db.py",
+    "app/demo.py",
+    "app/dictionary.py",
+    "app/i18n.py",
+    "app/matcher.py",
+    "app/menu.py",
+    "app/service.py",
+    "app/text.py",
+    "app/web_demo.py",
+    "app/llm/__init__.py",
+    "app/llm/base.py"
+  ]
+}

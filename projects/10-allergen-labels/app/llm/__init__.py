@@ -1,7 +1,11 @@
 """AI suggestions. The rest of the app only depends on the Suggester protocol."""
 
-from app.config import Settings
+from typing import TYPE_CHECKING
+
 from app.llm.base import LLMError, Suggester, Suggestion
+
+if TYPE_CHECKING:  # not at run time: the in-browser demo has no pydantic-settings
+    from app.config import Settings
 
 __all__ = ["LLMError", "OfflineSuggester", "Suggester", "Suggestion", "create_suggester"]
 
@@ -21,7 +25,7 @@ class OfflineSuggester:
         return []
 
 
-def create_suggester(settings: Settings) -> Suggester:
+def create_suggester(settings: "Settings") -> Suggester:
     if not settings.ai_enabled:
         return OfflineSuggester()
     # Imported here so the offline demo never needs the SDK configured.

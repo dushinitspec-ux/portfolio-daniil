@@ -10,10 +10,12 @@ import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-
-import aiosqlite
+from typing import TYPE_CHECKING
 
 from app.i18n import Language
+
+if TYPE_CHECKING:  # imported in connect(): the in-browser demo uses this module without it
+    import aiosqlite
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS dishes (
@@ -128,7 +130,7 @@ class CachedSuggestion:
     model: str
 
 
-def _dish(row: aiosqlite.Row) -> DishRow:
+def _dish(row: "aiosqlite.Row") -> DishRow:
     return DishRow(
         id=row["id"],
         section=row["section"],
@@ -144,7 +146,7 @@ def _dish(row: aiosqlite.Row) -> DishRow:
     )
 
 
-def _confirmation(row: aiosqlite.Row) -> Confirmation:
+def _confirmation(row: "aiosqlite.Row") -> Confirmation:
     return Confirmation(
         id=row["id"],
         dish_id=row["dish_id"],
@@ -158,11 +160,13 @@ def _confirmation(row: aiosqlite.Row) -> Confirmation:
 
 
 class Repository:
-    def __init__(self, conn: aiosqlite.Connection) -> None:
+    def __init__(self, conn: "aiosqlite.Connection") -> None:
         self._db = conn
 
     @classmethod
     async def connect(cls, path: Path | str) -> "Repository":
+        import aiosqlite
+
         if str(path) != ":memory:":
             Path(path).parent.mkdir(parents=True, exist_ok=True)
         conn = await aiosqlite.connect(path)
@@ -184,7 +188,7 @@ class Repository:
         await self._db.rollback()
 
     @property
-    def connection(self) -> aiosqlite.Connection:
+    def connection(self) -> "aiosqlite.Connection":
         return self._db
 
     # Dishes
