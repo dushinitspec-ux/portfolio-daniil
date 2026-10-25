@@ -12,22 +12,23 @@ ten production-style projects and promo videos for the first three.
 
 ## Projects
 
-| # | Project | Problem it solves | Stack | Tests |
-|---|---------|-------------------|-------|-------|
-| 01 | [Fridge Alert Bot](projects/01-fridge-alert-bot) | Spoiled food and failed hygiene inspections | FastAPI, aiogram 3, SQLite, matplotlib | 69 |
-| 02 | [Hotel AI Concierge](projects/02-hotel-ai-concierge) | Reception answers the same questions all day, in four languages | aiogram 3, Claude / OpenAI API, SQLite | 57 |
-| 03 | [Uptime Monitor](projects/03-uptime-monitor) | Cameras, routers or Wi-Fi go down and nobody notices | asyncio, FastAPI, HTMX, aiogram 3, SQLite | 45 |
-| 04 | [PII Guard](projects/04-pii-guard) | Staff paste customers' personal data into AI chats (GDPR) | FastAPI, HTMX, Claude API, phonenumbers, SQLite | 152 |
-| 05 | [E-Invoice](projects/05-e-invoice) | PDF invoices while the EU moves to structured e-invoices (EN 16931, XRechnung) | FastAPI, pdfplumber, lxml, Claude API, SQLite | 180 |
-| 06 | [Helpdesk Copilot](projects/06-helpdesk-copilot) | IT support answers the same questions; answers must come from the company's own how-tos | aiogram 3, BM25, Claude API, FastAPI, SQLite | 95 |
-| 07 | [Network Inventory](projects/07-network-inventory) | Nobody knows what is on the office network (NIS2 asset management) | asyncio, FastAPI, aiogram 3, SQLite | 107 |
-| 08 | [Accessibility Check](projects/08-accessibility-check) | Online shops fall under the European Accessibility Act since June 2025 | httpx, BeautifulSoup, FastAPI, Claude API, SQLite | 200 |
-| 09 | [Energy Saver](projects/09-energy-saver) | Boilers and EV chargers run in the most expensive hours of the day-ahead market | asyncio, FastAPI, aiogram 3, SQLite | 100 |
-| 10 | [Allergen Labels](projects/10-allergen-labels) | Menus must declare the 14 EU allergens, in the guests' languages | FastAPI, Jinja2, Claude API, SQLite | 207 |
+| # | Project | Problem it solves | Stack | Tests | Live demo |
+|---|---------|-------------------|-------|-------|-----------|
+| 01 | [Fridge Alert Bot](projects/01-fridge-alert-bot) | Spoiled food and failed hygiene inspections | FastAPI, aiogram 3, SQLite, matplotlib | 83 | [Run](https://site-production-898c.up.railway.app/en/projects/fridge-alert-bot/demo) |
+| 02 | [Hotel AI Concierge](projects/02-hotel-ai-concierge) | Reception answers the same questions all day, in four languages | aiogram 3, Claude / OpenAI API, SQLite | 68 | [Run](https://site-production-898c.up.railway.app/en/projects/hotel-ai-concierge/demo) |
+| 03 | [Uptime Monitor](projects/03-uptime-monitor) | Cameras, routers or Wi-Fi go down and nobody notices | asyncio, FastAPI, HTMX, aiogram 3, SQLite | 52 | [Run](https://site-production-898c.up.railway.app/en/projects/uptime-monitor/demo) |
+| 04 | [PII Guard](projects/04-pii-guard) | Staff paste customers' personal data into AI chats (GDPR) | FastAPI, HTMX, Claude API, phonenumbers, SQLite | 163 | [Run](https://site-production-898c.up.railway.app/en/projects/pii-guard/demo) |
+| 05 | [E-Invoice](projects/05-e-invoice) | PDF invoices while the EU moves to structured e-invoices (EN 16931, XRechnung) | FastAPI, pdfplumber, lxml, Claude API, SQLite | 192 | [Run](https://site-production-898c.up.railway.app/en/projects/e-invoice/demo) |
+| 06 | [Helpdesk Copilot](projects/06-helpdesk-copilot) | IT support answers the same questions; answers must come from the company's own how-tos | aiogram 3, BM25, Claude API, FastAPI, SQLite | 110 | [Run](https://site-production-898c.up.railway.app/en/projects/helpdesk-copilot/demo) |
+| 07 | [Network Inventory](projects/07-network-inventory) | Nobody knows what is on the office network (NIS2 asset management) | asyncio, FastAPI, aiogram 3, SQLite | 117 | [Run](https://site-production-898c.up.railway.app/en/projects/network-inventory/demo) |
+| 08 | [Accessibility Check](projects/08-accessibility-check) | Online shops fall under the European Accessibility Act since June 2025 | httpx, BeautifulSoup, FastAPI, Claude API, SQLite | 208 | [Run](https://site-production-898c.up.railway.app/en/projects/accessibility-check/demo) |
+| 09 | [Energy Saver](projects/09-energy-saver) | Boilers and EV chargers run in the most expensive hours of the day-ahead market | asyncio, FastAPI, aiogram 3, SQLite | 108 | [Run](https://site-production-898c.up.railway.app/en/projects/energy-saver/demo) |
+| 10 | [Allergen Labels](projects/10-allergen-labels) | Menus must declare the 14 EU allergens, in the guests' languages | FastAPI, Jinja2, Claude API, SQLite | 220 | [Run](https://site-production-898c.up.railway.app/en/projects/allergen-labels/demo) |
 
 Every project:
 
 - runs in **demo mode** with simulated or bundled sample data — no hardware and no paid API keys needed;
+- has a **live demo in the browser**: the project's own Python code runs on the visitor's device (Pyodide), plays a short scenario, then lets you try it;
 - has tests (`pytest`) and passes linting (`ruff`), checked by GitHub Actions on every push;
 - ships with `.env.example`, `Dockerfile` and `docker-compose.yml`;
 - keeps a `BUGFIX.md` with the real bugs found while building it (root cause, fix, before/after code).
