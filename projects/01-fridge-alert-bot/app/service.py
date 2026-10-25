@@ -1,19 +1,26 @@
 """Business logic shared by the HTTP API and the Telegram bot."""
 
+from __future__ import annotations
+
 import asyncio
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 
 from app.alerts import AlertEvent, AlertRules, EventKind, SensorState, evaluate
-from app.charts import render_history_png
-from app.config import Settings
-from app.db import Repository
 from app.messages import format_event, format_report
 from app.models import Point, ReadingIn, Sensor, SensorStatus
-from app.notifier import Notifier
 from app.report import Report, summarize
+
+# Type hints only. Not importing these at run time keeps the module free of SQLite,
+# Telegram and settings-file code, so the in-browser demo (app/web_demo.py) can run this
+# same service with an in-memory store.
+if TYPE_CHECKING:
+    from app.config import Settings
+    from app.db import Repository
+    from app.notifier import Notifier
 
 logger = logging.getLogger(__name__)
 
@@ -192,6 +199,9 @@ class FridgeService:
         return sensor, points
 
     async def history_chart(self, sensor_id: str, hours: int) -> bytes:
+        # Matplotlib is big and slow to import: load it only when a chart is drawn.
+        from app.charts import render_history_png
+
         sensor, points = await self.history(sensor_id, hours)
         # Rendering takes ~100 ms of CPU; keep it off the event loop.
         return await asyncio.to_thread(

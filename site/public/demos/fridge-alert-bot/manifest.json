@@ -1,0 +1,19 @@
+{
+  "project": "01-fridge-alert-bot",
+  "entry": "app.web_demo",
+  "packages": [
+    "pydantic"
+  ],
+  "micropip": [],
+  "files": [
+    "app/__init__.py",
+    "app/alerts.py",
+    "app/commands.py",
+    "app/messages.py",
+    "app/models.py",
+    "app/report.py",
+    "app/service.py",
+    "app/simulation.py",
+    "app/web_demo.py"
+  ]
+}

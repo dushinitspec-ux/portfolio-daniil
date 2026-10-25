@@ -1,28 +1,27 @@
-"""Telegram commands: /status, /history, /setlimit, /report."""
+"""Telegram commands: /status, /history, /setlimit, /report.
 
-import re
-from html import escape
+The reply texts live in app/commands.py; this module only connects them to aiogram.
+"""
 
 from aiogram import Dispatcher, Router
 from aiogram.filters import Command, CommandObject, Filter
 from aiogram.types import BotCommand, BufferedInputFile, Message
 
-from app.config import Settings
-from app.messages import format_report, format_status
-from app.models import LIMIT_RANGE, SENSOR_ID_PATTERN
-from app.service import FridgeService, SensorNotFoundError
-
-_SENSOR_ID = re.compile(SENSOR_ID_PATTERN)
-MAX_HISTORY_HOURS = 168
-
-HELP_TEXT = (
-    "🧊 <b>Fridge Alert Bot</b>\n\n"
-    "/status — current temperature of every fridge\n"
-    "/history &lt;sensor&gt; [hours] — temperature chart (default 24 h)\n"
-    "/setlimit &lt;sensor&gt; &lt;°C&gt; — change the alert limit\n"
-    "/report — summary of the last 24 hours\n"
-    "/id — show this chat's id (needed for setup)"
+from app.commands import (
+    HELP_TEXT,
+    history_reply,
+    id_reply,
+    report_reply,
+    setlimit_reply,
+    status_reply,
 )
+
+# Re-exported: these used to be defined here.
+from app.commands import CommandArgsError as CommandArgsError
+from app.commands import parse_history_args as parse_history_args
+from app.commands import parse_setlimit_args as parse_setlimit_args
+from app.config import Settings
+from app.service import FridgeService
 
 BOT_COMMANDS = [
     BotCommand(command="status", description="Current temperature of every fridge"),
@@ -31,44 +30,6 @@ BOT_COMMANDS = [
     BotCommand(command="report", description="Summary of the last 24 hours"),
     BotCommand(command="help", description="How to use the bot"),
 ]
-
-
-class CommandArgsError(ValueError):
-    """Bad command arguments; the message is shown to the user."""
-
-
-def parse_history_args(args: str | None) -> tuple[str, int]:
-    parts = (args or "").split()
-    if not parts or len(parts) > 2:
-        raise CommandArgsError("Usage: /history &lt;sensor&gt; [hours]")
-    sensor_id = parts[0]
-    if not _SENSOR_ID.match(sensor_id):
-        raise CommandArgsError("Sensor names use letters, digits, dot, dash and underscore.")
-    hours = 24
-    if len(parts) == 2:
-        if not parts[1].isdigit() or not 1 <= int(parts[1]) <= MAX_HISTORY_HOURS:
-            raise CommandArgsError(f"Hours must be a whole number from 1 to {MAX_HISTORY_HOURS}.")
-        hours = int(parts[1])
-    return sensor_id, hours
-
-
-def parse_setlimit_args(args: str | None) -> tuple[str, float]:
-    parts = (args or "").split()
-    if len(parts) != 2:
-        raise CommandArgsError(
-            "Usage: /setlimit &lt;sensor&gt; &lt;°C&gt;, e.g. /setlimit bar-fridge 6"
-        )
-    sensor_id, raw = parts
-    if not _SENSOR_ID.match(sensor_id):
-        raise CommandArgsError("Sensor names use letters, digits, dot, dash and underscore.")
-    try:
-        limit = float(raw.replace(",", "."))  # "4,5" is how many people type decimals
-    except ValueError:
-        raise CommandArgsError(f"'{escape(raw)}' is not a number.") from None
-    low, high = LIMIT_RANGE
-    if not low <= limit <= high:
-        raise CommandArgsError(f"The limit must be between {low:.0f} and {high:.0f} °C.")
-    return sensor_id, limit
 
 
 class AllowedChat(Filter):
@@ -84,49 +45,30 @@ async def cmd_help(message: Message) -> None:
 
 
 async def cmd_id(message: Message) -> None:
-    await message.answer(f"This chat's id: <code>{message.chat.id}</code>")
+    await message.answer(id_reply(message.chat.id))
 
 
 async def cmd_status(message: Message, service: FridgeService) -> None:
-    await message.answer(format_status(await service.statuses()))
-
-
-async def _known_sensors(service: FridgeService) -> str:
-    ids = await service.sensor_ids()
-    return ", ".join(escape(i) for i in ids) if ids else "none yet"
+    await message.answer(await status_reply(service))
 
 
 async def cmd_history(message: Message, command: CommandObject, service: FridgeService) -> None:
-    try:
-        sensor_id, hours = parse_history_args(command.args)
-    except CommandArgsError as exc:
-        await message.answer(f"{exc}\nSensors: {await _known_sensors(service)}")
-        return
-    try:
-        png = await service.history_chart(sensor_id, hours)
-    except SensorNotFoundError:
-        await message.answer(
-            f"Unknown sensor '{escape(sensor_id)}'. Sensors: {await _known_sensors(service)}"
-        )
+    reply = await history_reply(service, command.args, service.history_chart)
+    if isinstance(reply, str):
+        await message.answer(reply)
         return
     await message.answer_photo(
-        BufferedInputFile(png, filename=f"{sensor_id}.png"),
-        caption=f"{escape(sensor_id)} — last {hours} h",
+        BufferedInputFile(reply.chart, filename=f"{reply.sensor_id}.png"),
+        caption=reply.caption,
     )
 
 
 async def cmd_setlimit(message: Message, command: CommandObject, service: FridgeService) -> None:
-    try:
-        sensor_id, limit = parse_setlimit_args(command.args)
-    except CommandArgsError as exc:
-        await message.answer(str(exc))
-        return
-    sensor = await service.set_limit(sensor_id, limit)
-    await message.answer(f"✅ Limit for <b>{escape(sensor.sensor_id)}</b> is now {limit:.1f} °C.")
+    await message.answer(await setlimit_reply(service, command.args))
 
 
 async def cmd_report(message: Message, service: FridgeService, settings: Settings) -> None:
-    await message.answer(format_report(await service.report(), settings.tz))
+    await message.answer(await report_reply(service, settings.tz))
 
 
 def create_router() -> Router:

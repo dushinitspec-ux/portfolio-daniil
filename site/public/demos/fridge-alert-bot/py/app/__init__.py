@@ -1,0 +1,1 @@
+"""Fridge temperature alert bot."""
