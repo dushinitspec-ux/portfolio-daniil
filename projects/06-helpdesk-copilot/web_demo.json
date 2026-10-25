@@ -1,0 +1,24 @@
+{
+  "slug": "helpdesk-copilot",
+  "entry": "app.web_demo",
+  "packages": ["pydantic", "sqlite3"],
+  "micropip": ["pydantic-settings==2.16.1", "python-dotenv==1.2.4"],
+  "files": [
+    "app/__init__.py",
+    "app/citations.py",
+    "app/config.py",
+    "app/copilot.py",
+    "app/db.py",
+    "app/demo.py",
+    "app/knowledge.py",
+    "app/messages.py",
+    "app/retrieval.py",
+    "app/text.py",
+    "app/triage.py",
+    "app/web_demo.py",
+    "app/llm/__init__.py",
+    "app/llm/base.py",
+    "app/llm/demo.py",
+    "knowledge/*.md"
+  ]
+}

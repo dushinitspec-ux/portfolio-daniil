@@ -8,10 +8,12 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
-
-import aiosqlite
+from typing import TYPE_CHECKING
 
 from app.triage import Category, Priority, Triage
+
+if TYPE_CHECKING:
+    import aiosqlite
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS tickets (
@@ -110,7 +112,7 @@ def utcnow() -> datetime:
     return datetime.now(UTC)
 
 
-def _ticket(row: aiosqlite.Row) -> Ticket:
+def _ticket(row: "aiosqlite.Row") -> Ticket:
     return Ticket(
         id=row["id"],
         created_at=datetime.fromisoformat(row["created_at"]),
@@ -129,11 +131,15 @@ def _ticket(row: aiosqlite.Row) -> Ticket:
 
 
 class Repository:
-    def __init__(self, conn: aiosqlite.Connection) -> None:
+    def __init__(self, conn: "aiosqlite.Connection") -> None:
         self._db = conn
 
     @classmethod
     async def connect(cls, path: Path | str) -> "Repository":
+        # Imported here, not at the top: aiosqlite runs SQLite in a thread, and the in-browser
+        # demo (WebAssembly, no threads) passes its own connection to __init__ instead.
+        import aiosqlite
+
         if str(path) != ":memory:":
             Path(path).parent.mkdir(parents=True, exist_ok=True)
         conn = await aiosqlite.connect(path)

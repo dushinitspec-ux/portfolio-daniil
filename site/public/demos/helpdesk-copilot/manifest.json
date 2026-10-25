@@ -1,0 +1,45 @@
+{
+  "project": "06-helpdesk-copilot",
+  "entry": "app.web_demo",
+  "packages": [
+    "pydantic",
+    "sqlite3"
+  ],
+  "micropip": [
+    "pydantic-settings==2.16.1",
+    "python-dotenv==1.2.4"
+  ],
+  "files": [
+    "app/__init__.py",
+    "app/citations.py",
+    "app/config.py",
+    "app/copilot.py",
+    "app/db.py",
+    "app/demo.py",
+    "app/knowledge.py",
+    "app/messages.py",
+    "app/retrieval.py",
+    "app/text.py",
+    "app/triage.py",
+    "app/web_demo.py",
+    "app/llm/__init__.py",
+    "app/llm/base.py",
+    "app/llm/demo.py",
+    "knowledge/README.md",
+    "knowledge/accounts.md",
+    "knowledge/backup-restore.md",
+    "knowledge/guest-wifi.md",
+    "knowledge/lost-device.md",
+    "knowledge/mfa.md",
+    "knowledge/new-laptop.md",
+    "knowledge/outlook.md",
+    "knowledge/password-reset.md",
+    "knowledge/phishing.md",
+    "knowledge/printer.md",
+    "knowledge/shared-mailbox.md",
+    "knowledge/software.md",
+    "knowledge/teams.md",
+    "knowledge/vpn.md",
+    "knowledge/wifi.md"
+  ]
+}

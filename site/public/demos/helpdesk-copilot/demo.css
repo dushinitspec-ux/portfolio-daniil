@@ -1,0 +1,51 @@
+/* Helpdesk copilot demo: the employee chat, the copilot's working and the ticket queue.
+   Only the shared tokens from ../_shared/demo.css are used. */
+
+/* The shared .d-btn sets display, which beats the [hidden] attribute (Skip stayed visible). */
+[hidden] { display: none !important; }
+
+.hd-sr {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.hd-col { align-content: start; }
+
+.d-phone { max-width: none; }
+.d-phone-head .hd-head-text { flex: 1; min-width: 0; }
+.d-phone-head .d-badge { flex: none; }
+.hd-phone .d-chat { flex: none; height: 600px; max-height: none; }
+@media (max-width: 759px) { .hd-phone .d-chat { height: 480px; } }
+.hd-typing { color: var(--muted); font-style: italic; }
+.hd-error { border-color: var(--accent-text) !important; color: var(--accent-text); }
+.d-keys .d-btn.hd-press { background: var(--fg); color: var(--bg); }
+.hd-keys .d-btn { text-transform: none; letter-spacing: 0; }
+
+.hd-suggest .d-btn { text-transform: none; letter-spacing: 0; font: 400 13px/1.3 var(--sans); padding: 6px 10px; text-align: left; }
+
+/* What the copilot did */
+.hd-question { font-weight: 600; font-size: 15px; line-height: 1.35; overflow-wrap: anywhere; }
+.hd-block { display: grid; gap: 8px; padding-top: 14px; margin-top: 14px; border-top: 1px solid var(--line); }
+.hd-decision { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; }
+.hd-reason { font: 12px/1.4 var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.hd-meter { position: relative; height: 6px; background: var(--line); margin: 6px 0 2px; }
+.hd-meter > span { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ok); }
+.hd-meter.low > span { background: var(--accent); }
+.hd-meter > i { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--fg); }
+.hd-figure { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; font-size: 13px; }
+.hd-figure strong { font-variant-numeric: tabular-nums; }
+.hd-terms { display: flex; flex-wrap: wrap; gap: 4px; }
+.hd-term { font: 11px/1.5 var(--mono); padding: 0 6px; border: 1px solid var(--line); color: var(--muted); overflow-wrap: anywhere; }
+.hd-term.hit { color: var(--fg); border-color: var(--strong); }
+.hd-hits td:first-child { width: 1.5em; color: var(--muted); font-family: var(--mono); font-size: 12px; }
+.hd-hits .file { display: block; font: 11px/1.4 var(--mono); color: var(--muted); }
+.hd-hits .hd-terms { margin-top: 4px; }
+.hd-hits .label { overflow-wrap: anywhere; }
+
+/* Ticket queue */
+.hd-queue { list-style: none; margin: 0; padding: 0; display: grid; }
+.hd-queue li { display: grid; grid-template-columns: 2.6em minmax(0, 1fr); gap: 10px; align-items: start; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.hd-queue li:first-child { padding-top: 0; }
+.hd-queue .d-badge { text-align: center; }
+.hd-queue .summary { font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; }
+.hd-queue .sub { display: block; margin-top: 2px; font: 11px/1.4 var(--mono); color: var(--muted); }
+.hd-it { margin: 0; padding: 10px 12px; border: 1px dashed var(--line); background: var(--surface); font: 12px/1.45 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
