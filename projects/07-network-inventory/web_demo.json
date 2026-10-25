@@ -1,0 +1,24 @@
+{
+  "slug": "network-inventory",
+  "entry": "app.web_demo",
+  "packages": ["sqlite3", "tzdata"],
+  "micropip": [],
+  "files": [
+    "app/__init__.py",
+    "app/changes.py",
+    "app/db.py",
+    "app/demo.py",
+    "app/discovery.py",
+    "app/export.py",
+    "app/inventory.py",
+    "app/listing.py",
+    "app/messages.py",
+    "app/notifier.py",
+    "app/oui.py",
+    "app/parsing.py",
+    "app/risks.py",
+    "app/scope.py",
+    "app/web_demo.py",
+    "app/resources/oui.csv"
+  ]
+}

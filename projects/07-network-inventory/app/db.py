@@ -12,11 +12,15 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-
-import aiosqlite
+from typing import TYPE_CHECKING
 
 from app.changes import Change, ChangeKind, Known, Sighting, Snapshot
 from app.oui import MacInfo
+
+if TYPE_CHECKING:
+    # Imported where a connection is opened: the in-browser demo (Pyodide) has no threads,
+    # so it cannot run aiosqlite and hands Repository a connection of its own.
+    import aiosqlite
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS scans (
@@ -152,7 +156,7 @@ class IpRecord:
     last_seen: datetime
 
 
-def _device(row: aiosqlite.Row) -> Device:
+def _device(row: "aiosqlite.Row") -> Device:
     return Device(
         id=row[0],
         key=row[1],
@@ -174,7 +178,7 @@ def _device(row: aiosqlite.Row) -> Device:
     )
 
 
-def _scan(row: aiosqlite.Row) -> Scan:
+def _scan(row: "aiosqlite.Row") -> Scan:
     return Scan(
         id=row[0],
         started_at=from_db(row[1]),
@@ -187,12 +191,14 @@ def _scan(row: aiosqlite.Row) -> Scan:
 
 
 class Repository:
-    def __init__(self, conn: aiosqlite.Connection) -> None:
+    def __init__(self, conn: "aiosqlite.Connection") -> None:
         self._db = conn
         self._write_lock = asyncio.Lock()
 
     @classmethod
     async def connect(cls, path: Path | str) -> "Repository":
+        import aiosqlite
+
         if str(path) != ":memory:":
             Path(path).parent.mkdir(parents=True, exist_ok=True)
         conn = await aiosqlite.connect(path)

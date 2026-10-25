@@ -1,8 +1,10 @@
 """Where alerts go: a Telegram chat, or the console when no bot is configured."""
 
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
-from aiogram import Bot
+if TYPE_CHECKING:
+    # Only a type here (main.py creates the Bot), so the scan pipeline imports without aiogram.
+    from aiogram import Bot
 
 
 class Notifier(Protocol):
@@ -15,7 +17,7 @@ class ConsoleNotifier:
 
 
 class TelegramNotifier:
-    def __init__(self, bot: Bot, chat_id: int) -> None:
+    def __init__(self, bot: "Bot", chat_id: int) -> None:
         self._bot = bot
         self._chat_id = chat_id
 

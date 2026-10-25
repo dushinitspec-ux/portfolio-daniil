@@ -1,0 +1,92 @@
+/* Network-inventory demo: only layout on top of ../_shared/demo.css, same tokens. */
+
+.ni-scope { font-size: 13px; color: var(--muted); }
+.ni-scanrow { gap: 14px; }
+.ni-scaninfo { font-size: 13px; color: var(--muted); }
+.ni-error { color: var(--accent-text); }
+.ni-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; margin-bottom: 10px; }
+
+.ni-filters { display: grid; gap: 12px; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); }
+@media (max-width: 620px) {
+  .ni-filters { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .ni-filters .ni-search { grid-column: 1 / -1; }
+}
+
+/* Counters */
+.ni-stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border: 1px solid var(--line); background: var(--card); }
+.ni-stat { display: grid; gap: 4px; padding: 12px 14px; border-left: 1px solid var(--line); min-width: 0; }
+.ni-stat:first-child { border-left: 0; }
+.ni-value { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.ni-stat.hot .ni-value { color: var(--accent-text); }
+@media (max-width: 700px) {
+  .ni-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ni-stat:nth-child(3n + 1) { border-left: 0; }
+  .ni-stat:nth-child(n + 4) { border-top: 1px solid var(--line); }
+  .ni-value { font-size: 22px; }
+}
+
+/* Register table */
+.ni-table td { vertical-align: middle; }
+.ni-table td.mono { font-size: 13px; white-space: nowrap; }
+.ni-name { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.ni-dev {
+  padding: 0; border: 0; background: none; color: var(--fg); font: 600 14px/1.35 var(--sans); text-align: left; cursor: pointer;
+  text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; overflow-wrap: anywhere;
+}
+.ni-dev:hover:not(:disabled) { color: var(--accent-text); text-decoration-color: currentColor; }
+.ni-dev:disabled { cursor: default; text-decoration: none; }
+.ni-sub { display: none; margin-top: 2px; font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
+.ni-ports { font-size: 13px; }
+.ni-ports span { display: inline-block; margin-right: 6px; }
+.ni-risks { display: flex; align-items: center; gap: 6px; }
+.ni-count { font: 12px/1 var(--mono); color: var(--muted); }
+.ni-none { color: var(--muted); }
+.ni-empty { color: var(--muted); padding: 18px 0 !important; }
+.d-badge.ni-low { color: var(--muted); }
+.ni-table tr.ni-missing td { color: var(--muted); }
+.ni-table tr.ni-missing .ni-dev { color: var(--muted); }
+.ni-table tr.ni-selected td { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+@media (max-width: 640px) {
+  .ni-wide { display: none; }
+  .ni-sub { display: block; }
+  .ni-table td, .ni-table th { padding-right: 8px; }
+}
+.ni-sub.ni-sub-ports { display: none; }
+@media (max-width: 480px) {
+  .ni-portcol { display: none; }
+  .ni-sub.ni-sub-ports { display: block; }
+}
+
+/* Changes and alert */
+.ni-changes li { grid-template-columns: minmax(96px, 34%) minmax(0, 1fr); }
+.ni-kind { font: 500 11px/1.6 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.ni-detail { font-size: 12px; color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
+.ni-pre {
+  margin: 0; padding: 12px; background: var(--surface); border: 1px solid var(--line);
+  font: 12px/1.55 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.ni-pre.code { white-space: pre; overflow-x: auto; overflow-wrap: normal; max-width: 100%; }
+
+/* Device detail */
+.ni-title { gap: 6px 10px; }
+.ni-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; }
+.ni-facts > div { border-top: 1px solid var(--line); padding: 8px 0 10px; min-width: 0; }
+.ni-fact { margin-top: 3px; font-size: 14px; overflow-wrap: anywhere; }
+.ni-fact.mono { font-size: 13px; }
+.ni-risklist { display: grid; }
+.ni-risk { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.ni-risk-side { align-content: start; justify-items: start; gap: 6px; }
+.ni-risk h4 { margin: 0 0 4px; font-size: 15px; font-weight: 600; line-height: 1.3; }
+.ni-risk p { margin: 0 0 6px; font-size: 14px; }
+.ni-fix { margin-top: 8px !important; }
+@media (max-width: 480px) { .ni-risk { grid-template-columns: minmax(0, 1fr); gap: 6px; } .ni-risk-side { display: flex; align-items: center; } }
+.ni-sim { padding: 12px; border: 1px dashed var(--line); }
+.ni-sim .d-btn { padding: 7px 10px; font-size: 11px; }
+.ni-pending { color: var(--fg); }
+.ni-more summary { cursor: pointer; padding: 6px 0; }
+.ni-more .d-table { margin: 6px 0 10px; }
+
+/* Panels side by side keep their content at the top instead of stretching the rows. */
+.d-cols > .d-panel { align-content: start; }
+/* `hidden` must win over the display of .d-btn and friends. */
+[hidden] { display: none !important; }
