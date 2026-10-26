@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/dushinitspec-ux/portfolio-daniil/actions/workflows/ci.yml/badge.svg)](https://github.com/dushinitspec-ux/portfolio-daniil/actions/workflows/ci.yml)
 
-AI Developer & IT/Network Technician based in Antalya, open to relocation.
+AI Developer & IT/Network Technician based in Antalya, open to remote work.
 I build AI tools that save businesses time — and I set up the hardware they run on.
 
 **Website:** [site-production-898c.up.railway.app](https://site-production-898c.up.railway.app) · **Email:** dushin.itspec@gmail.com · **LinkedIn:** [linkedin.com/in/daniil-dushin](https://www.linkedin.com/in/daniil-dushin)

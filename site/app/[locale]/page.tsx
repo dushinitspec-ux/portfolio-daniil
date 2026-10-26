@@ -97,17 +97,17 @@ export default async function HomePage({ params: { locale } }: Props) {
         </div>
       </section>
 
-      {/* Relocation call to action */}
+      {/* Remote work call to action */}
       <section className="page-x mt-24 md:mt-36">
         <div data-rule className="grid-12 gap-y-8 border-t border-strong pt-10">
           <SplitHeadline
             as="p"
             reveal="scroll"
-            text={t("relocation")}
+            text={t("remote")}
             className="col-span-4 text-[clamp(2rem,5vw,4.5rem)] font-semibold leading-[1.02] tracking-[-0.04em] md:col-span-9"
           />
           <div data-reveal className="col-span-4 md:col-span-5 md:col-start-8">
-            <p className="text-muted">{t("relocationText")}</p>
+            <p className="text-muted">{t("remoteText")}</p>
             <div className="mt-8">
               <ButtonLink href={`mailto:${site.email}`}>{t("ctaContact")}</ButtonLink>
             </div>

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Daniil Dushin — AI Developer & IT/Network Technician",
-    "description": "I build AI tools that save businesses time — and I set up the hardware they run on. Based in Antalya, open to relocation to Europe and worldwide.",
+    "description": "I build AI tools that save businesses time — and I set up the hardware they run on. Based in Antalya, open to remote work.",
     "projects": "Projects",
     "projectsDescription": "Telegram bots, AI tools and network monitoring built for real business problems, each with tests and a log of real bugs fixed.",
     "about": "About",
@@ -34,7 +34,7 @@
     "introLabel": "Portfolio",
     "role": "AI Developer & IT/Network Technician",
     "place": "Antalya, Türkiye",
-    "available": "Open to relocation",
+    "available": "Open to remote work",
     "headline": "I build AI tools that save businesses time — and I set up the hardware they run on.",
     "intro": "By day I deploy AI monitoring systems for hotels, cafes and restaurants: cameras, recorders, sensors and MikroTik networks. In my own projects I build Telegram bots and web tools for the same kind of businesses, with AI coding agents and with tests.",
     "ctaProjects": "View projects",
@@ -47,8 +47,8 @@
       "web": "Bots & web",
       "infra": "Infrastructure"
     },
-    "relocation": "Open to relocation · Europe & worldwide",
-    "relocationText": "I am looking for a junior role as an AI developer or an IT/network technician, on site or remote.",
+    "remote": "Open to remote work · full-time or part-time",
+    "remoteText": "I am looking for a junior role as an AI developer or an IT/network technician, working remotely.",
     "portraitAlt": "Portrait of Daniil Dushin"
   },
   "projects": {
@@ -132,8 +132,8 @@
       "en": "English — A1, learning actively",
       "tr": "Turkish — A1"
     },
-    "relocationTitle": "Open to relocation",
-    "relocationText": "Ready to move to Europe or worldwide for the right team. Driving licence: category B."
+    "remoteTitle": "Working remotely",
+    "remoteText": "Remote, full-time or part-time: I plan my own tasks and hand in results as working links. Driving licence: category B."
   },
   "cv": {
     "title": "CV",

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Daniil Dushin — KI-Entwickler & IT-/Netzwerktechniker",
-    "description": "Ich baue KI-Tools, die Unternehmen Zeit sparen — und richte die Hardware ein, auf der sie laufen. Wohnhaft in Antalya, offen für einen Umzug nach Europa und weltweit.",
+    "description": "Ich baue KI-Tools, die Unternehmen Zeit sparen — und richte die Hardware ein, auf der sie laufen. Wohnhaft in Antalya, offen für Remote-Arbeit.",
     "projects": "Projekte",
     "projectsDescription": "Telegram-Bots, KI-Tools und Netzwerk-Monitoring für echte Geschäftsprobleme, jeweils mit Tests und einem Protokoll der behobenen Fehler.",
     "about": "Über mich",
@@ -34,7 +34,7 @@
     "introLabel": "Portfolio",
     "role": "KI-Entwickler & IT-/Netzwerktechniker",
     "place": "Antalya, Türkei",
-    "available": "Offen für einen Umzug",
+    "available": "Offen für Remote-Arbeit",
     "headline": "Ich baue KI-Tools, die Unternehmen Zeit sparen — und richte die Hardware ein, auf der sie laufen.",
     "intro": "Tagsüber installiere ich KI-Monitoring-Systeme für Hotels, Cafés und Restaurants: Kameras, Rekorder, Sensoren und MikroTik-Netzwerke. In eigenen Projekten baue ich Telegram-Bots und Web-Tools für genau solche Betriebe — mit KI-Coding-Agenten und mit Tests.",
     "ctaProjects": "Projekte ansehen",
@@ -47,8 +47,8 @@
       "web": "Bots & Web",
       "infra": "Infrastruktur"
     },
-    "relocation": "Offen für einen Umzug · Europa & weltweit",
-    "relocationText": "Ich suche eine Junior-Stelle als KI-Entwickler oder IT-/Netzwerktechniker, vor Ort oder remote.",
+    "remote": "Offen für Remote-Arbeit · Voll- oder Teilzeit",
+    "remoteText": "Ich suche eine Junior-Stelle als KI-Entwickler oder IT-/Netzwerktechniker, remote.",
     "portraitAlt": "Porträt von Daniil Dushin"
   },
   "projects": {
@@ -132,8 +132,8 @@
       "en": "Englisch — A1, lerne aktiv",
       "tr": "Türkisch — A1"
     },
-    "relocationTitle": "Offen für einen Umzug",
-    "relocationText": "Für das richtige Team ziehe ich nach Europa oder in ein anderes Land. Führerschein Klasse B."
+    "remoteTitle": "Remote-Arbeit",
+    "remoteText": "Remote, in Voll- oder Teilzeit: Ich plane meine Aufgaben selbst und liefere Ergebnisse als funktionierende Links. Führerschein Klasse B."
   },
   "cv": {
     "title": "Lebenslauf",

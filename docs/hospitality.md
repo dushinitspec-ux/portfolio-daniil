@@ -9,8 +9,7 @@ Antalya, Türkiye · dushin.itspec@gmail.com · [Telegram @daniil_dushin](https:
 Friendly, reliable, calm with demanding clients and tech-savvy, living in Antalya. Native Russian speaker able to support
 Russian-speaking guests, with years of customer service and sales experience. I already work
 in hotels, cafés and restaurants every day as a technical specialist, so I know how they run
-behind the scenes. Open to relocation, live-in (lojman) and contracts abroad with
-accommodation and work visa.
+behind the scenes. Open to live-in (lojman) positions.
 
 ## Experience
 
@@ -35,8 +34,7 @@ chef-confirmed allergen labels and fridge temperature alerts. Case studies on my
 
 ## Languages
 
-Russian — native · English — A1 (basic), studying actively and ready to learn fast on site
-after relocation · Turkish — basic · Driving licence: category B
+Russian — native · English — A1 (basic), studying actively · Turkish — basic · Driving licence: category B
 
 ## Education
 
@@ -47,4 +45,4 @@ an individual study plan.
 
 Fast learner who picks up new tools and fields quickly. Builds Telegram bots and websites,
 uses AI tools for automation, has sales and client-service experience. Open to new
-directions, relocation and contracts abroad.
+directions and remote work.

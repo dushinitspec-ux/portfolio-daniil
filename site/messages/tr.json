@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Daniil Dushin — Yapay Zekâ Geliştirici ve BT/Ağ Teknisyeni",
-    "description": "İşletmelere zaman kazandıran yapay zekâ araçları geliştiriyorum ve bu araçların çalıştığı donanımı da kendim kuruyorum. Antalya'da yaşıyorum, Avrupa'ya ve dünyanın her yerine taşınmaya açığım.",
+    "description": "İşletmelere zaman kazandıran yapay zekâ araçları geliştiriyorum ve bu araçların çalıştığı donanımı da kendim kuruyorum. Antalya'da yaşıyorum, uzaktan çalışmaya açığım.",
     "projects": "Projeler",
     "projectsDescription": "Gerçek iş sorunları için geliştirilmiş Telegram botları, yapay zekâ araçları ve ağ izleme; her biri testli ve bulunan hataların kaydıyla.",
     "about": "Hakkımda",
@@ -34,7 +34,7 @@
     "introLabel": "Portfolyo",
     "role": "Yapay Zekâ Geliştirici ve BT/Ağ Teknisyeni",
     "place": "Antalya, Türkiye",
-    "available": "Taşınmaya açığım",
+    "available": "Uzaktan çalışmaya açığım",
     "headline": "İşletmelere zaman kazandıran yapay zekâ araçları geliştiriyorum — ve çalıştıkları donanımı da ben kuruyorum.",
     "intro": "Gündüzleri oteller, kafeler ve restoranlar için yapay zekâ izleme sistemleri kuruyorum: kameralar, kayıt cihazları, sensörler ve MikroTik ağları. Kendi projelerimde aynı tür işletmeler için Telegram botları ve web araçları geliştiriyorum — yapay zekâ kodlama asistanlarıyla ve testlerle.",
     "ctaProjects": "Projeleri gör",
@@ -47,8 +47,8 @@
       "web": "Botlar ve web",
       "infra": "Altyapı"
     },
-    "relocation": "Taşınmaya açığım · Avrupa ve dünya",
-    "relocationText": "Yapay zekâ geliştirici veya BT/ağ teknisyeni olarak junior bir pozisyon arıyorum; ofiste ya da uzaktan.",
+    "remote": "Uzaktan çalışmaya açığım · tam veya yarı zamanlı",
+    "remoteText": "Yapay zekâ geliştirici veya BT/ağ teknisyeni olarak uzaktan bir junior pozisyon arıyorum.",
     "portraitAlt": "Daniil Dushin portresi"
   },
   "projects": {
@@ -132,8 +132,8 @@
       "en": "İngilizce — A1, aktif olarak öğreniyorum",
       "tr": "Türkçe — A1"
     },
-    "relocationTitle": "Taşınmaya açığım",
-    "relocationText": "Doğru ekip için Avrupa'ya veya dünyanın herhangi bir yerine taşınmaya hazırım. B sınıfı ehliyet."
+    "remoteTitle": "Uzaktan çalışma",
+    "remoteText": "Uzaktan, tam veya yarı zamanlı: görevlerimi kendim planlarım ve sonuçları çalışan bağlantılar olarak teslim ederim. B sınıfı ehliyet."
   },
   "cv": {
     "title": "Özgeçmiş",

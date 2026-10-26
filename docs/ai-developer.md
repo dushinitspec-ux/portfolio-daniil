@@ -96,8 +96,7 @@ asset inventories (NIS2).
 
 ## Languages
 
-Russian — native · English — A1 (basic), studying actively and ready to learn fast on site
-after relocation · Turkish — basic
+Russian — native · English — A1 (basic), studying actively · Turkish — basic
 
 **Driving licence:** category B
 
@@ -111,4 +110,4 @@ Software development: self-taught through real projects — 10 public repositori
 
 Fast learner who picks up new tools and fields quickly. Builds Telegram bots and websites,
 uses AI tools for automation, has sales and client-service experience. Open to new
-directions, relocation and contracts abroad.
+directions and remote work.

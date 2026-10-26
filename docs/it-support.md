@@ -67,8 +67,7 @@ Personal projects, code and demos on GitHub: [github.com/dushinitspec-ux](https:
 
 ## Languages
 
-Russian — native · English — A1 (basic), studying actively and ready to learn fast on site
-after relocation · Turkish — basic
+Russian — native · English — A1 (basic), studying actively · Turkish — basic
 
 **Driving licence:** category B
 
@@ -82,4 +81,4 @@ IT and networks: learned in practice since 2022, plus the internal training at S
 
 Fast learner who picks up new tools and fields quickly. Builds Telegram bots and websites,
 uses AI tools for automation, has sales and client-service experience. Open to new
-directions, relocation and contracts abroad.
+directions and remote work.

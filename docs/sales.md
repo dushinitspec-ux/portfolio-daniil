@@ -42,8 +42,7 @@ business.
 
 ## Languages
 
-Russian — native · English — A1 (basic), studying actively and ready to learn fast on site
-after relocation · Turkish — basic · Driving licence: category B
+Russian — native · English — A1 (basic), studying actively · Turkish — basic · Driving licence: category B
 
 ## Education
 
@@ -54,4 +53,4 @@ an individual study plan.
 
 Fast learner who picks up new tools and fields quickly. Builds Telegram bots and websites,
 uses AI tools for automation, has sales and client-service experience. Open to new
-directions, relocation and contracts abroad.
+directions and remote work.

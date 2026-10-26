@@ -24,7 +24,7 @@ export function LinkedInBanner() {
       >
         <div style={{ ...label, display: "flex", alignItems: "center", gap: 14 }}>
           <span style={{ width: 14, height: 14, background: colors.accent, display: "inline-block" }} />
-          AI developer · IT &amp; networks · Antalya → EU
+          AI developer · IT &amp; networks · Antalya · remote
         </div>
         <div style={{ fontSize: 50, fontWeight: 600, lineHeight: 1.04, letterSpacing: "-0.035em" }}>
           I build AI tools that save businesses time <span style={{ color: colors.accent }}>—</span>
@@ -33,7 +33,7 @@ export function LinkedInBanner() {
         </div>
         <div style={{ ...label, display: "flex", justifyContent: "space-between", borderTop: `1px solid rgba(237,234,227,0.18)`, paddingTop: 16 }}>
           <span>10 projects · live demos in the browser</span>
-          <span>Open to relocation &amp; remote</span>
+          <span>Open to remote work</span>
         </div>
       </div>
     </AbsoluteFill>
@@ -54,7 +54,7 @@ export function GitHubBanner({ theme }: { theme: "light" | "dark" }) {
     <AbsoluteFill style={{ backgroundColor: p.bg, color: p.fg, fontFamily: sans, padding: "64px 80px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
       <div style={{ ...label, display: "flex", alignItems: "center", gap: 16 }}>
         <span style={{ width: 16, height: 16, background: colors.accent, display: "inline-block" }} />
-        AI developer · IT &amp; networks · Antalya → EU
+        AI developer · IT &amp; networks · Antalya · remote
       </div>
       <div style={{ fontSize: 128, fontWeight: 600, lineHeight: 0.92, letterSpacing: "-0.05em" }}>Daniil Dushin</div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", borderTop: `1px solid ${p.line}`, paddingTop: 18 }}>

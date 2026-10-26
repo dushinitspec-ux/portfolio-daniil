@@ -89,19 +89,19 @@ export default async function AboutPage({ params: { locale } }: Props) {
         </div>
       </section>
 
-      <section aria-labelledby="relocation" className="page-x">
+      <section aria-labelledby="remote" className="page-x">
         <div data-rule className="grid-12 gap-y-6 border-t border-strong py-12 md:py-16">
           <h2
-            id="relocation"
+            id="remote"
             className="col-span-4 text-[clamp(2rem,5vw,4rem)] font-semibold leading-[1.02] tracking-[-0.04em] md:col-span-7"
           >
-            {t("relocationTitle")}
+            {t("remoteTitle")}
             <span aria-hidden="true" className="text-accent-text">
               .
             </span>
           </h2>
           <p className="col-span-4 self-end text-lg text-muted md:col-span-5">
-            {t("relocationText")}
+            {t("remoteText")}
           </p>
         </div>
       </section>
